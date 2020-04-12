@@ -14,7 +14,6 @@
 
 typedef struct {
 	bool disconnect;
-	GtkWidget* window;
 	pthread_mutex_t mutex;
 } shared_data;
 
@@ -31,7 +30,6 @@ void initialise_shared() {
 	g_assert(data);
 	
 	data->disconnect = FALSE;
-	data->window = NULL;
 	
 	pthread_mutexattr_t attr;
 	pthread_mutexattr_init(&attr);
@@ -57,14 +55,14 @@ static void run (void* cls, char*const* args, const char* cfgfile, const struct 
 }
 
 static void activate(GtkApplication* application, gpointer user_data) {
-	data->window = gtk_application_window_new(application);
-	gtk_window_set_default_size(GTK_WINDOW(data->window), 320, 512);
+	GtkWidget* window = gtk_application_window_new(application);
+	gtk_window_set_default_size(GTK_WINDOW(window), 320, 512);
 	
-	cadet_gtk_init_ui(data->window);
+	cadet_gtk_init_ui(window);
 	
 	pthread_mutex_unlock(&(data->mutex));
 	
-	gtk_widget_show_all(data->window);
+	gtk_widget_show_all(window);
 }
 
 int main(int argc, char** argv) {

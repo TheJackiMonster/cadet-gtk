@@ -10,12 +10,6 @@
 #include "contacts.h"
 #include "chat.h"
 
-void forward(GtkWidget* button, gpointer user_data) {
-	GtkWidget* content_leaflet = GTK_WIDGET(user_data);
-
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "chat");
-}
-
 void back(GtkWidget* back_button, gpointer user_data) {
 	GtkWidget* content_leaflet = GTK_WIDGET(user_data);
 	
@@ -84,6 +78,4 @@ void cadet_gtk_init_ui(GtkWidget* window) {
 	);
 	
 	g_signal_connect(back_button, "clicked", G_CALLBACK(back), content_leaflet);
-	
-	//g_signal_connect(fb, "clicked", G_CALLBACK(forward), content_leaflet);
 }

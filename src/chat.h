@@ -10,4 +10,6 @@
 
 void cadet_gtk_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button);
 
+void cadet_gtk_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row);
+
 #endif //CADET_GTK_CHAT_H
