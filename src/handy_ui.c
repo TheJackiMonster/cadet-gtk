@@ -26,11 +26,9 @@ void cadet_gtk_init_ui(GtkWidget* window) {
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();
 	
-	cadet_gtk_init_contacts(contacts_header, contacts_box);
+	GtkWidget* contacts_list = gtk_list_box_new();
 	
-	GtkWidget* fb = gtk_button_new_with_label("Forward");
-	
-	gtk_container_add(GTK_CONTAINER(contacts_box), fb);
+	cadet_gtk_init_contacts(contacts_header, contacts_box, contacts_list);
 	
 	GtkWidget* chat_header = gtk_header_bar_new();
 	GtkWidget* chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -46,6 +44,7 @@ void cadet_gtk_init_ui(GtkWidget* window) {
 	
 	gtk_container_child_set(GTK_CONTAINER(title_leaflet), contacts_header, "name", "contacts", NULL);
 	gtk_container_child_set(GTK_CONTAINER(title_leaflet), chat_header, "name", "chat", NULL);
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(title_leaflet), "contacts");
 	
 	GtkWidget* content_leaflet = hdy_leaflet_new();
 	hdy_leaflet_set_transition_type(HDY_LEAFLET(content_leaflet), HDY_LEAFLET_TRANSITION_TYPE_SLIDE);
@@ -55,6 +54,7 @@ void cadet_gtk_init_ui(GtkWidget* window) {
 	
 	gtk_container_child_set(GTK_CONTAINER(content_leaflet), contacts_box, "name", "contacts", NULL);
 	gtk_container_child_set(GTK_CONTAINER(content_leaflet), chat_box, "name", "chat", NULL);
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts");
 	
 	GtkWidget* titleBar = hdy_title_bar_new();
 	
@@ -84,5 +84,6 @@ void cadet_gtk_init_ui(GtkWidget* window) {
 	);
 	
 	g_signal_connect(back_button, "clicked", G_CALLBACK(back), content_leaflet);
-	g_signal_connect(fb, "clicked", G_CALLBACK(forward), content_leaflet);
+	
+	//g_signal_connect(fb, "clicked", G_CALLBACK(forward), content_leaflet);
 }

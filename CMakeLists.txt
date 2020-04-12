@@ -16,7 +16,7 @@ set(LIBHANDY_LIB "libhandy-0.0.so")
 
 list(APPEND GNUNET_LIBRARIES "libgnunetcadet.so")
 #list(APPEND GNUNET_LIBRARIES "/usr/lib/libgnunetcore.so")
-#list(APPEND GNUNET_LIBRARIES "/usr/lib/libgnunetutil.so")
+list(APPEND GNUNET_LIBRARIES "/usr/lib/libgnunetutil.so")
 
 set(CMAKE_C_STANDARD 11)
 
@@ -30,4 +30,4 @@ endif()
 
 add_executable(cadet_gtk src/main.c src/chat.h src/chat.c src/contacts.h src/contacts.c src/handy_ui.h src/handy_ui.c)
 
-target_link_libraries(cadet_gtk ${GTK_LIBRARIES} ${LIBHANDY_LIB} ${GNUNET_LIBRARIES})
+target_link_libraries(cadet_gtk ${GTK_LIBRARIES} ${LIBHANDY_LIB} ${GNUNET_LIBRARIES} pthread)

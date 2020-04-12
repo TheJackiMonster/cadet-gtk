@@ -7,6 +7,6 @@
 
 #include <gtk/gtk.h>
 
-void cadet_gtk_init_contacts(GtkWidget* header, GtkWidget* content);
+void cadet_gtk_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contacts_list);
 
 #endif //CADET_GTK_CONTACTS_H
