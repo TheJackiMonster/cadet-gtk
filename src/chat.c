@@ -32,10 +32,14 @@ void send_message(GtkWidget* msg_button, gpointer user_data) {
 		gtk_widget_set_halign(msg_frame, GTK_ALIGN_END);
 		gtk_frame_set_label_align(GTK_FRAME(msg_frame), 1.0f, 0.5f);
 		gtk_frame_set_shadow_type(GTK_FRAME(msg_frame), GTK_SHADOW_IN);
+		gtk_widget_set_size_request(msg_frame, 100, 0);
 		gtk_widget_set_valign(msg_frame, GTK_ALIGN_CENTER);
 		gtk_widget_set_hexpand(msg_frame, FALSE);
 		
 		GtkWidget* text = gtk_label_new(gtk_entry_get_text(GTK_ENTRY(msg_entry)));
+		gtk_label_set_line_wrap_mode(GTK_LABEL(text), GTK_WRAP_WORD);
+		gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
+		gtk_widget_set_halign(text, GTK_ALIGN_START);
 		gtk_widget_set_margin_bottom(text, 4);
 		gtk_widget_set_margin_start(text, 8);
 		gtk_widget_set_margin_top(text, 4);
