@@ -18,7 +18,15 @@ void activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	
 	cadet_gtk_load_chat(header, content, row);
 	
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat");
+	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat") != 0) {
+		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat");
+	}
+	
+	if (hdy_leaflet_get_fold(HDY_LEAFLET(leaflet)) == HDY_FOLD_UNFOLDED) {
+		GtkWidget* back_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header))->data);
+		
+		gtk_widget_set_visible(back_button, FALSE);
+	}
 }
 
 void add_contact(GtkWidget* confirm_button, gpointer user_data) {
@@ -121,6 +129,8 @@ void cadet_gtk_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* c
 	gtk_container_add(GTK_CONTAINER(header), add_button);
 	
 	gtk_list_box_set_selection_mode(GTK_LIST_BOX(contacts_list), GTK_SELECTION_BROWSE);
+	gtk_widget_set_size_request(contacts_list, 320, 0);
+	gtk_widget_set_hexpand(contacts_list, FALSE);
 	gtk_widget_set_vexpand(contacts_list, TRUE);
 	
 	gtk_container_add(GTK_CONTAINER(content), contacts_list);
