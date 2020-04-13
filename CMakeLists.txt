@@ -28,6 +28,6 @@ if (PKG_CONFIG_FOUND)
 	add_definitions(${GTK3_CFLAGS_OTHER})
 endif()
 
-add_executable(cadet_gtk src/main.c src/chat.h src/chat.c src/contacts.h src/contacts.c src/handy_ui.h src/handy_ui.c)
+add_executable(cadet_gtk src/main.c src/chat.h src/chat.c src/contacts.h src/contacts.c src/handy_ui.h src/handy_ui.c src/messaging.h src/messaging.c)
 
 target_link_libraries(cadet_gtk ${GTK_LIBRARIES} ${LIBHANDY_LIB} ${GNUNET_LIBRARIES} pthread)
