@@ -19,7 +19,7 @@ static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts");
 }
 
-void CGTK_init_ui(GtkWidget* window) {
+void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();
 	
@@ -36,7 +36,7 @@ void CGTK_init_ui(GtkWidget* window) {
 	GtkWidget* chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* back_button = gtk_button_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_MENU);
 	
-	CGTK_init_chat(chat_header, chat_box, back_button);
+	CGTK_init_chat(chat_header, chat_box, back_button, callbacks);
 	
 	GtkWidget* title_leaflet = hdy_leaflet_new();
 	hdy_leaflet_set_transition_type(HDY_LEAFLET(title_leaflet), HDY_LEAFLET_TRANSITION_TYPE_SLIDE);
@@ -154,4 +154,24 @@ void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {
 	strcpy(id_buffer, identity);
 	
 	handler_id = g_signal_connect(id_button, "clicked", G_CALLBACK(CGTK_open_identity), NULL);
+}
+
+void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char* port, gboolean active) {
+	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
+	GtkWidget* contacts_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->data);
+	GtkWidget* contacts_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(contacts_box))->data);
+	
+	if (active) {
+		CGTK_open_contact(contacts_list, identity, port);
+	} else {
+		CGTK_close_contact(contacts_list, identity, port);
+	}
+}
+
+void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char* port, const char* message) {
+	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
+	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
+	GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
+	
+	CGTK_add_message(chat_list, message, FALSE, "Other");
 }

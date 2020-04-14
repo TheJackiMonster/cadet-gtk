@@ -36,7 +36,7 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	}
 }
 
-static void CGTK_add_contact(GtkWidget* confirm_button, gpointer user_data) {
+static void CGTK_add_contact_entry(GtkWidget* confirm_button, gpointer user_data) {
 	GtkWidget* dialog = gtk_widget_get_toplevel(confirm_button);
 	
 	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
@@ -46,17 +46,11 @@ static void CGTK_add_contact(GtkWidget* confirm_button, gpointer user_data) {
 	GtkWidget* port_entry = gtk_grid_get_child_at(GTK_GRID(grid), 1, 1);
 	
 	if (user_data) {
-		GtkWidget* contacts_list = GTK_WIDGET(user_data);
-		
-		HdyActionRow* contact = hdy_action_row_new();
-		
-		hdy_action_row_set_title(contact, gtk_entry_get_text(GTK_ENTRY(id_entry)));
-		hdy_action_row_set_subtitle(contact, gtk_entry_get_text(GTK_ENTRY(port_entry)));
-		hdy_action_row_set_icon_name(contact, "user-available-symbolic");
-		
-		gtk_container_add(GTK_CONTAINER(contacts_list),  GTK_WIDGET(contact));
-		
-		gtk_widget_show_all(GTK_WIDGET(contact));
+		CGTK_open_contact(
+				GTK_WIDGET(user_data),
+				gtk_entry_get_text(GTK_ENTRY(id_entry)),
+				gtk_entry_get_text(GTK_ENTRY(port_entry))
+		);
 	}
 	
 	gtk_widget_destroy(dialog);
@@ -125,8 +119,8 @@ static void CGTK_add_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	gtk_box_set_child_packing(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 2, GTK_PACK_START);
 	gtk_box_set_child_packing(GTK_BOX(button_box), confirm_button, FALSE, FALSE, 2, GTK_PACK_START);
 	
-	g_signal_connect(cancel_button, "clicked", G_CALLBACK(CGTK_add_contact), NULL);
-	g_signal_connect(confirm_button, "clicked", G_CALLBACK(CGTK_add_contact), user_data);
+	g_signal_connect(cancel_button, "clicked", G_CALLBACK(CGTK_add_contact_entry), NULL);
+	g_signal_connect(confirm_button, "clicked", G_CALLBACK(CGTK_add_contact_entry), user_data);
 	
 	gtk_widget_show_all(dialog);
 }
@@ -155,4 +149,45 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contac
 	
 	g_signal_connect(add_button, "clicked", G_CALLBACK(CGTK_add_contact_dialog), contacts_list);
 	g_signal_connect(contacts_list, "row-activated", G_CALLBACK(CGTK_activate_contact), content);
+}
+
+void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port) {
+	GList* list = gtk_container_get_children(GTK_CONTAINER(contacts_list));
+	
+	while (list) {
+		GtkWidget* row = GTK_WIDGET(list->data);
+		
+		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+			gtk_widget_set_sensitive(row, TRUE);
+			return;
+		}
+		
+		list = list->next;
+	}
+	
+	HdyActionRow* contact = hdy_action_row_new();
+	gtk_widget_set_name(GTK_WIDGET(contact), identity);
+	
+	hdy_action_row_set_title(contact, port);
+	hdy_action_row_set_subtitle(contact, identity);
+	hdy_action_row_set_icon_name(contact, "user-available-symbolic");
+	
+	gtk_container_add(GTK_CONTAINER(contacts_list),  GTK_WIDGET(contact));
+	
+	gtk_widget_show_all(GTK_WIDGET(contact));
+}
+
+void CGTK_close_contact(GtkWidget* contacts_list, const char* identity, const char* port) {
+	GList* list = gtk_container_get_children(GTK_CONTAINER(contacts_list));
+	
+	while (list) {
+		GtkWidget* row = GTK_WIDGET(list->data);
+		
+		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+			gtk_widget_set_sensitive(row, FALSE);
+			break;
+		}
+		
+		list = list->next;
+	}
 }

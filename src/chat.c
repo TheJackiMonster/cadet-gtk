@@ -10,27 +10,13 @@
 #include <libhandy-1/handy.h>
 #endif
 
-static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
-	GtkWidget* chat_list = GTK_WIDGET(user_data);
-	GtkWidget* msg_box = gtk_widget_get_parent(msg_button);
-	GtkWidget* msg_entry = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->data);
+static void CGTK_active_entry(GtkWidget* msg_button, gpointer user_data) {
+	GtkWidget* msg_entry = GTK_WIDGET(user_data);
 	
-	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
-		GList* entries = gtk_container_get_children(GTK_CONTAINER(chat_list));
-		guint amount = 0;
-		
-		while (entries != NULL) {
-			entries = entries->next;
-			amount++;
-		}
-		
-		CGTK_add_message(chat_list, gtk_entry_get_text(GTK_ENTRY(msg_entry)), amount % 2 == 0, "Me");
-		
-		gtk_entry_set_text(GTK_ENTRY(msg_entry), "");
-	}
+	gtk_widget_activate(msg_entry);
 }
 
-void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button) {
+void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, handy_callbacks_t callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat");
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
@@ -65,30 +51,33 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(msg_button, "clicked", G_CALLBACK(CGTK_send_message), chat_list);
+	g_signal_connect(msg_entry, "activate", G_CALLBACK(callbacks.send_message), chat_list);
+	g_signal_connect(msg_button, "clicked", G_CALLBACK(CGTK_active_entry), msg_entry);
 }
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	HdyActionRow* contact = HDY_ACTION_ROW(row);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), hdy_action_row_get_title(contact));
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), hdy_action_row_get_subtitle(contact));
 	
 	gtk_widget_show_all(header);
 }
 
-static void* CGTK_reveal_message(void* data) {
-	GtkWidget* revealer = GTK_WIDGET(data);
-	guint duration_ms = gtk_revealer_get_transition_duration(GTK_REVEALER(revealer));
-	
-	g_usleep(1000L * duration_ms);
+static gboolean CGTK_reveal_message(gpointer user_data) {
+	GtkWidget* revealer = GTK_WIDGET(user_data);
 	
 	gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), TRUE);
-	return NULL;
+	
+	return FALSE;
 }
 
 void CGTK_add_message(GtkWidget* chat_list, const char* msg_text, gboolean my_message, const char* sender) {
 	GtkWidget* revealer = gtk_revealer_new();
-	gtk_revealer_set_transition_type(GTK_REVEALER(revealer), GTK_REVEALER_TRANSITION_TYPE_CROSSFADE);
+	
+	gtk_revealer_set_transition_type(GTK_REVEALER(revealer),
+			(my_message? GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT : GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT)
+	);
+	
 	gtk_revealer_set_transition_duration(GTK_REVEALER(revealer), 250);
 	gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), FALSE);
 	
@@ -113,8 +102,9 @@ void CGTK_add_message(GtkWidget* chat_list, const char* msg_text, gboolean my_me
 	gtk_container_add(GTK_CONTAINER(revealer), msg_frame);
 	gtk_container_add(GTK_CONTAINER(chat_list), revealer);
 	
+	guint duration_ms = gtk_revealer_get_transition_duration(GTK_REVEALER(revealer));
+	
 	gtk_widget_show_all(revealer);
 	
-	pthread_t p;
-	pthread_create(&p, NULL, CGTK_reveal_message, revealer);
+	g_timeout_add(duration_ms, CGTK_reveal_message, revealer);
 }

@@ -15,25 +15,21 @@ typedef struct messaging_t {
 } messaging_t;
 
 typedef enum {
-	NONE = 0,
+	MSG_NONE = 0,
 	
-	GTK_IDENTITY = 1,
-	GTK_PEERS = 2,
-	GTK_CONNECT = 3,
-	GTK_DISCONNECT = 4,
-	GTK_SEND_COMPLETE = 5,
-	GTK_RECV_MESSAGE = 6,
+	MSG_GTK_IDENTITY = 1,
+	MSG_GTK_PEERS = 2,
+	MSG_GTK_CONNECT = 3,
+	MSG_GTK_DISCONNECT = 4,
+	MSG_GTK_SEND_COMPLETE = 5,
+	MSG_GTK_RECV_MESSAGE = 6,
 	
-	GNUNET_PEERS = 20,
-	GNUNET_SEND_MESSAGE = 50,
-	GNUNET_POLL_MESSAGE = 60
+	MSG_GNUNET_PEERS = 20,
+	MSG_GNUNET_SEND_MESSAGE = 50,
+	MSG_GNUNET_POLL_MESSAGE = 60,
+	
+	MSG_ERROR = -1
 } msg_type_t;
-
-void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* source);
-
-void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* channel);
-
-void CGTK_on_window_size_change(void* cls, const struct GNUNET_CADET_Channel* channel, int window_size);
 
 void CGTK_init_messaging(messaging_t* messaging);
 
@@ -47,7 +43,28 @@ msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging);
 
 void CGTK_send_gtk_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity);
 
+void CGTK_send_gtk_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source);
+
+void CGTK_send_gtk_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source);
+
+ssize_t CGTK_send_gtk_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
+		const char* buffer, size_t length);
+
 const char* CGTK_recv_gnunet_identity(messaging_t* messaging);
+
+const char* CGTK_recv_gnunet_hashcode(messaging_t* messaging);
+
+size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging);
+
+ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length);
+
+ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* buffer, size_t length);
+
+const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging);
+
+size_t CGTK_recv_gtk_msg_length(messaging_t* messaging);
+
+ssize_t CGTK_recv_gtk_message(messaging_t* messaging, char* buffer, size_t length);
 
 void CGTK_close_messaging(messaging_t* messaging);
 

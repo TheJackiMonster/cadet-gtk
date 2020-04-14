@@ -5,9 +5,9 @@
 #ifndef CADET_GTK_CHAT_H
 #define CADET_GTK_CHAT_H
 
-#include <gtk/gtk.h>
+#include "handy_ui.h"
 
-void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button);
+void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, handy_callbacks_t callbacks);
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row);
 
