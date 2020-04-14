@@ -2,43 +2,33 @@
 // Created by thejackimonster on 12.04.20.
 //
 
-#include <semaphore.h>
+#include <pthread.h>
 
 #include <gnunet/platform.h>
-#include <gnunet/gnunet_mq_lib.h>
 #include <gnunet/gnunet_util_lib.h>
 
-#include "handy_ui.h"
 #include "messaging.h"
+#include "handy_ui.h"
 
-typedef struct {
-	bool disconnect;
+static struct {
 	pthread_mutex_t mutex;
-} shared_data;
+	bool alive;
+	const struct GNUNET_CONFIGURATION_Handle* cfg;
+	struct GNUNET_CADET_Handle* cadet;
+	struct GNUNET_CADET_Port* listen;
+} session;
 
-static shared_data* data = NULL;
-
-void initialise_shared() {
-	data = mmap(
-			NULL, sizeof(shared_data),
-			PROT_READ | PROT_WRITE,
-			MAP_SHARED | MAP_ANONYMOUS,
-			-1, 0
-	);
+static void CGTK_shutdown(void* cls) {
+	if (session.listen) {
+		GNUNET_CADET_close_port(session.listen);
+	}
 	
-	g_assert(data);
+	GNUNET_CADET_disconnect(session.cadet);
 	
-	data->disconnect = FALSE;
-	
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-	
-	pthread_mutex_init(&(data->mutex), &attr);
-	pthread_mutex_lock(&(data->mutex));
+	printf("shutdown!\n");
 }
 
-static void handle_cli_message(void* cls, const struct GNUNET_MessageHeader* message) {
+static void handle_message(void* cls, const struct GNUNET_MessageHeader* message) {
 	//
 	
 	//GNUNET_CADET_receive_done();
@@ -46,8 +36,18 @@ static void handle_cli_message(void* cls, const struct GNUNET_MessageHeader* mes
 	printf("message: !\n");
 }
 
-static void run (void* cls, char*const* args, const char* cfgfile, const struct GNUNET_CONFIGURATION_Handle* cfg) {
-	struct GNUNET_CADET_Handle* cadet = GNUNET_CADET_connect(cfg);
+static void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNUNET_CONFIGURATION_Handle* cfg) {
+	messaging_t* messaging = (messaging_t*) cls;
+	
+	session.cfg = cfg;
+	session.cadet = GNUNET_CADET_connect(cfg);
+	
+	if (!session.cadet) {
+		GNUNET_SCHEDULER_shutdown();
+		return;
+	}
+	
+	GNUNET_SCHEDULER_add_shutdown(&CGTK_shutdown, NULL);
 	
 	const char* port_s = "test\0";
 	const char* port_us = GNUNET_STRINGS_to_utf8(port_s, strlen(port_s), "ASCII");
@@ -57,7 +57,7 @@ static void run (void* cls, char*const* args, const char* cfgfile, const struct 
 	
 	struct GNUNET_MQ_MessageHandler handlers[] = {
 			GNUNET_MQ_hd_fixed_size(
-					cli_message,
+					message,
 					GNUNET_MESSAGE_TYPE_CADET_CLI,
 					struct GNUNET_MessageHeader,
 					NULL
@@ -66,53 +66,91 @@ static void run (void* cls, char*const* args, const char* cfgfile, const struct 
 	
 	struct GNUNET_PeerIdentity peer;
 	
-	if (GNUNET_CRYPTO_get_peer_identity(cfg, &peer) == GNUNET_OK) {
-		const struct GNUNET_PeerIdentity* const_peer = &peer;
-		const char* str_info = GNUNET_i2s_full(const_peer);
-		
-		printf("peer: %s\n", str_info);
+	if (GNUNET_CRYPTO_get_peer_identity(cfg, &peer) != GNUNET_OK) {
+		memset(&peer, 0, sizeof(peer));
 	}
 	
-	struct GNUNET_CADET_Port* open_port = GNUNET_CADET_open_port(
-			cadet,
+	CGTK_send_gtk_identity(messaging, &peer);
+	
+	session.listen = GNUNET_CADET_open_port(
+			session.cadet,
 			&port,
-			&cadet_gtk_on_connect,
+			&CGTK_on_connect,
 			NULL,
-			NULL,
-			&cadet_gtk_on_disconnect,
+			&CGTK_on_window_size_change,
+			&CGTK_on_disconnect,
 			handlers
 	);
+}
+
+static void* CGTK_poll(void* args) {
+	messaging_t* messaging = (messaging_t*) args;
+	
+	GtkWidget* window = GTK_WIDGET(gtk_window_list_toplevels()->data);
 	
 	while (TRUE) {
-		pthread_mutex_lock(&(data->mutex));
+		pthread_mutex_lock(&(session.mutex));
 		
-		if (data->disconnect) {
+		if (!session.alive) {
 			break;
 		}
 		
-		pthread_mutex_unlock(&(data->mutex));
+		switch (CGTK_recv_gnunet_msg_type(messaging)) {
+			case GTK_IDENTITY:
+				CGTK_update_identity_ui(window, CGTK_recv_gnunet_identity(messaging));
+				break;
+			default:
+				break;
+		}
+		
+		pthread_mutex_unlock(&(session.mutex));
 	}
 	
-	if (open_port) {
-		GNUNET_CADET_close_port(open_port);
-	}
-	
-	GNUNET_CADET_disconnect(cadet);
+	return NULL;
 }
 
-static void activate(GtkApplication* application, gpointer user_data) {
+static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
+	pthread_t* msg_thread = (pthread_t*) user_data;
+	
+	pthread_mutex_lock(&(session.mutex));
+	session.alive = FALSE;
+	pthread_mutex_unlock(&(session.mutex));
+	
+	pthread_join(*msg_thread, NULL);
+}
+
+static void CGTK_activate(GtkApplication* application, gpointer user_data) {
+	messaging_t* messaging = (messaging_t*) user_data;
+	
 	GtkWidget* window = gtk_application_window_new(application);
 	gtk_window_set_default_size(GTK_WINDOW(window), 320, 512);
 	
-	cadet_gtk_init_ui(window);
+	CGTK_init_ui(window);
 	
-	pthread_mutex_unlock(&(data->mutex));
+	pthread_t msg_thread;
+	
+	pthread_create(&msg_thread, NULL, &CGTK_poll, messaging);
+	
+	g_signal_connect(window, "destroy", G_CALLBACK(CGTK_end_thread), &msg_thread);
 	
 	gtk_widget_show_all(window);
 }
 
 int main(int argc, char** argv) {
-	initialise_shared();
+	messaging_t messaging;
+	
+	CGTK_init_messaging(&messaging);
+	
+	pthread_mutexattr_t attr;
+	
+	if ((pthread_mutexattr_init(&attr) == -1) ||
+		(pthread_mutex_init(&(session.mutex), &attr) == -1)) {
+		exit(EXIT_FAILURE);
+	}
+	
+	pthread_mutex_lock(&(session.mutex));
+	session.alive = TRUE;
+	pthread_mutex_unlock(&(session.mutex));
 	
 	pid_t pid = fork();
 	
@@ -121,12 +159,18 @@ int main(int argc, char** argv) {
 				GNUNET_GETOPT_OPTION_END
 		};
 		
+		CGTK_prepare_gnunet(&messaging);
+		
 		int status = (GNUNET_OK == GNUNET_PROGRAM_run(
 				argc, argv,
 				"cadet-gtk",
 				gettext_noop("A GTK based GUI for the CADET subsystem of GNUnet."),
-				options, &run, NULL
-		)? 0 : 1);
+				options, &CGTK_run, &messaging
+		)? EXIT_SUCCESS : EXIT_FAILURE);
+		
+		printf("net exit\n");
+		
+		CGTK_close_messaging(&messaging);
 		
 		return status;
 	} else {
@@ -137,21 +181,25 @@ int main(int argc, char** argv) {
 				G_APPLICATION_FLAGS_NONE
 		);
 		
-		g_signal_connect(application, "activate", G_CALLBACK(activate), NULL);
+		g_signal_connect(application, "activate", G_CALLBACK(CGTK_activate), &messaging);
+		
+		CGTK_prepare_gtk(&messaging);
 		
 		int status = g_application_run(G_APPLICATION(application), argc, argv);
 		
-		data->disconnect = TRUE;
+		printf("app exit\n");
 		
 		if (pid > 0) {
+			kill(pid, SIGTERM);
+			
 			waitpid(pid, NULL, NULL);
 		}
 		
-		pthread_mutex_destroy(&(data->mutex));
-		
 		g_object_unref(application);
 		
-		munmap(data, sizeof(shared_data));
+		pthread_mutex_destroy(&(session.mutex));
+		
+		CGTK_close_messaging(&messaging);
 		
 		return status;
 	}

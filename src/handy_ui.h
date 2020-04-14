@@ -7,6 +7,8 @@
 
 #include <gtk/gtk.h>
 
-void cadet_gtk_init_ui(GtkWidget* window);
+void CGTK_init_ui(GtkWidget* window);
+
+void CGTK_update_identity_ui(GtkWidget* window, const char* identity);
 
 #endif //CADET_GTK_HANDY_UI_H
