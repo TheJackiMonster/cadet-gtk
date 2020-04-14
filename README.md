@@ -2,6 +2,10 @@
 
 A GTK based GUI for the CADET subsystem of GNUnet.
 
+![Example for contacts-list](examples/mobile_contacts.png "List of contacts")
+![Example for adding a contact](examples/mobile_add_contact.png "Adding a contact")
+![Example for chat](examples/mobile_chat.png "Chat between you and one contact")
+
 This application uses early and unstable additions to [GTK](https://www.gtk.org/) 
 from [libhandy](https://source.puri.sm/Librem5/libhandy) to make it work as mobile application too.
 
