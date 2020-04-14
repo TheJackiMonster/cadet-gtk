@@ -12,11 +12,18 @@ else()
 	find_package(GTK REQUIRED)
 endif()
 
-set(LIBHANDY_LIB "libhandy-0.0.so")
+add_compile_definitions(HANDY_USE_UNSTABLE_API)
+
+if (EXISTS "/usr/lib/libhandy-1.so")
+	set(LIBHANDY_LIB "libhandy-1.so")
+else()
+	add_compile_definitions(HANDY_USE_ZERO_API)
+	set(LIBHANDY_LIB "libhandy-0.0.so")
+endif()
 
 list(APPEND GNUNET_LIBRARIES "libgnunetcadet.so")
-#list(APPEND GNUNET_LIBRARIES "/usr/lib/libgnunetcore.so")
-list(APPEND GNUNET_LIBRARIES "/usr/lib/libgnunetutil.so")
+#list(APPEND GNUNET_LIBRARIES "libgnunetcore.so")
+list(APPEND GNUNET_LIBRARIES "libgnunetutil.so")
 
 set(CMAKE_C_STANDARD 11)
 

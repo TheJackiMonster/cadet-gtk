@@ -11,6 +11,7 @@
 #include "handy_ui.h"
 
 static struct {
+	pthread_t msg_thread;
 	pthread_mutex_t mutex;
 	bool alive;
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
@@ -110,13 +111,11 @@ static void* CGTK_poll(void* args) {
 }
 
 static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
-	pthread_t* msg_thread = (pthread_t*) user_data;
-	
 	pthread_mutex_lock(&(session.mutex));
 	session.alive = FALSE;
 	pthread_mutex_unlock(&(session.mutex));
 	
-	pthread_join(*msg_thread, NULL);
+	pthread_join(session.msg_thread, NULL);
 }
 
 static void CGTK_activate(GtkApplication* application, gpointer user_data) {
@@ -127,11 +126,13 @@ static void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	CGTK_init_ui(window);
 	
-	pthread_t msg_thread;
+	pthread_mutex_lock(&(session.mutex));
 	
-	pthread_create(&msg_thread, NULL, &CGTK_poll, messaging);
+	pthread_create(&(session.msg_thread), NULL, &CGTK_poll, messaging);
 	
-	g_signal_connect(window, "destroy", G_CALLBACK(CGTK_end_thread), &msg_thread);
+	g_signal_connect(window, "destroy", G_CALLBACK(CGTK_end_thread), NULL);
+	
+	pthread_mutex_unlock(&(session.mutex));
 	
 	gtk_widget_show_all(window);
 }

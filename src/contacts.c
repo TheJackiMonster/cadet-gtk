@@ -5,8 +5,11 @@
 #include "contacts.h"
 #include "chat.h"
 
-#define HANDY_USE_UNSTABLE_API
+#ifdef HANDY_USE_ZERO_API
 #include <libhandy-0.0/handy.h>
+#else
+#include <libhandy-1/handy.h>
+#endif
 
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	GtkWidget* leaflet = gtk_widget_get_parent(GTK_WIDGET(user_data));
@@ -22,7 +25,11 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat");
 	}
 	
+#ifdef HANDY_USE_ZERO_API
 	if (hdy_leaflet_get_fold(HDY_LEAFLET(leaflet)) == HDY_FOLD_UNFOLDED) {
+#else
+	if (!hdy_leaflet_get_folded(HDY_LEAFLET(leaflet))) {
+#endif
 		GtkWidget* back_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header))->data);
 		
 		gtk_widget_set_visible(back_button, FALSE);
@@ -59,7 +66,12 @@ static void CGTK_add_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	GtkWidget* contacts_list = GTK_WIDGET(user_data);
 	GtkWidget* window = gtk_widget_get_toplevel(contacts_list);
 	
+#ifdef HANDY_USE_ZERO_API
 	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(window));
+#else
+	GtkWidget* dialog = gtk_dialog_new();
+#endif
+	
 	gtk_window_set_title(GTK_WINDOW(dialog), "Add contact");
 	gtk_widget_set_size_request(dialog, 320, 0);
 	

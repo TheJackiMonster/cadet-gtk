@@ -4,8 +4,11 @@
 
 #include "chat.h"
 
-#define HANDY_USE_UNSTABLE_API
+#ifdef HANDY_USE_ZERO_API
 #include <libhandy-0.0/handy.h>
+#else
+#include <libhandy-1/handy.h>
+#endif
 
 static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
 	GtkWidget* chat_list = GTK_WIDGET(user_data);
