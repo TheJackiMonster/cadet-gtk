@@ -16,12 +16,7 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 	GtkWidget* chat_list = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
-		GtkWidget* window = gtk_widget_get_toplevel(chat_list);
-		GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
-		GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
-		GtkWidget* chat_header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
-		
-		const char* destination = gtk_header_bar_get_subtitle(GTK_HEADER_BAR(chat_header));
+		const char* destination = gtk_stack_get_visible_child_name(GTK_STACK(chat_stack));
 		
 		const char* msg_text = gtk_entry_get_text(GTK_ENTRY(msg_entry));
 		size_t msg_length = gtk_entry_get_text_length(GTK_ENTRY(msg_entry));

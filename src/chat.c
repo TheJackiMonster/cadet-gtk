@@ -84,7 +84,7 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	
 	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), contact_id);
 	
-	gtk_widget_show_all(chat_list);
+	gtk_widget_show_all(chat_stack);
 	gtk_widget_show_all(header);
 }
 
