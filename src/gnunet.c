@@ -110,7 +110,7 @@ static void CGTK_handle_message(const struct GNUNET_CADET_Channel* channel, cons
 }
 
 static int check_channel_message(void* cls, const struct GNUNET_MessageHeader* message) {
-	struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
+	const struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
 	
 	return (session.channel_map) && (GNUNET_CONTAINER_multipeermap_contains(
 		session.channel_map, source
@@ -118,7 +118,7 @@ static int check_channel_message(void* cls, const struct GNUNET_MessageHeader* m
 }
 
 static void handle_channel_message(void* cls, const struct GNUNET_MessageHeader* message) {
-	struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
+	const struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
 	
 	CGTK_handle_message(
 			GNUNET_CONTAINER_multipeermap_get(session.channel_map, source),
@@ -147,21 +147,56 @@ static void CGTK_poll(void* cls) {
 	msg_type_t type = CGTK_recv_gtk_msg_type(messaging);
 	
 	switch (type) {
-		case MSG_GNUNET_SEND_MESSAGE: {
-			struct GNUNET_PeerIdentity* destination = CGTK_recv_gtk_identity(messaging);
+		case MSG_GNUNET_PORT: {
+			if (session.listen) {
+				const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
+				
+				if (!port) {
+					GNUNET_SCHEDULER_shutdown();
+					return;
+				}
+				
+				GNUNET_CADET_close_port(session.listen);
+				session.listen = NULL;
+				
+				struct GNUNET_MQ_MessageHandler handlers[] = {
+						GNUNET_MQ_hd_var_size(
+								port_message,
+								GNUNET_MESSAGE_TYPE_CADET_CLI,
+								struct GNUNET_MessageHeader,
+								NULL
+						), GNUNET_MQ_handler_end()
+				};
+				
+				session.listen = GNUNET_CADET_open_port(
+						session.cadet,
+						port,
+						&CGTK_on_connect,
+						NULL,
+						&CGTK_on_window_size_change,
+						&CGTK_on_disconnect,
+						handlers
+				);
+			}
+			
+			break;
+		} case MSG_GNUNET_SEND_MESSAGE: {
+			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gtk_identity(messaging);
 			struct GNUNET_CADET_Channel* channel = NULL;
 			
-			if (destination == NULL) {
+			if (!destination) {
 				GNUNET_SCHEDULER_shutdown();
 				return;
-			} else
+			}
+			
+			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
+			
+			if (!port) {
+				GNUNET_SCHEDULER_shutdown();
+				return;
+			}
+			
 			if ((!session.channel_map) || (!GNUNET_CONTAINER_multipeermap_contains(session.channel_map, destination))) {
-				const char* port_s = "test\0";
-				const char* port_us = GNUNET_STRINGS_to_utf8(port_s, strlen(port_s), "ASCII");
-				
-				struct GNUNET_HashCode port;
-				GNUNET_CRYPTO_hash(port_us, strlen(port_us), &port);
-				
 				struct GNUNET_MQ_MessageHandler handlers[] = {
 						GNUNET_MQ_hd_var_size(
 								channel_message,
@@ -175,7 +210,7 @@ static void CGTK_poll(void* cls) {
 						session.cadet,
 						destination,
 						destination,
-						&port,
+						port,
 						&CGTK_on_window_size_change,
 						&CGTK_on_disconnect,
 						handlers
@@ -274,11 +309,8 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 	
 	GNUNET_SCHEDULER_add_shutdown(&CGTK_shutdown, NULL);
 	
-	const char* port_s = "test\0";
-	const char* port_us = GNUNET_STRINGS_to_utf8(port_s, strlen(port_s), "ASCII");
-	
 	struct GNUNET_HashCode port;
-	GNUNET_CRYPTO_hash(port_us, strlen(port_us), &port);
+	GNUNET_CRYPTO_hash(NULL, 0, &port);
 	
 	struct GNUNET_MQ_MessageHandler handlers[] = {
 			GNUNET_MQ_hd_var_size(

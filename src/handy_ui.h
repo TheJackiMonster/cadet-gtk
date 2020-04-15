@@ -9,6 +9,7 @@
 
 typedef struct {
 	void (*send_message)(GtkWidget*, gpointer);
+	void (*set_port)(GtkWidget*, gpointer);
 } handy_callbacks_t;
 
 void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks);

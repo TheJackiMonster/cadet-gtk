@@ -54,19 +54,26 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	g_signal_connect(msg_button, "clicked", G_CALLBACK(CGTK_active_entry), msg_entry);
 }
 
-GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id) {
+GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const char* contact_port) {
 	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
 	
-	GtkWidget* chat_list = gtk_stack_get_child_by_name(GTK_STACK(chat_stack), contact_id);
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(chat_stack), contact_id);
+	GtkWidget* chat_list;
 	
-	if (!chat_list) {
-		chat_list = gtk_list_box_new();
+	if (!chat_box) {
+		chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 		
+		GtkWidget* port_label = gtk_label_new(contact_port);
+		
+		chat_list = gtk_list_box_new();
 		gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
 		
-		//
+		gtk_container_add(GTK_CONTAINER(chat_box), port_label);
+		gtk_container_add(GTK_CONTAINER(chat_box), chat_list);
 		
-		gtk_stack_add_named(GTK_STACK(chat_stack), chat_list, contact_id);
+		gtk_stack_add_named(GTK_STACK(chat_stack), chat_box, contact_id);
+	} else {
+		chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
 	}
 	
 	return chat_list;
@@ -77,10 +84,11 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	HdyActionRow* contact = HDY_ACTION_ROW(row);
 	
 	const char* contact_id = hdy_action_row_get_subtitle(contact);
+	const char* contact_port = hdy_action_row_get_title(contact);
 	
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), contact_id);
 	
-	GtkWidget* chat_list = CGTK_get_chat_list(content, contact_id);
+	GtkWidget* chat_list = CGTK_get_chat_list(content, contact_id, contact_port);
 	
 	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), contact_id);
 	

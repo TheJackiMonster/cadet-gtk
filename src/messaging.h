@@ -24,6 +24,7 @@ typedef enum {
 	MSG_GTK_SEND_COMPLETE = 5,
 	MSG_GTK_RECV_MESSAGE = 6,
 	
+	MSG_GNUNET_PORT = 10,
 	MSG_GNUNET_PEERS = 20,
 	MSG_GNUNET_SEND_MESSAGE = 50,
 	MSG_GNUNET_POLL_MESSAGE = 60,
@@ -52,13 +53,15 @@ ssize_t CGTK_send_gtk_message(messaging_t* messaging, const struct GNUNET_PeerId
 
 const char* CGTK_recv_gnunet_identity(messaging_t* messaging);
 
-const char* CGTK_recv_gnunet_hashcode(messaging_t* messaging);
-
 size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging);
 
 ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length);
 
-ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* buffer, size_t length);
+void CGTK_send_gnunet_port(messaging_t* messaging, const char* port);
+
+ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port, const char* buffer, size_t length);
+
+const struct GNUNET_HashCode* CGTK_recv_gtk_hashcode(messaging_t* messaging);
 
 const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging);
 

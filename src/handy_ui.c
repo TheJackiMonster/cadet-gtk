@@ -19,9 +19,83 @@ static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts");
 }
 
+static char id_buffer [1024];
+static char port_buffer [512];
+
+static void CGTK_writeback_port(GtkWidget* id_entry, gpointer user_data) {
+	void (*callback)(GtkWidget*, gpointer) = user_data;
+	
+	GtkWidget* dialog = gtk_widget_get_toplevel(id_entry);
+	
+	const char* port = gtk_entry_get_text(GTK_ENTRY(id_entry));
+	size_t port_length = gtk_entry_get_text_length(GTK_ENTRY(id_entry));
+	
+	strncpy(port_buffer, port, port_length < 512? port_length : 511);
+	id_buffer[511] = '\0';
+	
+	callback(id_entry, NULL);
+	
+	gtk_widget_destroy(dialog);
+}
+
+static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
+	GtkWidget* window = gtk_widget_get_toplevel(id_button);
+
+#ifdef HANDY_USE_ZERO_API
+	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(window));
+#else
+	GtkWidget* dialog = gtk_dialog_new();
+#endif
+	
+	gtk_window_set_title(GTK_WINDOW(dialog), "Identity");
+	gtk_widget_set_size_request(dialog, 300, 0);
+	
+	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
+	gtk_box_set_spacing(GTK_BOX(main_box), 2);
+	gtk_widget_set_margin_start(main_box, 4);
+	gtk_widget_set_margin_bottom(main_box, 4);
+	gtk_widget_set_margin_end(main_box, 4);
+	gtk_widget_set_margin_top(main_box, 4);
+	gtk_widget_set_vexpand(main_box, TRUE);
+
+#ifndef HANDY_USE_ZERO_API
+	char capitals [8];
+	
+	for (int i = 0; i < 4; i++) {
+		capitals[i*2] = id_buffer[i];
+		capitals[i*2 + 1] = (char) (i == 3? '\0' : ' ');
+	}
+	
+	GtkWidget* avatar = hdy_avatar_new(48, capitals, TRUE);
+	gtk_widget_set_margin_bottom(avatar, 4);
+	gtk_widget_set_margin_start(avatar, 8);
+	gtk_widget_set_margin_top(avatar, 4);
+	gtk_widget_set_margin_end(avatar, 8);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), avatar);
+#endif
+	
+	GtkWidget* id_label = gtk_label_new(id_buffer);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(id_label), PANGO_WRAP_CHAR);
+	gtk_label_set_line_wrap(GTK_LABEL(id_label), TRUE);
+	gtk_label_set_selectable(GTK_LABEL(id_label), TRUE);
+	
+	GtkWidget* port_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(port_entry), port_buffer);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), id_label);
+	gtk_container_add(GTK_CONTAINER(main_box), port_entry);
+	
+	g_signal_connect(port_entry, "activate", G_CALLBACK(CGTK_writeback_port), user_data);
+	
+	gtk_widget_show_all(dialog);
+}
+
 void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();
+	
+	memset(port_buffer, '\0', 512);
 	
 	GtkWidget* contacts_list = gtk_list_box_new();
 	
@@ -86,74 +160,19 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	);
 	
 	g_signal_connect(back_button, "clicked", G_CALLBACK(CGTK_back), content_leaflet);
-}
-
-static char id_buffer [1024];
-
-static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
-	GtkWidget* window = gtk_widget_get_toplevel(id_button);
-
-#ifdef HANDY_USE_ZERO_API
-	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(window));
-#else
-	GtkWidget* dialog = gtk_dialog_new();
-#endif
-	
-	gtk_window_set_title(GTK_WINDOW(dialog), "Identity");
-	gtk_widget_set_size_request(dialog, 300, 0);
-	
-	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
-	gtk_box_set_spacing(GTK_BOX(main_box), 2);
-	gtk_widget_set_margin_start(main_box, 4);
-	gtk_widget_set_margin_bottom(main_box, 4);
-	gtk_widget_set_margin_end(main_box, 4);
-	gtk_widget_set_margin_top(main_box, 4);
-	gtk_widget_set_vexpand(main_box, TRUE);
-	
-#ifndef HANDY_USE_ZERO_API
-	char capitals [8];
-	
-	for (int i = 0; i < 4; i++) {
-		capitals[i*2] = id_buffer[i];
-		capitals[i*2 + 1] = (char) (i == 3? '\0' : ' ');
-	}
-	
-	GtkWidget* avatar = hdy_avatar_new(48, capitals, TRUE);
-	gtk_widget_set_margin_bottom(avatar, 4);
-	gtk_widget_set_margin_start(avatar, 8);
-	gtk_widget_set_margin_top(avatar, 4);
-	gtk_widget_set_margin_end(avatar, 8);
-	
-	gtk_container_add(GTK_CONTAINER(main_box), avatar);
-#endif
-	
-	GtkWidget* id_label = gtk_label_new(id_buffer);
-	gtk_label_set_line_wrap_mode(GTK_LABEL(id_label), PANGO_WRAP_CHAR);
-	gtk_label_set_line_wrap(GTK_LABEL(id_label), TRUE);
-	gtk_label_set_selectable(GTK_LABEL(id_label), TRUE);
-	
-	gtk_container_add(GTK_CONTAINER(main_box), id_label);
-	
-	gtk_widget_show_all(dialog);
+	g_signal_connect(id_button, "clicked", G_CALLBACK(CGTK_open_identity), callbacks.set_port);
 }
 
 void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {
-	static gulong handler_id = 0;
-	
 	GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
 	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
 	GtkWidget* contacts_header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->data);
 	GtkWidget* id_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(contacts_header))->next->data);
 	
+	strncpy(id_buffer, identity, 1023);
+	id_buffer[1023] = '\0';
+	
 	gtk_widget_set_sensitive(id_button, TRUE);
-	
-	if (handler_id != 0) {
-		g_signal_handler_disconnect(id_button, handler_id);
-	}
-	
-	strcpy(id_buffer, identity);
-	
-	handler_id = g_signal_connect(id_button, "clicked", G_CALLBACK(CGTK_open_identity), NULL);
 }
 
 void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char* port, gboolean active) {
@@ -171,7 +190,7 @@ void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char
 void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char* port, const char* message) {
 	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
 	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
-	GtkWidget* chat_list = CGTK_get_chat_list(chat_box, identity);
+	GtkWidget* chat_list = CGTK_get_chat_list(chat_box, identity, port);
 	
 	CGTK_add_message(chat_list, message, FALSE, "Other");
 }

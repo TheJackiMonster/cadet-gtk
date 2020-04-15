@@ -13,20 +13,30 @@ static messaging_t* messaging;
 
 static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 	GtkWidget* chat_stack = GTK_WIDGET(user_data);
-	GtkWidget* chat_list = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
+		GtkWidget* chat_box = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
+		GtkWidget* port_label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
+		GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
+		
 		const char* destination = gtk_stack_get_visible_child_name(GTK_STACK(chat_stack));
+		const char* port = gtk_label_get_text(GTK_LABEL(port_label));
 		
 		const char* msg_text = gtk_entry_get_text(GTK_ENTRY(msg_entry));
 		size_t msg_length = gtk_entry_get_text_length(GTK_ENTRY(msg_entry));
 		
-		if (CGTK_send_gnunet_message(messaging, destination, msg_text, msg_length) >= 0) {
+		if (CGTK_send_gnunet_message(messaging, destination, port, msg_text, msg_length) >= 0) {
 			CGTK_add_message(chat_list, msg_text, TRUE, "Me");
 			
 			gtk_entry_set_text(GTK_ENTRY(msg_entry), "");
 		}
 	}
+}
+
+static void CGTK_set_port(GtkWidget* port_entry, gpointer user_data) {
+	const char* port = gtk_entry_get_text(GTK_ENTRY(port_entry));
+	
+	CGTK_send_gnunet_port(messaging, port);
 }
 
 static gboolean CGTK_poll(gpointer user_data) {
@@ -121,7 +131,8 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	gtk_window_set_default_size(GTK_WINDOW(window), 320, 512);
 	
 	handy_callbacks_t callbacks = {
-			&CGTK_send_message
+			&CGTK_send_message,
+			&CGTK_set_port
 	};
 	
 	CGTK_init_ui(window, callbacks);

@@ -105,16 +105,6 @@ const char* CGTK_recv_gnunet_identity(messaging_t* messaging) {
 	return GNUNET_i2s_full(&identity);
 }
 
-const char* CGTK_recv_gnunet_hashcode(messaging_t* messaging) {
-	struct GNUNET_HashCode hashcode;
-	
-	if (read(messaging->pipe_gtk[0], &hashcode, sizeof(hashcode)) < sizeof(hashcode)) {
-		return NULL;
-	}
-	
-	return GNUNET_h2s_full(&hashcode);
-}
-
 size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging) {
 	size_t length = 0;
 	
@@ -129,17 +119,36 @@ ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t le
 	return read(messaging->pipe_gtk[0], buffer, length);
 }
 
-ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* buffer, size_t length) {
+void CGTK_send_gnunet_port(messaging_t* messaging, const char* port) {
+	const char* port_utf8 = GNUNET_STRINGS_to_utf8(port, strlen(port), "ASCII");
+	struct GNUNET_HashCode hashcode;
+	
+	GNUNET_CRYPTO_hash(port_utf8, strlen(port_utf8), &hashcode);
+	
+	msg_type_t type = MSG_GNUNET_PORT;
+	
+	write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+}
+
+ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port,
+		const char* buffer, size_t length) {
 	struct GNUNET_PeerIdentity identity;
 	
 	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
 		return -1;
 	}
 	
+	const char* port_utf8 = GNUNET_STRINGS_to_utf8(port, strlen(port), "ASCII");
+	struct GNUNET_HashCode hashcode;
+	
+	GNUNET_CRYPTO_hash(port_utf8, strlen(port_utf8), &hashcode);
+	
 	msg_type_t type = MSG_GNUNET_SEND_MESSAGE;
 	
 	write(messaging->pipe_gnunet[1], &type, sizeof(type));
 	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
+	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
 	write(messaging->pipe_gnunet[1], &length, sizeof(length));
 	
 	ssize_t offset = 0;
@@ -155,6 +164,16 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 	}
 	
 	return offset;
+}
+
+const struct GNUNET_HashCode* CGTK_recv_gtk_hashcode(messaging_t* messaging) {
+	static struct GNUNET_HashCode hashcode;
+	
+	if (read(messaging->pipe_gnunet[0], &hashcode, sizeof(hashcode)) < sizeof(hashcode)) {
+		return NULL;
+	}
+	
+	return &hashcode;
 }
 
 const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging) {
