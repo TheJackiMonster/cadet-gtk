@@ -38,3 +38,5 @@ endif()
 add_executable(cadet_gtk src/main.c src/chat.h src/chat.c src/contacts.h src/contacts.c src/handy_ui.h src/handy_ui.c src/messaging.h src/messaging.c src/gnunet.h src/gnunet.c src/gtk.h src/gtk.c)
 
 target_link_libraries(cadet_gtk ${GTK_LIBRARIES} ${LIBHANDY_LIB} ${GNUNET_LIBRARIES})
+
+install(TARGETS cadet_gtk RUNTIME DESTINATION bin CONFIGURATIONS Release)
