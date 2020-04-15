@@ -17,7 +17,8 @@ cli for CADET.
 > source is here: https://git.gnunet.org/gnunet.git/tree/src/cadet/gnunet-cadet.c
 * [x] The second target is creating a channel towards another peer.
 * [x] An advanced target is to handle multiple channels at once.
-* [ ] Choosing a specific port instead of a default ('test') one.
+* [x] Choosing a specific port instead of a default ('test') one.
+> Receiving messages will still mix up ignoring the port of the channel.
 * [ ] Integrating a layer with JSON or similar to allow metadata in messages.
 * [ ] Integrating the current state of functionality of the groupchat-application.
 > source is here: https://git.gnunet.org/groupchat.git/tree/
