@@ -39,4 +39,4 @@ add_executable(cadet_gtk src/main.c src/chat.h src/chat.c src/contacts.h src/con
 
 target_link_libraries(cadet_gtk ${GTK_LIBRARIES} ${LIBHANDY_LIB} ${GNUNET_LIBRARIES})
 
-install(TARGETS cadet_gtk RUNTIME DESTINATION bin CONFIGURATIONS Release)
+install(TARGETS cadet_gtk RUNTIME DESTINATION bin)
