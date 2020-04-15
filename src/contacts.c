@@ -158,7 +158,7 @@ void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const cha
 		GtkWidget* row = GTK_WIDGET(list->data);
 		
 		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
-			gtk_widget_set_sensitive(row, TRUE);
+			hdy_action_row_set_icon_name(HDY_ACTION_ROW(row), "user-available-symbolic");
 			return;
 		}
 		
@@ -184,7 +184,7 @@ void CGTK_close_contact(GtkWidget* contacts_list, const char* identity, const ch
 		GtkWidget* row = GTK_WIDGET(list->data);
 		
 		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
-			gtk_widget_set_sensitive(row, FALSE);
+			hdy_action_row_set_icon_name(HDY_ACTION_ROW(row), "user-idle-symbolic");
 			break;
 		}
 		

@@ -12,7 +12,8 @@ static messaging_t* messaging;
 #include "chat.h"
 
 static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
-	GtkWidget* chat_list = GTK_WIDGET(user_data);
+	GtkWidget* chat_stack = GTK_WIDGET(user_data);
+	GtkWidget* chat_list = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
 		GtkWidget* window = gtk_widget_get_toplevel(chat_list);
@@ -55,7 +56,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, "\0", TRUE);
+			CGTK_update_contacts_ui(window, source, "test\0", TRUE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -64,7 +65,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, "\0", FALSE);
+			CGTK_update_contacts_ui(window, source, "test\0", FALSE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);

@@ -171,7 +171,7 @@ void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char
 void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char* port, const char* message) {
 	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
 	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
-	GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
+	GtkWidget* chat_list = CGTK_get_chat_list(chat_box, identity);
 	
 	CGTK_add_message(chat_list, message, FALSE, "Other");
 }

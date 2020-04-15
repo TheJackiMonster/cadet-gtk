@@ -28,11 +28,10 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_widget_set_hexpand(content, TRUE);
 	gtk_widget_set_vexpand(content, TRUE);
 	
-	GtkWidget* chat_list = gtk_list_box_new();
-	gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
+	GtkWidget* chat_stack = gtk_stack_new();
 	
-	gtk_widget_set_hexpand(chat_list, TRUE);
-	gtk_widget_set_vexpand(chat_list, TRUE);
+	gtk_widget_set_hexpand(chat_stack, TRUE);
+	gtk_widget_set_vexpand(chat_stack, TRUE);
 	
 	GtkWidget* msg_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	
@@ -44,22 +43,48 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_entry);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_button);
 	
-	gtk_container_add(GTK_CONTAINER(content), chat_list);
+	gtk_container_add(GTK_CONTAINER(content), chat_stack);
 	gtk_container_add(GTK_CONTAINER(content), msg_box);
 	
 	GtkSizeGroup* sizeGroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(msg_entry, "activate", G_CALLBACK(callbacks.send_message), chat_list);
+	g_signal_connect(msg_entry, "activate", G_CALLBACK(callbacks.send_message), chat_stack);
 	g_signal_connect(msg_button, "clicked", G_CALLBACK(CGTK_active_entry), msg_entry);
 }
 
+GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id) {
+	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
+	
+	GtkWidget* chat_list = gtk_stack_get_child_by_name(GTK_STACK(chat_stack), contact_id);
+	
+	if (!chat_list) {
+		chat_list = gtk_list_box_new();
+		
+		gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
+		
+		//
+		
+		gtk_stack_add_named(GTK_STACK(chat_stack), chat_list, contact_id);
+	}
+	
+	return chat_list;
+}
+
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
+	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
 	HdyActionRow* contact = HDY_ACTION_ROW(row);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), hdy_action_row_get_subtitle(contact));
+	const char* contact_id = hdy_action_row_get_subtitle(contact);
 	
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), contact_id);
+	
+	GtkWidget* chat_list = CGTK_get_chat_list(content, contact_id);
+	
+	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), contact_id);
+	
+	gtk_widget_show_all(chat_list);
 	gtk_widget_show_all(header);
 }
 
