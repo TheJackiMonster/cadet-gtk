@@ -283,9 +283,9 @@ static void CGTK_poll(void* cls) {
 						), GNUNET_MQ_handler_end()
 				};
 				
-				connection_t* connection = NULL;
+				connection_t* connection = CGTK_connection_create(destination, port, NULL);
 				
-				connection = CGTK_connection_create(destination, port, GNUNET_CADET_channel_create(
+				connection->channel = GNUNET_CADET_channel_create(
 						session.cadet,
 						connection,
 						destination,
@@ -293,7 +293,7 @@ static void CGTK_poll(void* cls) {
 						&CGTK_on_window_size_change,
 						&CGTK_on_disconnect,
 						handlers
-				));
+				);
 				
 				if (CGTK_add_new_connection(connection) == GNUNET_SYSERR) {
 					CGTK_connection_destroy(connection, true);
