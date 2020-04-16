@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 		if (pid > 0) {
 			kill(pid, SIGTERM);
 			
-			waitpid(pid, NULL, NULL);
+			waitpid(pid, NULL, 0);
 		}
 		
 		g_object_unref(application);
