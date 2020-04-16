@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
 		)? EXIT_SUCCESS : EXIT_FAILURE);
 		
 		CGTK_close_messaging(&messaging);
+		CGTK_shutdown_messaging();
 		
 		return status;
 	} else {
@@ -53,6 +54,7 @@ int main(int argc, char** argv) {
 		g_object_unref(application);
 		
 		CGTK_close_messaging(&messaging);
+		CGTK_shutdown_messaging();
 		
 		return status;
 	}

@@ -19,6 +19,8 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
 	GtkWidget* header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header_leaflet))->next->data);
 	
+	printf("select: %s\n", gtk_widget_get_name(GTK_WIDGET(row)));
+	
 	CGTK_load_chat(header, content, row);
 	
 	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat") != 0) {
@@ -154,11 +156,16 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contac
 void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port) {
 	GList* list = gtk_container_get_children(GTK_CONTAINER(contacts_list));
 	
+	GString* name = g_string_new(identity);
+	g_string_append_c(name, '_');
+	g_string_append(name, port);
+	
 	while (list) {
 		GtkWidget* row = GTK_WIDGET(list->data);
 		
-		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
 			hdy_action_row_set_icon_name(HDY_ACTION_ROW(row), "user-available-symbolic");
+			g_string_free(name, TRUE);
 			return;
 		}
 		
@@ -166,7 +173,9 @@ void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const cha
 	}
 	
 	HdyActionRow* contact = hdy_action_row_new();
-	gtk_widget_set_name(GTK_WIDGET(contact), identity);
+	gtk_widget_set_name(GTK_WIDGET(contact), name->str);
+	
+	g_string_free(name, TRUE);
 	
 	hdy_action_row_set_title(contact, port);
 	hdy_action_row_set_subtitle(contact, identity);
@@ -180,14 +189,20 @@ void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const cha
 void CGTK_close_contact(GtkWidget* contacts_list, const char* identity, const char* port) {
 	GList* list = gtk_container_get_children(GTK_CONTAINER(contacts_list));
 	
+	GString* name = g_string_new(identity);
+	g_string_append_c(name, '_');
+	g_string_append(name, port);
+	
 	while (list) {
 		GtkWidget* row = GTK_WIDGET(list->data);
 		
-		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
 			hdy_action_row_set_icon_name(HDY_ACTION_ROW(row), "user-idle-symbolic");
 			break;
 		}
 		
 		list = list->next;
 	}
+	
+	g_string_free(name, TRUE);
 }

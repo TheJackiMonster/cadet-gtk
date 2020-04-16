@@ -57,7 +57,11 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const char* contact_port) {
 	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
 	
-	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(chat_stack), contact_id);
+	GString* name = g_string_new(contact_id);
+	g_string_append_c(name, '_');
+	g_string_append(name, contact_port);
+	
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(chat_stack), name->str);
 	GtkWidget* chat_list;
 	
 	if (!chat_box) {
@@ -71,29 +75,55 @@ GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const 
 		gtk_container_add(GTK_CONTAINER(chat_box), port_label);
 		gtk_container_add(GTK_CONTAINER(chat_box), chat_list);
 		
-		gtk_stack_add_named(GTK_STACK(chat_stack), chat_box, contact_id);
+		gtk_stack_add_named(GTK_STACK(chat_stack), chat_box, name->str);
 	} else {
 		chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
 	}
+	
+	g_string_free(name, TRUE);
 	
 	return chat_list;
 }
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
-	HdyActionRow* contact = HDY_ACTION_ROW(row);
+	GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
 	
-	const char* contact_id = hdy_action_row_get_subtitle(contact);
-	const char* contact_port = hdy_action_row_get_title(contact);
+	const char* contact_id = name->str;
+	const char* contact_port = "\0";
+	
+	size_t index = 0;
+	
+	while (index < name->len) {
+		if (name->str[index] == '_') {
+			if (index + 1 < name->len) {
+				contact_port = (name->str + index + 1);
+			}
+			
+			name->str[index] = '\0';
+			break;
+		}
+		
+		index++;
+	}
+	
+	printf("%s %s\n", contact_id, contact_port);
 	
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), contact_id);
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(content, contact_id, contact_port);
 	
-	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), contact_id);
+	if (name->str[index] == '\0') {
+		name->str[index] = '_';
+	}
 	
+	gtk_widget_show_all(chat_list);
 	gtk_widget_show_all(chat_stack);
 	gtk_widget_show_all(header);
+	
+	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), name->str);
+	
+	g_string_free(name, TRUE);
 }
 
 static gboolean CGTK_reveal_message(gpointer user_data) {

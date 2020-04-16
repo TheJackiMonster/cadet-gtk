@@ -16,11 +16,31 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
 		GtkWidget* chat_box = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
-		GtkWidget* port_label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
 		GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
 		
-		const char* destination = gtk_stack_get_visible_child_name(GTK_STACK(chat_stack));
-		const char* port = gtk_label_get_text(GTK_LABEL(port_label));
+		GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(chat_stack)));
+		
+		printf("send: %s", name->str);
+		
+		const char* destination = name->str;
+		const char* port = "\0";
+		
+		printf(" | %s\n", port);
+		
+		size_t index = 0;
+		
+		while (index < name->len) {
+			if (name->str[index] == '_') {
+				if (index + 1 < name->len) {
+					port = (name->str + index + 1);
+				}
+				
+				name->str[index] = '\0';
+				break;
+			}
+			
+			index++;
+		}
 		
 		const char* msg_text = gtk_entry_get_text(GTK_ENTRY(msg_entry));
 		size_t msg_length = gtk_entry_get_text_length(GTK_ENTRY(msg_entry));
@@ -30,6 +50,12 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 			
 			gtk_entry_set_text(GTK_ENTRY(msg_entry), "");
 		}
+		
+		if (name->str[index] == '\0') {
+			name->str[index] = '_';
+		}
+		
+		g_string_free(name, TRUE);
 	}
 }
 
@@ -61,7 +87,13 @@ static gboolean CGTK_poll(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, "test\0", TRUE);
+			const char* port = CGTK_recv_gnunet_port(messaging);
+			
+			if (port == NULL) {
+				return FALSE;
+			}
+			
+			CGTK_update_contacts_ui(window, source, port, TRUE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -70,12 +102,24 @@ static gboolean CGTK_poll(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, "test\0", FALSE);
+			const char* port = CGTK_recv_gnunet_port(messaging);
+			
+			if (port == NULL) {
+				return FALSE;
+			}
+			
+			CGTK_update_contacts_ui(window, source, port, FALSE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
+				return FALSE;
+			}
+			
+			const char* port = CGTK_recv_gnunet_port(messaging);
+			
+			if (port == NULL) {
 				return FALSE;
 			}
 			
@@ -104,7 +148,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 				
 				buffer[offset] = '\0';
 				
-				CGTK_update_messages_ui(window, source, "\0", buffer);
+				CGTK_update_messages_ui(window, source, port, buffer);
 				
 				complete += offset;
 			}
