@@ -107,8 +107,6 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 		index++;
 	}
 	
-	printf("%s %s\n", contact_id, contact_port);
-	
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), contact_id);
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(content, contact_id, contact_port);

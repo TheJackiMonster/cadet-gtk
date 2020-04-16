@@ -19,8 +19,6 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
 	GtkWidget* header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header_leaflet))->next->data);
 	
-	printf("select: %s\n", gtk_widget_get_name(GTK_WIDGET(row)));
-	
 	CGTK_load_chat(header, content, row);
 	
 	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat") != 0) {

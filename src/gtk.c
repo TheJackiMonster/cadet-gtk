@@ -20,12 +20,8 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 		
 		GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(chat_stack)));
 		
-		printf("send: %s", name->str);
-		
 		const char* destination = name->str;
 		const char* port = "\0";
-		
-		printf(" | %s\n", port);
 		
 		size_t index = 0;
 		
