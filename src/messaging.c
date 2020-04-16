@@ -172,10 +172,8 @@ static void CGTK_add_port_to_lookup(const char* port, size_t port_len, const str
 void CGTK_send_gnunet_port(messaging_t* messaging, const char* port) {
 	size_t port_len = strlen(port);
 	
-	const char* port_utf8 = GNUNET_STRINGS_to_utf8(port, port_len, "ASCII");
 	struct GNUNET_HashCode hashcode;
-	
-	GNUNET_CRYPTO_hash(port_utf8, strlen(port_utf8), &hashcode);
+	GNUNET_CRYPTO_hash(port, port_len, &hashcode);
 	
 	CGTK_add_port_to_lookup(port, port_len, &hashcode);
 	
@@ -195,10 +193,8 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 	
 	size_t port_len = strlen(port);
 	
-	const char* port_utf8 = GNUNET_STRINGS_to_utf8(port, port_len, "ASCII");
 	struct GNUNET_HashCode hashcode;
-	
-	GNUNET_CRYPTO_hash(port_utf8, strlen(port_utf8), &hashcode);
+	GNUNET_CRYPTO_hash(port, port_len, &hashcode);
 	
 	CGTK_add_port_to_lookup(port, port_len, &hashcode);
 	

@@ -28,9 +28,9 @@ static void CGTK_writeback_port(GtkWidget* id_entry, gpointer user_data) {
 	GtkWidget* dialog = gtk_widget_get_toplevel(id_entry);
 	
 	const char* port = gtk_entry_get_text(GTK_ENTRY(id_entry));
-	size_t port_length = gtk_entry_get_text_length(GTK_ENTRY(id_entry));
+	size_t port_length = strlen(port);
 	
-	strncpy(port_buffer, port, port_length < 512? port_length : 511);
+	strncpy(port_buffer, port, 511);
 	id_buffer[511] = '\0';
 	
 	callback(id_entry, NULL);

@@ -47,9 +47,9 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 		}
 		
 		const char* msg_text = gtk_entry_get_text(GTK_ENTRY(msg_entry));
-		size_t msg_length = gtk_entry_get_text_length(GTK_ENTRY(msg_entry));
+		size_t msg_len = strlen(msg_text);
 		
-		if (CGTK_send_gnunet_message(messaging, destination, port, msg_text, msg_length) >= 0) {
+		if (CGTK_send_gnunet_message(messaging, destination, port, msg_text, msg_len) >= 0) {
 			CGTK_add_message(chat_list, msg_text, TRUE, "Me");
 			
 			gtk_entry_set_text(GTK_ENTRY(msg_entry), "");
