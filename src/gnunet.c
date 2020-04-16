@@ -12,14 +12,34 @@ static struct {
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
 	struct GNUNET_CADET_Handle* cadet;
 	struct GNUNET_CADET_Port* listen;
-	struct GNUNET_CONTAINER_MultiPeerMap* channel_map;
+	struct GNUNET_CONTAINER_MultiPeerMap* connections;
 	struct GNUNET_SCHEDULER_Task* poll;
 } session;
 
-static int CGTK_clear_channel(void *cls, const struct GNUNET_PeerIdentity *key, void *value) {
-	struct GNUNET_CADET_Channel* channel = (struct GNUNET_CADET_Channel*) value;
+typedef struct {
+	struct GNUNET_PeerIdentity identity;
+	struct GNUNET_CADET_Channel* channel;
+} connection_t;
+
+static connection_t* CGTK_connection_create(const struct GNUNET_PeerIdentity* identity, struct GNUNET_CADET_Channel* channel) {
+	connection_t* connection = GNUNET_malloc(sizeof(connection_t));
 	
-	GNUNET_CADET_channel_destroy(channel);
+	GNUNET_memcpy(&(connection->identity), identity, sizeof(struct GNUNET_PeerIdentity));
+	connection->channel = channel;
+	
+	return connection;
+}
+
+static void CGTK_connection_destroy(connection_t* connection, bool close_channel) {
+	if (close_channel) {
+		GNUNET_CADET_channel_destroy(connection->channel);
+	}
+	
+	GNUNET_free(connection);
+}
+
+static int CGTK_clear_connection(void *cls, const struct GNUNET_PeerIdentity* key, void* value) {
+	CGTK_connection_destroy((connection_t*) value, true);
 }
 
 static void CGTK_shutdown(void* cls) {
@@ -28,10 +48,10 @@ static void CGTK_shutdown(void* cls) {
 		session.poll = NULL;
 	}
 	
-	if (session.channel_map) {
-		GNUNET_CONTAINER_multipeermap_iterate(session.channel_map, CGTK_clear_channel, NULL);
-		GNUNET_CONTAINER_multipeermap_destroy(session.channel_map);
-		session.channel_map = NULL;
+	if (session.connections) {
+		GNUNET_CONTAINER_multipeermap_iterate(session.connections, CGTK_clear_connection, NULL);
+		GNUNET_CONTAINER_multipeermap_destroy(session.connections);
+		session.connections = NULL;
 	}
 	
 	if (session.listen) {
@@ -45,64 +65,68 @@ static void CGTK_shutdown(void* cls) {
 	CGTK_close_messaging(messaging);
 }
 
-static int CGTK_add_new_channel(struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* identity) {
-	if (!session.channel_map) {
-		session.channel_map = GNUNET_CONTAINER_multipeermap_create(8, GNUNET_NO);
+static int CGTK_add_new_connection(connection_t* connection) {
+	if (!session.connections) {
+		session.connections = GNUNET_CONTAINER_multipeermap_create(8, GNUNET_NO);
 	}
 	
 	return GNUNET_CONTAINER_multipeermap_put(
-			session.channel_map,
-			identity,
-			channel,
+			session.connections,
+			&(connection->identity),
+			connection,
 			GNUNET_CONTAINER_MULTIHASHMAPOPTION_MULTIPLE
 	);
 }
 
+static int CGTK_remove_connection(connection_t* connection) {
+	if (session.connections) {
+		int res = GNUNET_CONTAINER_multipeermap_remove(session.connections, &(connection->identity), connection);
+		
+		if (res == GNUNET_YES) {
+			if (GNUNET_CONTAINER_multipeermap_size(session.connections) == 0) {
+				GNUNET_CONTAINER_multipeermap_destroy(session.connections);
+				session.connections = NULL;
+			}
+		}
+	}
+}
+
 static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* source) {
-	int res = CGTK_add_new_channel(channel, source);
+	connection_t* connection = CGTK_connection_create(source, channel);
+	
+	int res = CGTK_add_new_connection(connection);
 	
 	if (res == GNUNET_SYSERR) {
-		GNUNET_CADET_channel_destroy(channel);
+		CGTK_connection_destroy(connection, true);
 		return NULL;
 	}
 	
 	CGTK_send_gtk_connect(messaging, source);
 	
-	return channel;
+	return connection;
 }
 
-
 static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* channel) {
-	const union GNUNET_CADET_ChannelInfo* info = GNUNET_CADET_channel_get_info(
-			channel, GNUNET_CADET_OPTION_PEER
-	);
+	connection_t* connection = (connection_t*) cls;
 	
-	CGTK_send_gtk_disconnect(messaging, &(info->peer));
+	CGTK_send_gtk_disconnect(messaging, &(connection->identity));
+	CGTK_remove_connection(connection);
 	
-	if (session.channel_map) {
-		if (GNUNET_CONTAINER_multipeermap_remove(session.channel_map, &(info->peer), channel) == GNUNET_YES) {
-			if (GNUNET_CONTAINER_multipeermap_size(session.channel_map) == 0) {
-				GNUNET_CONTAINER_multipeermap_destroy(session.channel_map);
-				session.channel_map = NULL;
-			}
-		}
-	}
+	CGTK_connection_destroy(connection, false);
 }
 
 static void CGTK_on_window_size_change(void* cls, const struct GNUNET_CADET_Channel* channel, int window_size) {
 	// TODO
 }
 
-static void CGTK_handle_message(const struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* source,
-		const struct GNUNET_MessageHeader* message) {
-	size_t payload_size = ntohs(message->size) - sizeof(*message);
+static void CGTK_handle_message(connection_t* connection, const struct GNUNET_MessageHeader* message) {
 	uint16_t length = ntohs(message->size) - sizeof(*message);
 	
 	const char* buffer = (const char *) &message[1];
 	
-	GNUNET_CADET_receive_done(channel);
+	GNUNET_CADET_receive_done(connection->channel);
 	
-	ssize_t result = CGTK_send_gtk_message(messaging, source, buffer, length);
+	ssize_t result = CGTK_send_gtk_message(messaging, &(connection->identity), buffer, length);
 	
 	if (result < 0) {
 		GNUNET_SCHEDULER_shutdown();
@@ -110,21 +134,15 @@ static void CGTK_handle_message(const struct GNUNET_CADET_Channel* channel, cons
 }
 
 static int check_channel_message(void* cls, const struct GNUNET_MessageHeader* message) {
-	const struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
+	connection_t* connection = (connection_t*) cls;
 	
-	return (session.channel_map) && (GNUNET_CONTAINER_multipeermap_contains(
-		session.channel_map, source
+	return (session.connections) && (GNUNET_CONTAINER_multipeermap_contains(
+		session.connections, &(connection->identity)
 	))? GNUNET_OK : GNUNET_NO;
 }
 
 static void handle_channel_message(void* cls, const struct GNUNET_MessageHeader* message) {
-	const struct GNUNET_PeerIdentity* source = (struct GNUNET_PeerIdentity*) cls;
-	
-	CGTK_handle_message(
-			GNUNET_CONTAINER_multipeermap_get(session.channel_map, source),
-			source,
-			message
-	);
+	CGTK_handle_message((connection_t*) cls, message);
 }
 
 static int check_port_message(void* cls, const struct GNUNET_MessageHeader* message) {
@@ -132,13 +150,7 @@ static int check_port_message(void* cls, const struct GNUNET_MessageHeader* mess
 }
 
 static void handle_port_message(void* cls, const struct GNUNET_MessageHeader* message) {
-	struct GNUNET_CADET_Channel* channel = (struct GNUNET_CADET_Channel*) cls;
-	
-	const union GNUNET_CADET_ChannelInfo* info = GNUNET_CADET_channel_get_info(
-			channel, GNUNET_CADET_OPTION_PEER
-	);
-	
-	CGTK_handle_message(channel, &(info->peer), message);
+	CGTK_handle_message((connection_t*) cls, message);
 }
 
 static void CGTK_poll(void* cls) {
@@ -182,7 +194,7 @@ static void CGTK_poll(void* cls) {
 			break;
 		} case MSG_GNUNET_SEND_MESSAGE: {
 			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gtk_identity(messaging);
-			struct GNUNET_CADET_Channel* channel = NULL;
+			connection_t* connection = NULL;
 			
 			if (!destination) {
 				GNUNET_SCHEDULER_shutdown();
@@ -196,7 +208,7 @@ static void CGTK_poll(void* cls) {
 				return;
 			}
 			
-			if ((!session.channel_map) || (!GNUNET_CONTAINER_multipeermap_contains(session.channel_map, destination))) {
+			if ((!session.connections) || (!GNUNET_CONTAINER_multipeermap_contains(session.connections, destination))) {
 				struct GNUNET_MQ_MessageHandler handlers[] = {
 						GNUNET_MQ_hd_var_size(
 								channel_message,
@@ -206,25 +218,25 @@ static void CGTK_poll(void* cls) {
 						), GNUNET_MQ_handler_end()
 				};
 				
-				channel = GNUNET_CADET_channel_create(
+				connection = CGTK_connection_create(destination, GNUNET_CADET_channel_create(
 						session.cadet,
-						destination,
+						connection,
 						destination,
 						port,
 						&CGTK_on_window_size_change,
 						&CGTK_on_disconnect,
 						handlers
-				);
+				));
 				
-				int res = CGTK_add_new_channel(channel, destination);
+				int res = CGTK_add_new_connection(connection);
 				
 				if (res == GNUNET_SYSERR) {
-					GNUNET_CADET_channel_destroy(channel);
-					channel = NULL;
+					CGTK_connection_destroy(connection, true);
+					connection = NULL;
 				}
 			} else {
-				channel = (struct GNUNET_CADET_Channel *) GNUNET_CONTAINER_multipeermap_get(
-						session.channel_map, destination
+				connection = (connection_t*) GNUNET_CONTAINER_multipeermap_get(
+						session.connections, destination
 				);
 			}
 			
@@ -238,7 +250,7 @@ static void CGTK_poll(void* cls) {
 			struct GNUNET_MessageHeader *msg;
 			struct GNUNET_MQ_Envelope* env = NULL;
 			
-			if (channel) {
+			if (connection) {
 				env = GNUNET_MQ_msg_extra(msg, length, GNUNET_MESSAGE_TYPE_CADET_CLI);
 			}
 			
@@ -270,8 +282,8 @@ static void CGTK_poll(void* cls) {
 				complete += offset;
 			}
 			
-			if (channel) {
-				struct GNUNET_MQ_Handle* mq = GNUNET_CADET_get_mq(channel);
+			if (connection) {
+				struct GNUNET_MQ_Handle* mq = GNUNET_CADET_get_mq(connection->channel);
 				
 				GNUNET_MQ_send(mq, env);
 				GNUNET_MQ_notify_sent(env, CGTK_poll, cls);
@@ -286,7 +298,7 @@ static void CGTK_poll(void* cls) {
 		}
 	}
 	
-	if ((session.listen != NULL) || (session.channel_map != NULL)) {
+	if ((session.listen != NULL) || (session.connections != NULL)) {
 		struct GNUNET_TIME_Relative delay = GNUNET_TIME_relative_get_second_();
 		
 		session.poll = GNUNET_SCHEDULER_add_delayed(delay, &CGTK_poll, NULL);
@@ -299,7 +311,7 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 	session.cfg = cfg;
 	session.cadet = GNUNET_CADET_connect(cfg);
 	session.listen = NULL;
-	session.channel_map = NULL;
+	session.connections = NULL;
 	session.poll = NULL;
 	
 	if (!session.cadet) {
