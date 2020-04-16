@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 		
 		GtkApplication* application = gtk_application_new(
 				"org.gnunet.CADET",
-				G_APPLICATION_FLAGS_NONE
+				G_APPLICATION_NON_UNIQUE
 		);
 		
 		g_signal_connect(application, "activate", G_CALLBACK(CGTK_activate), &messaging);

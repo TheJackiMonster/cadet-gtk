@@ -11,6 +11,14 @@ static messaging_t* messaging;
 #include "handy_ui.h"
 #include "chat.h"
 
+static void CGTK_shutdown(GtkWidget* window, const char* error_message) {
+	gtk_widget_destroy(window);
+	
+	perror(error_message);
+	
+	CGTK_close_messaging(messaging);
+}
+
 static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 	GtkWidget* chat_stack = GTK_WIDGET(user_data);
 	
@@ -71,6 +79,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 			const char* identity = CGTK_recv_gnunet_identity(messaging);
 			
 			if (identity == NULL) {
+				CGTK_shutdown(window, "Can't retrieve identity of peer!");
 				return FALSE;
 			}
 			
@@ -80,12 +89,14 @@ static gboolean CGTK_poll(gpointer user_data) {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
+				CGTK_shutdown(window, "Can't identify connections source!");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
+				CGTK_shutdown(window, "Can't identify connections port!");
 				return FALSE;
 			}
 			
@@ -95,12 +106,14 @@ static gboolean CGTK_poll(gpointer user_data) {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
+				CGTK_shutdown(window, "Can't identify connections source!");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
+				CGTK_shutdown(window, "Can't identify connections port!");
 				return FALSE;
 			}
 			
@@ -110,12 +123,14 @@ static gboolean CGTK_poll(gpointer user_data) {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
+				CGTK_shutdown(window, "Can't identify connections source!");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
+				CGTK_shutdown(window, "Can't identify connections port!");
 				return FALSE;
 			}
 			
@@ -136,6 +151,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 					ssize_t done = CGTK_recv_gnunet_message(messaging, buffer + offset, remaining - offset);
 					
 					if (done <= 0) {
+						CGTK_shutdown(window, "Transmission of message has exited!");
 						return FALSE;
 					}
 					
@@ -151,6 +167,7 @@ static gboolean CGTK_poll(gpointer user_data) {
 			
 			break;
 		} case MSG_ERROR: {
+			CGTK_shutdown(window, "No connection!");
 			return FALSE;
 		} default: {
 			break;
