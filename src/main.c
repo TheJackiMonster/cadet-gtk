@@ -4,6 +4,8 @@
 
 #include "gtk.h"
 #include "gnunet.h"
+
+#include "config.h"
 #include "messaging.h"
 
 int main(int argc, char** argv) {
@@ -22,8 +24,8 @@ int main(int argc, char** argv) {
 		
 		int status = (GNUNET_OK == GNUNET_PROGRAM_run(
 				argc, argv,
-				"cadet-gtk",
-				gettext_noop("A GTK based GUI for the CADET subsystem of GNUnet."),
+				CGTK_BINARY_NAME,
+				gettext_noop(CGTK_DESCRIPTION),
 				options, &CGTK_run, &messaging
 		)? EXIT_SUCCESS : EXIT_FAILURE);
 		
@@ -35,7 +37,7 @@ int main(int argc, char** argv) {
 		gtk_init(&argc, &argv);
 		
 		GtkApplication* application = gtk_application_new(
-				"org.gnunet.CADET",
+				CGTK_APPLICATION_ID,
 				G_APPLICATION_NON_UNIQUE
 		);
 		

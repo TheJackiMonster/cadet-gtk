@@ -4,6 +4,7 @@
 
 #include "gnunet.h"
 
+#include "config.h"
 #include "messaging.h"
 
 static messaging_t* messaging;
@@ -14,7 +15,8 @@ static struct {
 	struct GNUNET_HashCode port;
 	struct GNUNET_CADET_Port* listen;
 	struct GNUNET_CONTAINER_MultiPeerMap* connections;
-	struct GNUNET_SCHEDULER_Task* poll;
+	struct GNUNET_SCHEDULER_Task* idle;
+	struct GNUNET_TIME_Relative delay;
 } session;
 
 typedef struct {
@@ -49,9 +51,9 @@ static int CGTK_clear_connection(void *cls, const struct GNUNET_PeerIdentity* ke
 }
 
 static void CGTK_shutdown(void* cls) {
-	if (session.poll) {
-		GNUNET_SCHEDULER_cancel(session.poll);
-		session.poll = NULL;
+	if (session.idle) {
+		GNUNET_SCHEDULER_cancel(session.idle);
+		session.idle = NULL;
 	}
 	
 	if (session.connections) {
@@ -159,7 +161,7 @@ static void handle_port_message(void* cls, const struct GNUNET_MessageHeader* me
 	CGTK_handle_message((connection_t*) cls, message);
 }
 
-static void CGTK_poll(void* cls);
+static void CGTK_idle(void* cls);
 
 static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, void* value) {
 	connection_t* connection = (connection_t*) value;
@@ -209,7 +211,7 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, v
 		struct GNUNET_MQ_Handle* mq = GNUNET_CADET_get_mq(connection->channel);
 		
 		GNUNET_MQ_send(mq, env);
-		GNUNET_MQ_notify_sent(env, CGTK_poll, cls);
+		GNUNET_MQ_notify_sent(env, CGTK_idle, cls);
 		
 		return GNUNET_NO;
 	}
@@ -217,8 +219,8 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, v
 	return GNUNET_YES;
 }
 
-static void CGTK_poll(void* cls) {
-	session.poll = NULL;
+static void CGTK_idle(void* cls) {
+	session.idle = NULL;
 	
 	msg_type_t type = CGTK_recv_gtk_msg_type(messaging);
 	
@@ -320,9 +322,12 @@ static void CGTK_poll(void* cls) {
 	}
 	
 	if ((session.listen != NULL) || (session.connections != NULL)) {
-		struct GNUNET_TIME_Relative delay = GNUNET_TIME_relative_get_second_();
-		
-		session.poll = GNUNET_SCHEDULER_add_delayed(delay, &CGTK_poll, NULL);
+		session.idle = GNUNET_SCHEDULER_add_delayed_with_priority(
+				session.delay,
+				GNUNET_SCHEDULER_PRIORITY_IDLE,
+				&CGTK_idle,
+				NULL
+		);
 	}
 }
 
@@ -334,7 +339,7 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 	memset(&(session.port), 0, sizeof(struct GNUNET_HashCode));
 	session.listen = NULL;
 	session.connections = NULL;
-	session.poll = NULL;
+	session.idle = NULL;
 	
 	if (!session.cadet) {
 		GNUNET_SCHEDULER_shutdown();
@@ -372,7 +377,15 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 			handlers
 	);
 	
-	struct GNUNET_TIME_Relative delay = GNUNET_TIME_relative_get_second_();
+	session.delay = GNUNET_TIME_relative_multiply(
+			GNUNET_TIME_UNIT_MILLISECONDS,
+			CGTK_GNUNET_SESSION_IDLE_DELAY_MS
+	);
 	
-	session.poll = GNUNET_SCHEDULER_add_delayed(delay, &CGTK_poll, NULL);
+	session.idle = GNUNET_SCHEDULER_add_delayed_with_priority(
+			session.delay,
+			GNUNET_SCHEDULER_PRIORITY_IDLE,
+			&CGTK_idle,
+			NULL
+	);
 }

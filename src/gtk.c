@@ -4,6 +4,7 @@
 
 #include "gtk.h"
 
+#include "config.h"
 #include "messaging.h"
 
 static messaging_t* messaging;
@@ -11,12 +12,14 @@ static messaging_t* messaging;
 #include "handy_ui.h"
 #include "chat.h"
 
+static struct {
+	guint idle;
+} session;
+
 static void CGTK_shutdown(GtkWidget* window, const char* error_message) {
 	gtk_widget_destroy(window);
 	
 	perror(error_message);
-	
-	CGTK_close_messaging(messaging);
 }
 
 static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
@@ -69,7 +72,7 @@ static void CGTK_set_port(GtkWidget* port_entry, gpointer user_data) {
 	CGTK_send_gnunet_port(messaging, port);
 }
 
-static gboolean CGTK_poll(gpointer user_data) {
+static gboolean CGTK_idle(gpointer user_data) {
 	GtkWidget* window = GTK_WIDGET(gtk_window_list_toplevels()->data);
 	
 	msg_type_t type = CGTK_recv_gnunet_msg_type(messaging);
@@ -178,6 +181,11 @@ static gboolean CGTK_poll(gpointer user_data) {
 }
 
 static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
+	if (session.idle) {
+		g_source_remove(session.idle);
+		session.idle = 0;
+	}
+	
 	CGTK_close_messaging(messaging);
 }
 
@@ -198,5 +206,9 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	gtk_widget_show_all(window);
 	
-	g_timeout_add_seconds(1, CGTK_poll, NULL);
+	#if(CGTK_GTK_SESSION_IDLE_DELAY_MS > 0)
+	session.idle = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_GTK_SESSION_IDLE_DELAY_MS, CGTK_idle, NULL, NULL);
+	#else
+	session.idle = g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_idle, NULL, NULL);
+	#endif
 }
