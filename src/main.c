@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 				G_APPLICATION_NON_UNIQUE
 		);
 		
-		g_signal_connect(application, "activate", G_CALLBACK(CGTK_activate), &messaging);
+		g_signal_connect(application, "activate\0", G_CALLBACK(CGTK_activate), &messaging);
 		
 		CGTK_prepare_gtk(&messaging);
 		

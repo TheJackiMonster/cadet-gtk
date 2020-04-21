@@ -52,10 +52,10 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 		const char* msg_text = gtk_entry_get_text(GTK_ENTRY(msg_entry));
 		size_t msg_len = strlen(msg_text);
 		
-		if (CGTK_send_gnunet_message(messaging, destination, port, msg_text, msg_len) >= 0) {
-			CGTK_add_message(chat_list, msg_text, TRUE, "Me");
+		if (CGTK_send_gnunet_message(messaging, destination, port, msg_text, msg_len) > 0) {
+			CGTK_add_message(chat_list, msg_text, TRUE, "Me\0");
 			
-			gtk_entry_set_text(GTK_ENTRY(msg_entry), "");
+			gtk_entry_set_text(GTK_ENTRY(msg_entry), "\0");
 		}
 		
 		if (name->str[index] == '\0') {
@@ -82,7 +82,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			const char* identity = CGTK_recv_gnunet_identity(messaging);
 			
 			if (identity == NULL) {
-				CGTK_shutdown(window, "Can't retrieve identity of peer!");
+				CGTK_shutdown(window, "Can't retrieve identity of peer!\0");
 				return FALSE;
 			}
 			
@@ -92,14 +92,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!");
+				CGTK_shutdown(window, "Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!");
+				CGTK_shutdown(window, "Can't identify connections port!\0");
 				return FALSE;
 			}
 			
@@ -109,14 +109,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!");
+				CGTK_shutdown(window, "Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!");
+				CGTK_shutdown(window, "Can't identify connections port!\0");
 				return FALSE;
 			}
 			
@@ -126,14 +126,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!");
+				CGTK_shutdown(window, "Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!");
+				CGTK_shutdown(window, "Can't identify connections port!\0");
 				return FALSE;
 			}
 			
@@ -154,7 +154,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 					ssize_t done = CGTK_recv_gnunet_message(messaging, buffer + offset, remaining - offset);
 					
 					if (done <= 0) {
-						CGTK_shutdown(window, "Transmission of message has exited!");
+						CGTK_shutdown(window, "Transmission of message has exited!\0");
 						return FALSE;
 					}
 					
@@ -163,14 +163,16 @@ static gboolean CGTK_idle(gpointer user_data) {
 				
 				buffer[offset] = '\0';
 				
-				CGTK_update_messages_ui(window, source, port, buffer);
+				if (strlen(buffer) > 0) {
+					CGTK_update_messages_ui(window, source, port, buffer);
+				}
 				
 				complete += offset;
 			}
 			
 			break;
 		} case MSG_ERROR: {
-			CGTK_shutdown(window, "No connection!");
+			CGTK_shutdown(window, "No connection!\0");
 			return FALSE;
 		} default: {
 			break;
@@ -202,7 +204,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	CGTK_init_ui(window, callbacks);
 	
-	g_signal_connect(window, "destroy", G_CALLBACK(CGTK_end_thread), NULL);
+	g_signal_connect(window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	
 	gtk_widget_show_all(window);
 	

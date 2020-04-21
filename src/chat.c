@@ -17,10 +17,10 @@ static void CGTK_active_entry(GtkWidget* msg_button, gpointer user_data) {
 }
 
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, handy_callbacks_t callbacks) {
-	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat");
+	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "");
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "\0");
 	gtk_widget_set_hexpand(header, TRUE);
 	
 	gtk_container_add(GTK_CONTAINER(header), back_button);
@@ -38,7 +38,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	GtkWidget* msg_entry = gtk_entry_new();
 	gtk_widget_set_hexpand(msg_entry, TRUE);
 	
-	GtkWidget* msg_button = gtk_button_new_from_icon_name("document-send", GTK_ICON_SIZE_MENU);
+	GtkWidget* msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
 	
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_entry);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_button);
@@ -50,8 +50,8 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(msg_entry, "activate", G_CALLBACK(callbacks.send_message), chat_stack);
-	g_signal_connect(msg_button, "clicked", G_CALLBACK(CGTK_active_entry), msg_entry);
+	g_signal_connect(msg_entry, "activate\0", G_CALLBACK(callbacks.send_message), chat_stack);
+	g_signal_connect(msg_button, "clicked\0", G_CALLBACK(CGTK_active_entry), msg_entry);
 }
 
 GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const char* contact_port) {

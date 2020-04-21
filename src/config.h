@@ -5,9 +5,9 @@
 #ifndef CADET_GTK_CONFIG_H
 #define CADET_GTK_CONFIG_H
 
-#define CGTK_BINARY_NAME "cadet-gtk"
-#define CGTK_APPLICATION_ID "org.gnunet.CADET"
-#define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet."
+#define CGTK_BINARY_NAME "cadet-gtk\0"
+#define CGTK_APPLICATION_ID "org.gnunet.CADET\0"
+#define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet.\0"
 
 /*
  * Delay of every call of CGTK_idle(...) in both processes:

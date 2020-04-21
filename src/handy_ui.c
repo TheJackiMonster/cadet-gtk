@@ -16,7 +16,7 @@
 static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	GtkWidget* content_leaflet = GTK_WIDGET(user_data);
 	
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts");
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts\0");
 }
 
 static char id_buffer [1024];
@@ -47,7 +47,7 @@ static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
 	GtkWidget* dialog = gtk_dialog_new();
 #endif
 	
-	gtk_window_set_title(GTK_WINDOW(dialog), "Identity");
+	gtk_window_set_title(GTK_WINDOW(dialog), "Identity\0");
 	gtk_widget_set_size_request(dialog, 300, 0);
 	
 	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
@@ -86,7 +86,7 @@ static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
 	gtk_container_add(GTK_CONTAINER(main_box), id_label);
 	gtk_container_add(GTK_CONTAINER(main_box), port_entry);
 	
-	g_signal_connect(port_entry, "activate", G_CALLBACK(CGTK_writeback_port), user_data);
+	g_signal_connect(port_entry, "activate\0", G_CALLBACK(CGTK_writeback_port), user_data);
 	
 	gtk_widget_show_all(dialog);
 }
@@ -101,14 +101,14 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	
 	CGTK_init_contacts(contacts_header, contacts_box, contacts_list);
 	
-	GtkWidget* id_button = gtk_button_new_from_icon_name("avatar-default", GTK_ICON_SIZE_MENU);
+	GtkWidget* id_button = gtk_button_new_from_icon_name("user-info\0", GTK_ICON_SIZE_MENU);
 	gtk_widget_set_sensitive(id_button, FALSE);
 	
 	gtk_container_add(GTK_CONTAINER(contacts_header), id_button);
 	
 	GtkWidget* chat_header = gtk_header_bar_new();
 	GtkWidget* chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	GtkWidget* back_button = gtk_button_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_MENU);
+	GtkWidget* back_button = gtk_button_new_from_icon_name("go-previous-symbolic\0", GTK_ICON_SIZE_MENU);
 	
 	CGTK_init_chat(chat_header, chat_box, back_button, callbacks);
 	
@@ -118,9 +118,9 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	gtk_container_add(GTK_CONTAINER(title_leaflet), contacts_header);
 	gtk_container_add(GTK_CONTAINER(title_leaflet), chat_header);
 	
-	gtk_container_child_set(GTK_CONTAINER(title_leaflet), contacts_header, "name", "contacts", NULL);
-	gtk_container_child_set(GTK_CONTAINER(title_leaflet), chat_header, "name", "chat", NULL);
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(title_leaflet), "contacts");
+	gtk_container_child_set(GTK_CONTAINER(title_leaflet), contacts_header, "name\0", "contacts\0", NULL);
+	gtk_container_child_set(GTK_CONTAINER(title_leaflet), chat_header, "name\0", "chat\0", NULL);
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(title_leaflet), "contacts\0");
 	
 	GtkWidget* content_leaflet = hdy_leaflet_new();
 	hdy_leaflet_set_transition_type(HDY_LEAFLET(content_leaflet), HDY_LEAFLET_TRANSITION_TYPE_SLIDE);
@@ -128,9 +128,9 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	gtk_container_add(GTK_CONTAINER(content_leaflet), contacts_box);
 	gtk_container_add(GTK_CONTAINER(content_leaflet), chat_box);
 	
-	gtk_container_child_set(GTK_CONTAINER(content_leaflet), contacts_box, "name", "contacts", NULL);
-	gtk_container_child_set(GTK_CONTAINER(content_leaflet), chat_box, "name", "chat", NULL);
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts");
+	gtk_container_child_set(GTK_CONTAINER(content_leaflet), contacts_box, "name\0", "contacts\0", NULL);
+	gtk_container_child_set(GTK_CONTAINER(content_leaflet), chat_box, "name\0", "chat\0", NULL);
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(content_leaflet), "contacts\0");
 	
 	HdyTitleBar* titleBar = hdy_title_bar_new();
 	
@@ -145,22 +145,22 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	
 	g_object_bind_property(
 			content_leaflet,
-			"visible-child-name",
+			"visible-child-name\0",
 			title_leaflet,
-			"visible-child-name",
+			"visible-child-name\0",
 			G_BINDING_SYNC_CREATE
 	);
 	
 	g_object_bind_property(
 			title_leaflet,
-			"folded",
+			"folded\0",
 			back_button,
-			"visible",
+			"visible\0",
 			G_BINDING_SYNC_CREATE
 	);
 	
-	g_signal_connect(back_button, "clicked", G_CALLBACK(CGTK_back), content_leaflet);
-	g_signal_connect(id_button, "clicked", G_CALLBACK(CGTK_open_identity), callbacks.set_port);
+	g_signal_connect(back_button, "clicked\0", G_CALLBACK(CGTK_back), content_leaflet);
+	g_signal_connect(id_button, "clicked\0", G_CALLBACK(CGTK_open_identity), callbacks.set_port);
 }
 
 void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {
@@ -192,5 +192,5 @@ void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char
 	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
 	GtkWidget* chat_list = CGTK_get_chat_list(chat_box, identity, port);
 	
-	CGTK_add_message(chat_list, message, FALSE, "Other");
+	CGTK_add_message(chat_list, message, FALSE, "Other\0");
 }
