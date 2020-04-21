@@ -1,6 +1,0 @@
-[submodule "lib/libhandy"]
-	path = lib/libhandy
-	url = https://source.puri.sm/Librem5/libhandy.git
-[submodule "lib/gnunet"]
-	path = lib/gnunet
-	url = https://gnunet.org/git/gnunet.git
