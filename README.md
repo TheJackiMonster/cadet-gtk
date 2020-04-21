@@ -12,6 +12,20 @@ from [libhandy](https://source.puri.sm/Librem5/libhandy) to make it work as mobi
 It runs the actual handling of CADET as second process and communicates to the main process with the GUI
 via unix specific pipes.
 
+## Installation
+
+### Arch
+
+You can install directly from the source via the package [cadet-gtk-git](https://aur.archlinux.org/packages/cadet-gtk-git/) in the AUR.
+
+### Other
+
+You will need to clone the [repository](https://gitlab.com/TheJackiMonster/cadet-gtk.git) and compile it from source with cmake.
+You should notice that you will need a quite current release of GNUnet installed so maybe you will need to compile
+this from [source](https://git.gnunet.org/gnunet.git) too.
+
+## Progress
+
 * [x] The first target of this application is being able to communicate with the basic 
 cli for CADET.
 > source is here: https://git.gnunet.org/gnunet.git/tree/src/cadet/gnunet-cadet.c
