@@ -26,16 +26,20 @@ this from [source](https://git.gnunet.org/gnunet.git) too.
 
 ## Progress
 
-* [x] The first target of this application is being able to communicate with the basic 
-cli for CADET.
-> source is here: https://git.gnunet.org/gnunet.git/tree/src/cadet/gnunet-cadet.c
-* [x] The second target is creating a channel towards another peer.
-* [x] An advanced target is to handle multiple channels at once.
-* [x] Choosing a specific port instead of a default ('test') one.
-* [x] Ports make channels and chats completely independent of each other.
-* [x] Integrating a layer with JSON or similar to allow metadata in messages.
-* [x] Integrating the current state of functionality of the groupchat-application.
-> source is here: https://git.gnunet.org/groupchat.git/tree/
+If you want to take a look at all the releases and its changes: [Release Notes](CHANGES.md)
+
+You can see all other features and bigger changes which are planned right here:
+
+ * [ ] Allow creating a groupchat inside the application with a selected port.
+ * [ ] Allow creating a normal chat with JSON.
+ * [ ] Allow viewing all members in a groupchat more conveniently.
+ * [ ] Allow changing your nickname via GUI.
+ * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
+>  More information here: https://pep.software/about/
+ * [ ] Use pEp-sync to use the application on multiple peers concurrently.
+ * [ ] Allow sharing files privately through GNUnet and encryption.
+>  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
+ * [ ] Implementing audio-calls with the conversation of GNUnet.
 
 ## Docs I use
 
