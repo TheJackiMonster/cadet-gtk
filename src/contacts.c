@@ -11,31 +11,6 @@
 #include <libhandy-1/handy.h>
 #endif
 
-static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
-	GtkWidget* leaflet = gtk_widget_get_parent(GTK_WIDGET(user_data));
-	GtkWidget* content = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
-	GtkWidget* window = gtk_widget_get_toplevel(leaflet);
-	GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
-	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
-	GtkWidget* header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header_leaflet))->next->data);
-	
-	CGTK_load_chat(header, content, row);
-	
-	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat\0") != 0) {
-		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat\0");
-	}
-	
-#ifdef HANDY_USE_ZERO_API
-	if (hdy_leaflet_get_fold(HDY_LEAFLET(leaflet)) == HDY_FOLD_UNFOLDED) {
-#else
-	if (!hdy_leaflet_get_folded(HDY_LEAFLET(leaflet))) {
-#endif
-		GtkWidget* back_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header))->data);
-		
-		gtk_widget_set_visible(back_button, FALSE);
-	}
-}
-
 static void CGTK_add_contact_entry(GtkWidget* confirm_button, gpointer user_data) {
 	GtkWidget* dialog = gtk_widget_get_toplevel(confirm_button);
 	
@@ -44,12 +19,22 @@ static void CGTK_add_contact_entry(GtkWidget* confirm_button, gpointer user_data
 	
 	GtkWidget* id_entry = gtk_grid_get_child_at(GTK_GRID(grid), 1, 0);
 	GtkWidget* port_entry = gtk_grid_get_child_at(GTK_GRID(grid), 1, 1);
+	GtkWidget* group_check = gtk_grid_get_child_at(GTK_GRID(grid), 1, 2);
 	
 	if (user_data) {
+		contact_type_t type;
+		
+		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(group_check))) {
+			type = CGTK_CONTACT_GROUP;
+		} else {
+			type = CGTK_CONTACT_PERSON;
+		}
+		
 		CGTK_open_contact(
 				GTK_WIDGET(user_data),
 				gtk_entry_get_text(GTK_ENTRY(id_entry)),
-				gtk_entry_get_text(GTK_ENTRY(port_entry))
+				gtk_entry_get_text(GTK_ENTRY(port_entry)),
+				type
 		);
 	}
 	
@@ -99,10 +84,14 @@ static void CGTK_add_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	GtkWidget* port_entry = gtk_entry_new();
 	gtk_widget_set_hexpand(port_entry, TRUE);
 	
+	GtkWidget* group_check = gtk_check_button_new_with_label("Join a groupchat?\0");
+	gtk_widget_set_hexpand(group_check, TRUE);
+	
 	gtk_grid_attach(GTK_GRID(grid), id_label, 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), port_label, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), id_entry, 1, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), port_entry, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), group_check, 1, 2, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
@@ -125,7 +114,7 @@ static void CGTK_add_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	gtk_widget_show_all(dialog);
 }
 
-void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contacts_list) {
+void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contacts_list, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Contacts\0");
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), FALSE);
@@ -148,10 +137,10 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contac
 	gtk_size_group_add_widget(sizeGroup, content);
 	
 	g_signal_connect(add_button, "clicked\0", G_CALLBACK(CGTK_add_contact_dialog), contacts_list);
-	g_signal_connect(contacts_list, "row-activated\0", G_CALLBACK(CGTK_activate_contact), content);
+	g_signal_connect(contacts_list, "row-activated\0", G_CALLBACK(callbacks->activate_contact), content);
 }
 
-void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port) {
+void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port, contact_type_t type) {
 	GList* list = gtk_container_get_children(GTK_CONTAINER(contacts_list));
 	
 	GString* name = g_string_new(identity);
@@ -175,9 +164,17 @@ void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const cha
 	
 	g_string_free(name, TRUE);
 	
-	hdy_action_row_set_title(contact, port);
+	name = g_string_new(port);
+	
+	if (type == CGTK_CONTACT_GROUP) {
+		g_string_append(name, " (GROUP)\0");
+	}
+	
+	hdy_action_row_set_title(contact, name->str);
 	hdy_action_row_set_subtitle(contact, identity);
 	hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
+	
+	g_string_free(name, TRUE);
 	
 	gtk_container_add(GTK_CONTAINER(contacts_list),  GTK_WIDGET(contact));
 	

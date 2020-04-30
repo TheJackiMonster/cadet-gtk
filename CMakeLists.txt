@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 include(config/GTK.cmake)
 include(config/LibHandy.cmake)
 include(config/GNUnet.cmake)
+include(config/Jansson.cmake)
 
 include_directories(${CGTK_INCLUDE_DIRECTORIES})
 
@@ -30,6 +31,8 @@ add_executable(cadet-gtk
 		src/gnunet.c
 		src/gtk.h
 		src/gtk.c
+		src/json.h
+		src/json.c
 )
 
 target_link_libraries(cadet-gtk ${CGTK_LIBRARIES})

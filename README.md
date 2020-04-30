@@ -33,8 +33,8 @@ cli for CADET.
 * [x] An advanced target is to handle multiple channels at once.
 * [x] Choosing a specific port instead of a default ('test') one.
 * [x] Ports make channels and chats completely independent of each other.
-* [ ] Integrating a layer with JSON or similar to allow metadata in messages.
-* [ ] Integrating the current state of functionality of the groupchat-application.
+* [x] Integrating a layer with JSON or similar to allow metadata in messages.
+* [x] Integrating the current state of functionality of the groupchat-application.
 > source is here: https://git.gnunet.org/groupchat.git/tree/
 
 ## Docs I use
@@ -42,6 +42,7 @@ cli for CADET.
  - GTK3: https://developer.gnome.org/gtk3/stable/
  - libhandy: https://developer.puri.sm/projects/libhandy/unstable/
  - GNUnet: https://docs.gnunet.org/doxygen/modules.html
+ - Jansson: https://jansson.readthedocs.io/en/2.8/apiref.html
  - pipe: https://linux.die.net/man/2/pipe
 
 ## Who is contributing

@@ -16,7 +16,7 @@ static void CGTK_active_entry(GtkWidget* msg_button, gpointer user_data) {
 	gtk_widget_activate(msg_entry);
 }
 
-void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, handy_callbacks_t callbacks) {
+void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
@@ -50,7 +50,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(msg_entry, "activate\0", G_CALLBACK(callbacks.send_message), chat_stack);
+	g_signal_connect(msg_entry, "activate\0", G_CALLBACK(callbacks->send_message), chat_stack);
 	g_signal_connect(msg_button, "clicked\0", G_CALLBACK(CGTK_active_entry), msg_entry);
 }
 
@@ -132,25 +132,25 @@ static gboolean CGTK_reveal_message(gpointer user_data) {
 	return FALSE;
 }
 
-void CGTK_add_message(GtkWidget* chat_list, const char* msg_text, gboolean my_message, const char* sender) {
+void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
 	GtkWidget* revealer = gtk_revealer_new();
 	
 	gtk_revealer_set_transition_type(GTK_REVEALER(revealer),
-			(my_message? GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT : GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT)
+			(msg->local? GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT : GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT)
 	);
 	
 	gtk_revealer_set_transition_duration(GTK_REVEALER(revealer), 250);
 	gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), FALSE);
 	
-	GtkWidget* msg_frame = gtk_frame_new(sender);
-	gtk_widget_set_halign(msg_frame, (my_message? GTK_ALIGN_END : GTK_ALIGN_START));
-	gtk_frame_set_label_align(GTK_FRAME(msg_frame), (my_message? 1.0f : 0.0f), 0.5f);
+	GtkWidget* msg_frame = gtk_frame_new(msg->sender);
+	gtk_widget_set_halign(msg_frame, (msg->local? GTK_ALIGN_END : GTK_ALIGN_START));
+	gtk_frame_set_label_align(GTK_FRAME(msg_frame), (msg->local? 1.0f : 0.0f), 0.5f);
 	gtk_frame_set_shadow_type(GTK_FRAME(msg_frame), GTK_SHADOW_IN);
 	gtk_widget_set_size_request(msg_frame, 100, 0);
 	gtk_widget_set_valign(msg_frame, GTK_ALIGN_CENTER);
 	gtk_widget_set_hexpand(msg_frame, FALSE);
 	
-	GtkWidget* text = gtk_label_new(msg_text);
+	GtkWidget* text = gtk_label_new(msg->content);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);
 	gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
 	gtk_widget_set_halign(text, GTK_ALIGN_START);

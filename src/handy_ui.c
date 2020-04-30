@@ -91,7 +91,7 @@ static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
 	gtk_widget_show_all(dialog);
 }
 
-void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
+void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks) {
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();
 	
@@ -99,7 +99,7 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	
 	GtkWidget* contacts_list = gtk_list_box_new();
 	
-	CGTK_init_contacts(contacts_header, contacts_box, contacts_list);
+	CGTK_init_contacts(contacts_header, contacts_box, contacts_list, callbacks);
 	
 	GtkWidget* id_button = gtk_button_new_from_icon_name("user-info\0", GTK_ICON_SIZE_MENU);
 	gtk_widget_set_sensitive(id_button, FALSE);
@@ -160,7 +160,7 @@ void CGTK_init_ui(GtkWidget* window, handy_callbacks_t callbacks) {
 	);
 	
 	g_signal_connect(back_button, "clicked\0", G_CALLBACK(CGTK_back), content_leaflet);
-	g_signal_connect(id_button, "clicked\0", G_CALLBACK(CGTK_open_identity), callbacks.set_port);
+	g_signal_connect(id_button, "clicked\0", G_CALLBACK(CGTK_open_identity), callbacks->set_port);
 }
 
 void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {
@@ -181,16 +181,90 @@ void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char
 	GtkWidget* contacts_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(contacts_box))->data);
 	
 	if (active) {
-		CGTK_open_contact(contacts_list, identity, port);
+		CGTK_open_contact(contacts_list, identity, port, CGTK_CONTACT_UNKNOWN);
 	} else {
 		CGTK_close_contact(contacts_list, identity, port);
 	}
 }
 
-void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char* port, const char* message) {
+void CGTK_update_messages_ui(GtkWidget* window, const char* identity, const char* port, const msg_t* msg) {
 	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
 	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
 	GtkWidget* chat_list = CGTK_get_chat_list(chat_box, identity, port);
+	GtkWidget* port_label = GTK_WIDGET(gtk_container_get_children(
+			GTK_CONTAINER(gtk_widget_get_parent(chat_list)))->data
+	);
 	
-	CGTK_add_message(chat_list, message, FALSE, "Other\0");
+	switch (msg->kind) {
+		case MSG_KIND_TALK: {
+			CGTK_add_message(chat_list, msg);
+			break;
+		} case MSG_KIND_JOIN: {
+			GString* members = g_string_new(gtk_label_get_text(GTK_LABEL(port_label)));
+			
+			if (members->len > 0) {
+				g_string_append(members, ", \0");
+			}
+			
+			g_string_append(members, msg->who);
+			
+			gtk_label_set_text(GTK_LABEL(port_label), members->str);
+			g_string_free(members, TRUE);
+			break;
+		} case MSG_KIND_LEAVE: {
+			GString* members = g_string_new(gtk_label_get_text(GTK_LABEL(port_label)));
+			
+			const size_t who_len = strlen(msg->who);
+			
+			char* pos = members->str;
+			
+			while (pos) {
+				pos = strstr(pos, msg->who);
+				
+				if (pos) {
+					if (((pos == msg->who) || (*(pos - 1) == ' ')) &&
+						((pos[who_len] == '\0') || ((pos[who_len] == ',') && (pos[who_len + 1] == ' ')))) {
+						break;
+					} else {
+						pos++;
+					}
+				}
+			}
+			
+			if (pos) {
+				if (pos[who_len] == '\0') {
+					if (pos == msg->who) {
+						g_string_erase(members, 0, who_len);
+					} else {
+						g_string_erase(members, (ssize_t) (pos - msg->who) - 2, who_len + 2);
+					}
+				} else {
+					g_string_erase(members, (ssize_t) (pos - msg->who), who_len + 2);
+				}
+				
+				gtk_label_set_text(GTK_LABEL(port_label), members->str);
+			}
+			
+			g_string_free(members, TRUE);
+			break;
+		} case MSG_KIND_INFO: {
+			GString* members = g_string_new("\0");
+			const char** part = msg->participants;
+			
+			while (*part) {
+				if (members->len > 0) {
+					g_string_append(members, ", \0");
+				}
+				
+				g_string_append(members, *part);
+				part++;
+			}
+			
+			gtk_label_set_text(GTK_LABEL(port_label), members->str);
+			g_string_free(members, TRUE);
+			break;
+		} default: {
+			break;
+		}
+	}
 }
