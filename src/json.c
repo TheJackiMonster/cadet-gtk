@@ -69,9 +69,9 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 const char* CGTK_string_clone(const char* string) {
 	if (string) {
 		const size_t len = strlen(string);
-		
 		char* clone = (char*) malloc(len + 1);
-		strncpy(clone, string, len);
+		
+		strcpy(clone, string);
 		
 		clone[len] = '\0';
 		return clone;

@@ -17,6 +17,7 @@ static messaging_t* messaging;
 #include <libhandy-1/handy.h>
 #endif
 
+#include "chat.h"
 #include "json.h"
 
 #include <stdlib.h>
