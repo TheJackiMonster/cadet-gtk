@@ -18,12 +18,30 @@ static void CGTK_active_entry(GtkWidget* msg_button, gpointer user_data) {
 
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
-	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "\0");
 	gtk_widget_set_hexpand(header, TRUE);
 	
-	gtk_container_add(GTK_CONTAINER(header), back_button);
+	GtkWidget* options = gtk_popover_menu_new();
+	GtkWidget* options_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 1);
+	
+	// TODO: add options for different chats
+	
+	GtkWidget* option_test = gtk_button_new_with_label("Test\0");
+	gtk_button_set_relief(GTK_BUTTON(option_test), GTK_RELIEF_NONE);
+	
+	gtk_container_add(GTK_CONTAINER(options_box), option_test);
+	gtk_container_add(GTK_CONTAINER(options), options_box);
+	
+	gtk_widget_show_all(options_box);
+	
+	GtkWidget* options_icon = gtk_image_new_from_icon_name("view-more-symbolic\0", GTK_ICON_SIZE_MENU);
+	GtkWidget* options_button = gtk_menu_button_new();
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(options_button), options);
+	gtk_button_set_image(GTK_BUTTON(options_button), options_icon);
+	
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), back_button);
+	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), options_button);
 	
 	gtk_widget_set_hexpand(content, TRUE);
 	gtk_widget_set_vexpand(content, TRUE);

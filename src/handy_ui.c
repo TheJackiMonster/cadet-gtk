@@ -101,7 +101,7 @@ void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks) {
 	
 	CGTK_init_contacts(contacts_header, contacts_box, contacts_list, callbacks);
 	
-	GtkWidget* id_button = gtk_button_new_from_icon_name("user-info\0", GTK_ICON_SIZE_MENU);
+	GtkWidget* id_button = gtk_button_new_from_icon_name("user-info-symbolic\0", GTK_ICON_SIZE_MENU);
 	gtk_widget_set_sensitive(id_button, FALSE);
 	
 	gtk_container_add(GTK_CONTAINER(contacts_header), id_button);
@@ -159,8 +159,26 @@ void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks) {
 			G_BINDING_SYNC_CREATE
 	);
 	
+	g_object_bind_property(
+			title_leaflet,
+			"folded\0",
+			contacts_header,
+			"show-close-button\0",
+			G_BINDING_INVERT_BOOLEAN
+	);
+	
+	g_object_bind_property(
+			title_leaflet,
+			"folded\0",
+			chat_header,
+			"show-close-button\0",
+			G_BINDING_INVERT_BOOLEAN
+	);
+	
 	g_signal_connect(back_button, "clicked\0", G_CALLBACK(CGTK_back), content_leaflet);
 	g_signal_connect(id_button, "clicked\0", G_CALLBACK(CGTK_open_identity), callbacks->set_port);
+	
+	gtk_widget_show_all(GTK_WIDGET(titleBar));
 }
 
 void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {

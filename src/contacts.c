@@ -116,10 +116,9 @@ static void CGTK_add_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 
 void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contacts_list, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Contacts\0");
-	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(header), TRUE);
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), FALSE);
 	
-	GtkWidget* add_button = gtk_button_new_from_icon_name("list-add\0", GTK_ICON_SIZE_MENU);
+	GtkWidget* add_button = gtk_button_new_from_icon_name("list-add-symbolic\0", GTK_ICON_SIZE_MENU);
 	
 	gtk_container_add(GTK_CONTAINER(header), add_button);
 	
