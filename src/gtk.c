@@ -86,7 +86,7 @@ static uint CGTK_split_name(GString* name, const char** identity, const char** p
 
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	GtkWidget* leaflet = gtk_widget_get_parent(GTK_WIDGET(user_data));
-	GtkWidget* content = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
+	GtkWidget* chat_content = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
 	GtkWidget* window = gtk_widget_get_toplevel(leaflet);
 	GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
 	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
@@ -129,7 +129,7 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 		free((void*) buffer);
 	}
 	
-	CGTK_load_chat(header, content, row);
+	CGTK_load_chat(header, chat_content, row);
 	
 	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat\0") != 0) {
 		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat\0");

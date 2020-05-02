@@ -128,7 +128,18 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contac
 	gtk_widget_set_hexpand(contacts_list, FALSE);
 	gtk_widget_set_vexpand(contacts_list, TRUE);
 	
-	gtk_container_add(GTK_CONTAINER(content), contacts_list);
+	GtkWidget* viewport = gtk_viewport_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(viewport), contacts_list);
+	
+	GtkWidget* scrolled = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(
+			GTK_SCROLLED_WINDOW(scrolled),
+			GTK_POLICY_NEVER,
+			GTK_POLICY_AUTOMATIC
+	);
+	
+	gtk_container_add(GTK_CONTAINER(scrolled), viewport);
+	gtk_container_add(GTK_CONTAINER(content), scrolled);
 	
 	// TODO: load all contacts
 	
@@ -138,6 +149,13 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contac
 	
 	g_signal_connect(add_button, "clicked\0", G_CALLBACK(CGTK_add_contact_dialog), contacts_list);
 	g_signal_connect(contacts_list, "row-activated\0", G_CALLBACK(callbacks->activate_contact), content);
+}
+
+GtkWidget* CGTK_get_contacts_list(GtkWidget* content) {
+	GtkWidget* scrolled = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
+	GtkWidget* viewport = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(scrolled))->data);
+	
+	return GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(viewport))->data);
 }
 
 void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port, contact_type_t type) {

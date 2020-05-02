@@ -16,6 +16,8 @@ typedef enum {
 
 void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, GtkWidget* contacts_list, const handy_callbacks_t* callbacks);
 
+GtkWidget* CGTK_get_contacts_list(GtkWidget* content);
+
 void CGTK_open_contact(GtkWidget* contacts_list, const char* identity, const char* port, contact_type_t type);
 
 void CGTK_close_contact(GtkWidget* contacts_list, const char* identity, const char* port);

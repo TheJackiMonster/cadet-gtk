@@ -178,7 +178,7 @@ void CGTK_update_identity_ui(GtkWidget* window, const char* identity) {
 void CGTK_update_contacts_ui(GtkWidget* window, const char* identity, const char* port, gboolean active) {
 	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
 	GtkWidget* contacts_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->data);
-	GtkWidget* contacts_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(contacts_box))->data);
+	GtkWidget* contacts_list = CGTK_get_contacts_list(contacts_box);
 	
 	if (active) {
 		CGTK_open_contact(contacts_list, identity, port, CGTK_CONTACT_UNKNOWN);

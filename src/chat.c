@@ -37,8 +37,10 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	
 	GtkWidget* msg_entry = gtk_entry_new();
 	gtk_widget_set_hexpand(msg_entry, TRUE);
+	gtk_widget_set_sensitive(msg_entry, FALSE);
 	
 	GtkWidget* msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
+	gtk_widget_set_sensitive(msg_button, FALSE);
 	
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_entry);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_button);
@@ -72,12 +74,28 @@ GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const 
 		chat_list = gtk_list_box_new();
 		gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
 		
+		GtkWidget* viewport = gtk_viewport_new(NULL, NULL);
+		gtk_container_add(GTK_CONTAINER(viewport), chat_list);
+		
+		GtkWidget* scrolled = gtk_scrolled_window_new(NULL, NULL);
+		gtk_widget_set_vexpand(scrolled, TRUE);
+		gtk_scrolled_window_set_policy(
+				GTK_SCROLLED_WINDOW(scrolled),
+				GTK_POLICY_NEVER,
+				GTK_POLICY_AUTOMATIC
+		);
+		
+		gtk_container_add(GTK_CONTAINER(scrolled), viewport);
+		
 		gtk_container_add(GTK_CONTAINER(chat_box), port_label);
-		gtk_container_add(GTK_CONTAINER(chat_box), chat_list);
+		gtk_container_add(GTK_CONTAINER(chat_box), scrolled);
 		
 		gtk_stack_add_named(GTK_STACK(chat_stack), chat_box, name->str);
 	} else {
-		chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
+		GtkWidget* scrolled = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
+		GtkWidget* viewport = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(scrolled))->data);
+		
+		chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(viewport))->data);
 	}
 	
 	g_string_free(name, TRUE);
@@ -86,6 +104,10 @@ GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const 
 }
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
+	GtkWidget* msg_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->next->data);
+	GtkWidget* msg_entry = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->data);
+	GtkWidget* msg_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->next->data);
+	
 	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
 	GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
 	
@@ -121,51 +143,33 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	
 	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), name->str);
 	
+	gtk_widget_set_sensitive(msg_entry, TRUE);
+	gtk_widget_set_sensitive(msg_button, TRUE);
+	
 	g_string_free(name, TRUE);
 }
 
-static gboolean CGTK_reveal_message(gpointer user_data) {
-	GtkWidget* revealer = GTK_WIDGET(user_data);
-	
-	gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), TRUE);
-	
-	return FALSE;
-}
-
 void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
-	GtkWidget* revealer = gtk_revealer_new();
-	
-	gtk_revealer_set_transition_type(GTK_REVEALER(revealer),
-			(msg->local? GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT : GTK_REVEALER_TRANSITION_TYPE_SLIDE_RIGHT)
-	);
-	
-	gtk_revealer_set_transition_duration(GTK_REVEALER(revealer), 250);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(revealer), FALSE);
-	
 	GtkWidget* msg_frame = gtk_frame_new(msg->sender);
 	gtk_widget_set_halign(msg_frame, (msg->local? GTK_ALIGN_END : GTK_ALIGN_START));
-	gtk_frame_set_label_align(GTK_FRAME(msg_frame), (msg->local? 1.0f : 0.0f), 0.5f);
+	gtk_widget_set_valign(msg_frame, GTK_ALIGN_CENTER);
+	gtk_frame_set_label_align(GTK_FRAME(msg_frame), (msg->local? 1.0f : 0.0f), 1.0f);
 	gtk_frame_set_shadow_type(GTK_FRAME(msg_frame), GTK_SHADOW_IN);
 	gtk_widget_set_size_request(msg_frame, 100, 0);
-	gtk_widget_set_valign(msg_frame, GTK_ALIGN_CENTER);
-	gtk_widget_set_hexpand(msg_frame, FALSE);
+	gtk_container_set_border_width(GTK_CONTAINER(msg_frame), 4);
 	
 	GtkWidget* text = gtk_label_new(msg->content);
-	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);
 	gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);
 	gtk_widget_set_halign(text, GTK_ALIGN_START);
+	gtk_widget_set_valign(text, GTK_ALIGN_START);
 	gtk_widget_set_margin_bottom(text, 4);
 	gtk_widget_set_margin_start(text, 8);
 	gtk_widget_set_margin_top(text, 4);
 	gtk_widget_set_margin_end(text, 8);
 	
 	gtk_container_add(GTK_CONTAINER(msg_frame), text);
-	gtk_container_add(GTK_CONTAINER(revealer), msg_frame);
-	gtk_container_add(GTK_CONTAINER(chat_list), revealer);
+	gtk_container_add(GTK_CONTAINER(chat_list), msg_frame);
 	
-	guint duration_ms = gtk_revealer_get_transition_duration(GTK_REVEALER(revealer));
-	
-	gtk_widget_show_all(revealer);
-	
-	g_timeout_add(duration_ms, CGTK_reveal_message, revealer);
+	gtk_widget_show_all(chat_list);
 }
