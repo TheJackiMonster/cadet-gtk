@@ -148,11 +148,14 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	}
 }
 
-static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
-	GtkWidget* window = gtk_widget_get_toplevel(msg_entry);
+static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
+	GtkWidget* msg_box = gtk_widget_get_parent(msg_button);
+	GtkWidget* window = gtk_widget_get_toplevel(msg_button);
 	GtkWidget* chat_stack = GTK_WIDGET(user_data);
 	
-	if (gtk_entry_get_text_length(GTK_ENTRY(msg_entry)) > 0) {
+	GtkTextBuffer* text_buffer = CGTK_get_chat_text_buffer(msg_box);
+	
+	if (gtk_text_buffer_get_char_count(text_buffer) > 0) {
 		GtkWidget* chat_box = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
 		GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
 		
@@ -171,8 +174,13 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 		msg.kind = MSG_KIND_TALK;
 		msg.timestamp = time(NULL);
 		
+		GtkTextIter start_iter, end_iter;
+		
+		gtk_text_buffer_get_start_iter(text_buffer, &start_iter);
+		gtk_text_buffer_get_end_iter(text_buffer, &end_iter);
+		
 		msg.sender = session.nick;
-		msg.content = gtk_entry_get_text(GTK_ENTRY(msg_entry));
+		msg.content = gtk_text_buffer_get_text(text_buffer, &start_iter, &end_iter, FALSE);
 		
 		size_t buffer_len;
 		const char* buffer;
@@ -189,7 +197,7 @@ static void CGTK_send_message(GtkWidget* msg_entry, gpointer user_data) {
 			
 			CGTK_update_messages_ui(window, destination, port, &msg);
 			
-			gtk_entry_set_text(GTK_ENTRY(msg_entry), "\0");
+			gtk_text_buffer_set_text(text_buffer, "\0", 0);
 		}
 		
 		if (name->str[index] == '\0') {

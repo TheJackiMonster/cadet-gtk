@@ -73,6 +73,14 @@ static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
 	gtk_widget_set_margin_end(avatar, 8);
 	
 	gtk_container_add(GTK_CONTAINER(main_box), avatar);
+#else
+	GtkWidget* avatar = gtk_image_new_from_icon_name("avatar-default-symbolic\0", GTK_ICON_SIZE_DIALOG);
+	gtk_widget_set_margin_bottom(avatar, 4);
+	gtk_widget_set_margin_start(avatar, 8);
+	gtk_widget_set_margin_top(avatar, 4);
+	gtk_widget_set_margin_end(avatar, 8);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), avatar);
 #endif
 	
 	GtkWidget* id_label = gtk_label_new(id_buffer);

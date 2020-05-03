@@ -10,12 +10,6 @@
 #include <libhandy-1/handy.h>
 #endif
 
-static void CGTK_active_entry(GtkWidget* msg_button, gpointer user_data) {
-	GtkWidget* msg_entry = GTK_WIDGET(user_data);
-	
-	gtk_widget_activate(msg_entry);
-}
-
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
@@ -53,14 +47,35 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	
 	GtkWidget* msg_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	
-	GtkWidget* msg_entry = gtk_entry_new();
-	gtk_widget_set_hexpand(msg_entry, TRUE);
-	gtk_widget_set_sensitive(msg_entry, FALSE);
+	GtkWidget* msg_text_view = gtk_text_view_new();
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(msg_text_view), 4);
+	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(msg_text_view), 4);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(msg_text_view), 4);
+	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(msg_text_view), 4);
+	gtk_widget_set_sensitive(msg_text_view, FALSE);
+	gtk_widget_set_margin_bottom(msg_text_view, 2);
+	gtk_widget_set_margin_top(msg_text_view, 2);
+	
+	GtkWidget* msg_scrolled = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(msg_scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_propagate_natural_height(GTK_SCROLLED_WINDOW(msg_scrolled), TRUE);
+	gtk_scrolled_window_set_max_content_height(GTK_SCROLLED_WINDOW(msg_scrolled), 150);
+	gtk_widget_set_hexpand(msg_scrolled, TRUE);
+	gtk_widget_set_margin_start(msg_scrolled, 4);
+	gtk_widget_set_margin_bottom(msg_scrolled, 2);
+	gtk_widget_set_margin_end(msg_scrolled, 2);
+	gtk_widget_set_margin_top(msg_scrolled, 2);
 	
 	GtkWidget* msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
+	gtk_widget_set_valign(msg_button, GTK_ALIGN_END);
 	gtk_widget_set_sensitive(msg_button, FALSE);
+	gtk_widget_set_margin_start(msg_button, 2);
+	gtk_widget_set_margin_bottom(msg_button, 4);
+	gtk_widget_set_margin_end(msg_button, 4);
+	gtk_widget_set_margin_top(msg_button, 4);
 	
-	gtk_container_add(GTK_CONTAINER(msg_box), msg_entry);
+	gtk_container_add(GTK_CONTAINER(msg_scrolled), msg_text_view);
+	gtk_container_add(GTK_CONTAINER(msg_box), msg_scrolled);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_button);
 	
 	gtk_container_add(GTK_CONTAINER(content), chat_stack);
@@ -70,8 +85,14 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(msg_entry, "activate\0", G_CALLBACK(callbacks->send_message), chat_stack);
-	g_signal_connect(msg_button, "clicked\0", G_CALLBACK(CGTK_active_entry), msg_entry);
+	g_signal_connect(msg_button, "clicked\0", G_CALLBACK(callbacks->send_message), chat_stack);
+}
+
+GtkTextBuffer* CGTK_get_chat_text_buffer(GtkWidget* chat_box) {
+	GtkWidget* scrolled = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
+	GtkWidget* text_view = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(scrolled))->data);
+	
+	return gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
 }
 
 GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const char* contact_port) {
@@ -123,7 +144,8 @@ GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const 
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	GtkWidget* msg_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->next->data);
-	GtkWidget* msg_entry = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->data);
+	GtkWidget* msg_scrolled = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->data);
+	GtkWidget* msg_text_view = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_scrolled))->data);
 	GtkWidget* msg_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_box))->next->data);
 	
 	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(content))->data);
@@ -161,7 +183,7 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	
 	gtk_stack_set_visible_child_name(GTK_STACK(chat_stack), name->str);
 	
-	gtk_widget_set_sensitive(msg_entry, TRUE);
+	gtk_widget_set_sensitive(msg_text_view, TRUE);
 	gtk_widget_set_sensitive(msg_button, TRUE);
 	
 	g_string_free(name, TRUE);

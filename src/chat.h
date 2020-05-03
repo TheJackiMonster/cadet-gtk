@@ -9,6 +9,8 @@
 
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, const handy_callbacks_t* callbacks);
 
+GtkTextBuffer* CGTK_get_chat_text_buffer(GtkWidget* chat_box);
+
 GtkWidget* CGTK_get_chat_list(GtkWidget* content, const char* contact_id, const char* contact_port);
 
 void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row);
