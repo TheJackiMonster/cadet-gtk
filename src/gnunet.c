@@ -38,8 +38,9 @@ static connection_t* CGTK_connection_create(const struct GNUNET_PeerIdentity* id
 }
 
 static void CGTK_connection_destroy(connection_t* connection, bool close_channel) {
-	if (close_channel) {
+	if ((close_channel) && (connection->channel)) {
 		GNUNET_CADET_channel_destroy(connection->channel);
+		connection->channel = NULL;
 	}
 	
 	GNUNET_free(connection);
@@ -88,14 +89,9 @@ static int CGTK_add_new_connection(connection_t* connection) {
 
 static int CGTK_remove_connection(connection_t* connection) {
 	if (session.connections) {
-		int res = GNUNET_CONTAINER_multipeermap_remove(session.connections, &(connection->identity), connection);
-		
-		if (res == GNUNET_YES) {
-			if (GNUNET_CONTAINER_multipeermap_size(session.connections) == 0) {
-				GNUNET_CONTAINER_multipeermap_destroy(session.connections);
-				session.connections = NULL;
-			}
-		}
+		return GNUNET_CONTAINER_multipeermap_remove(session.connections, &(connection->identity), connection);
+	} else {
+		return GNUNET_NO;
 	}
 }
 
@@ -219,6 +215,19 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, v
 	return GNUNET_YES;
 }
 
+static int CGTK_exit_connection(void *cls, const struct GNUNET_PeerIdentity* key, void* value) {
+	connection_t* connection = (connection_t*) value;
+	
+	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), (struct GNUNET_HashCode*) cls) == 0) {
+		CGTK_remove_connection(connection);
+		
+		CGTK_connection_destroy(connection, true);
+		return GNUNET_NO;
+	}
+	
+	return GNUNET_YES;
+}
+
 static void CGTK_idle(void* cls) {
 	session.idle = NULL;
 	
@@ -261,14 +270,14 @@ static void CGTK_idle(void* cls) {
 			
 			break;
 		} case MSG_GNUNET_SEND_MESSAGE: {
-			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gtk_identity(messaging);
+			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gtk_identity(messaging);
 			
 			if (!destination) {
 				GNUNET_SCHEDULER_shutdown();
 				return;
 			}
 			
-			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
+			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
 			
 			if (!port) {
 				GNUNET_SCHEDULER_shutdown();
@@ -285,7 +294,7 @@ static void CGTK_idle(void* cls) {
 						), GNUNET_MQ_handler_end()
 				};
 				
-				connection_t* connection = CGTK_connection_create(destination, port, NULL);
+				connection_t *connection = CGTK_connection_create(destination, port, NULL);
 				
 				connection->channel = GNUNET_CADET_channel_create(
 						session.cadet,
@@ -313,6 +322,29 @@ static void CGTK_idle(void* cls) {
 			}
 			
 			return;
+		} case MSG_GNUNET_EXIT: {
+			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gtk_identity(messaging);
+			
+			if (!destination) {
+				GNUNET_SCHEDULER_shutdown();
+				return;
+			}
+			
+			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
+			
+			if (!port) {
+				GNUNET_SCHEDULER_shutdown();
+				return;
+			}
+			
+			if (session.connections) {
+				struct GNUNET_HashCode hashcode;
+				GNUNET_memcpy(&hashcode, port, sizeof(struct GNUNET_HashCode));
+				
+				GNUNET_CONTAINER_multipeermap_get_multiple(session.connections, destination, CGTK_exit_connection, &hashcode);
+			}
+			
+			break;
 		} case MSG_ERROR: {
 			GNUNET_SCHEDULER_shutdown();
 			return;

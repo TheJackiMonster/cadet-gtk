@@ -13,6 +13,7 @@ typedef struct {
 	void (*activate_contact)(GtkListBox*, GtkListBoxRow*, gpointer);
 	void (*send_message)(GtkWidget*, gpointer);
 	void (*set_port)(GtkWidget*, gpointer);
+	void (*exit_chat)(GtkWidget*, gpointer);
 } handy_callbacks_t;
 
 void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks);

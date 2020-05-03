@@ -220,6 +220,27 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 	return offset;
 }
 
+void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port) {
+	struct GNUNET_PeerIdentity identity;
+	
+	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
+		return;
+	}
+	
+	size_t port_len = strlen(port);
+	
+	struct GNUNET_HashCode hashcode;
+	GNUNET_CRYPTO_hash(port, port_len, &hashcode);
+	
+	CGTK_add_port_to_lookup(port, port_len, &hashcode);
+	
+	msg_type_t type = MSG_GNUNET_EXIT;
+	
+	write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
+	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+}
+
 const struct GNUNET_HashCode* CGTK_recv_gtk_hashcode(messaging_t* messaging) {
 	static struct GNUNET_HashCode hashcode;
 	

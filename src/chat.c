@@ -10,6 +10,50 @@
 #include <libhandy-1/handy.h>
 #endif
 
+void CGTK_manage_chat_dialog(GtkWidget* manage_button, gpointer user_data) {
+	const handy_callbacks_t* callbacks = (const handy_callbacks_t*) user_data;
+	
+	GtkWidget* window = gtk_widget_get_toplevel(manage_button);
+	GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
+	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
+	GtkWidget* chat_header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header_leaflet))->next->data);
+	GtkWidget* options_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_header))->next->data);
+	
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(options_button), FALSE);
+	
+	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
+	GtkWidget* chat_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
+	GtkWidget* chat_stack = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
+	
+	#ifdef HANDY_USE_ZERO_API
+	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(window));
+	#else
+	GtkWidget* dialog = gtk_dialog_new();
+	#endif
+	
+	gtk_window_set_title(GTK_WINDOW(dialog), "Manage Chat\0");
+	gtk_widget_set_size_request(dialog, 320, 0);
+	
+	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
+	gtk_box_set_spacing(GTK_BOX(main_box), 2);
+	gtk_widget_set_margin_start(main_box, 4);
+	gtk_widget_set_margin_bottom(main_box, 4);
+	gtk_widget_set_margin_end(main_box, 4);
+	gtk_widget_set_margin_top(main_box, 4);
+	gtk_widget_set_vexpand(main_box, TRUE);
+	
+	GtkWidget* exit_button = gtk_button_new_with_label("Exit Chat\0");
+	gtk_widget_set_halign(exit_button, GTK_ALIGN_END);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), exit_button);
+	
+	gtk_box_set_child_packing(GTK_BOX(main_box), exit_button, FALSE, FALSE, 2, GTK_PACK_END);
+	
+	g_signal_connect(exit_button, "clicked\0", G_CALLBACK(callbacks->exit_chat), chat_stack);
+	
+	gtk_widget_show_all(dialog);
+}
+
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_button, const handy_callbacks_t* callbacks) {
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
@@ -21,10 +65,10 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	
 	// TODO: add options for different chats
 	
-	GtkWidget* option_test = gtk_button_new_with_label("Test\0");
-	gtk_button_set_relief(GTK_BUTTON(option_test), GTK_RELIEF_NONE);
+	GtkWidget* option_manage = gtk_button_new_with_label("Manage Chat\0");
+	gtk_button_set_relief(GTK_BUTTON(option_manage), GTK_RELIEF_NONE);
 	
-	gtk_container_add(GTK_CONTAINER(options_box), option_test);
+	gtk_container_add(GTK_CONTAINER(options_box), option_manage);
 	gtk_container_add(GTK_CONTAINER(options), options_box);
 	
 	gtk_widget_show_all(options_box);
@@ -86,6 +130,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, GtkWidget* back_butto
 	gtk_size_group_add_widget(sizeGroup, content);
 	
 	g_signal_connect(msg_button, "clicked\0", G_CALLBACK(callbacks->send_message), chat_stack);
+	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_manage_chat_dialog), callbacks);
 }
 
 GtkTextBuffer* CGTK_get_chat_text_buffer(GtkWidget* chat_box) {

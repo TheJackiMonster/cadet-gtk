@@ -28,6 +28,8 @@ typedef struct chat_state_t {
 } chat_state_t;
 
 static struct {
+	handy_callbacks_t callbacks;
+	
 	guint idle;
 	const char* nick;
 	GHashTable* states;
@@ -220,6 +222,35 @@ static void CGTK_set_port(GtkWidget* port_entry, gpointer user_data) {
 	CGTK_send_gnunet_port(messaging, port);
 }
 
+static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
+	GtkWidget* chat_stack = GTK_WIDGET(user_data);
+	GtkWidget* window = gtk_widget_get_toplevel(chat_stack);
+	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
+	
+	GtkWidget* dialog = gtk_widget_get_toplevel(exit_button);
+	
+	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(chat_stack)));
+	
+	const char* destination = name->str;
+	const char* port = "\0";
+	
+	uint index = CGTK_split_name(name, &destination, &port);
+	
+	CGTK_send_gnunet_exit(messaging, destination, port);
+	
+	if (name->str[index] == '\0') {
+		name->str[index] = '_';
+	}
+	
+	g_string_free(name, TRUE);
+	
+	gtk_widget_destroy(dialog);
+	
+	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "contacts\0") != 0) {
+		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "contacts\0");
+	}
+}
+
 static gboolean CGTK_idle(gpointer user_data) {
 	GtkWidget* window = GTK_WIDGET(gtk_window_list_toplevels()->data);
 	
@@ -273,8 +304,6 @@ static gboolean CGTK_idle(gpointer user_data) {
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
-			printf("A-");
-			
 			if (source == NULL) {
 				CGTK_shutdown(window, "Can't identify connections source!\0");
 				return FALSE;
@@ -282,14 +311,10 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
-			printf("%s-B-", source);
-			
 			if (port == NULL) {
 				CGTK_shutdown(window, "Can't identify connections port!\0");
 				return FALSE;
 			}
-			
-			printf("%s-C-", port);
 			
 			size_t length = CGTK_recv_gnunet_msg_length(messaging);
 			char buffer[60000 + 1];
@@ -319,6 +344,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 				
 				if (strlen(buffer) > 0) {
 					msg_t* msg = CGTK_decode_message(buffer);
+					
+					if (!(msg->decoding & MSG_DEC_KIND_BIT)) {
+						msg->kind = MSG_KIND_TALK;
+					}
+					
+					if (!(msg->decoding & MSG_DEC_TIMESTAMP_BIT)) {
+						msg->timestamp = time(NULL);
+					}
 					
 					if (!(msg->decoding & MSG_DEC_SENDER_BIT)) {
 						msg->sender = "other\0";
@@ -395,13 +428,12 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	GtkWidget* window = gtk_application_window_new(application);
 	gtk_window_set_default_size(GTK_WINDOW(window), 320, 512);
 	
-	handy_callbacks_t callbacks;
+	session.callbacks.activate_contact = &CGTK_activate_contact;
+	session.callbacks.send_message = &CGTK_send_message;
+	session.callbacks.set_port = &CGTK_set_port;
+	session.callbacks.exit_chat = &CGTK_exit_chat;
 	
-	callbacks.activate_contact = &CGTK_activate_contact;
-	callbacks.send_message = &CGTK_send_message;
-	callbacks.set_port = &CGTK_set_port;
-	
-	CGTK_init_ui(window, &callbacks);
+	CGTK_init_ui(window, &(session.callbacks));
 	
 	g_signal_connect(window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	
