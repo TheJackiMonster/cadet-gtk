@@ -16,6 +16,8 @@ typedef struct {
 	void (*exit_chat)(GtkWidget*, gpointer);
 } handy_callbacks_t;
 
+uint CGTK_split_name(GString* name, const char** identity, const char** port);
+
 void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks);
 
 void CGTK_update_identity_ui(GtkWidget* window, const char* identity);

@@ -199,20 +199,7 @@ void CGTK_load_chat(GtkWidget* header, GtkWidget* content, GtkListBoxRow* row) {
 	const char* contact_id = name->str;
 	const char* contact_port = "\0";
 	
-	size_t index = 0;
-	
-	while (index < name->len) {
-		if (name->str[index] == '_') {
-			if (index + 1 < name->len) {
-				contact_port = (name->str + index + 1);
-			}
-			
-			name->str[index] = '\0';
-			break;
-		}
-		
-		index++;
-	}
+	size_t index = CGTK_split_name(name, &contact_id, &contact_port);
 	
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), contact_id);
 	

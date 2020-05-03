@@ -99,6 +99,27 @@ static void CGTK_open_identity(GtkWidget* id_button, gpointer user_data) {
 	gtk_widget_show_all(dialog);
 }
 
+uint CGTK_split_name(GString* name, const char** identity, const char** port) {
+	size_t index = 0;
+	
+	*identity = name->str;
+	
+	while (index < name->len) {
+		if (name->str[index] == '_') {
+			if (index + 1 < name->len) {
+				*port = (name->str + index + 1);
+			}
+			
+			name->str[index] = '\0';
+			break;
+		}
+		
+		index++;
+	}
+	
+	return index;
+}
+
 void CGTK_init_ui(GtkWidget* window, const handy_callbacks_t* callbacks) {
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();

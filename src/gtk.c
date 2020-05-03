@@ -65,27 +65,6 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 	}
 }
 
-static uint CGTK_split_name(GString* name, const char** identity, const char** port) {
-	size_t index = 0;
-	
-	*identity = name->str;
-	
-	while (index < name->len) {
-		if (name->str[index] == '_') {
-			if (index + 1 < name->len) {
-				*port = (name->str + index + 1);
-			}
-			
-			name->str[index] = '\0';
-			break;
-		}
-		
-		index++;
-	}
-	
-	return index;
-}
-
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	GtkWidget* leaflet = gtk_widget_get_parent(GTK_WIDGET(user_data));
 	GtkWidget* chat_content = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
