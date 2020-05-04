@@ -9,7 +9,7 @@
 
 static messaging_t* messaging;
 
-#include "handy_ui.h"
+#include "gui.h"
 
 #ifdef HANDY_USE_ZERO_API
 #include <libhandy-0.0/handy.h>
@@ -17,7 +17,7 @@ static messaging_t* messaging;
 #include <libhandy-1/handy.h>
 #endif
 
-#include "chat.h"
+#include "gui/chat.h"
 #include "json.h"
 
 #include <stdlib.h>
@@ -28,15 +28,15 @@ typedef struct chat_state_t {
 } chat_state_t;
 
 static struct {
-	handy_callbacks_t callbacks;
+	cgtk_gui_t gui;
 	
 	guint idle;
 	const char* nick;
 	GHashTable* states;
 } session;
 
-static void CGTK_shutdown(GtkWidget* window, const char* error_message) {
-	gtk_widget_destroy(window);
+static void CGTK_shutdown(const char* error_message) {
+	gtk_widget_destroy(session.gui.app_window);
 	
 	perror(error_message);
 }
@@ -65,174 +65,65 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 	}
 }
 
-static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
-	GtkWidget* leaflet = gtk_widget_get_parent(GTK_WIDGET(user_data));
-	GtkWidget* chat_content = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(leaflet))->next->data);
-	GtkWidget* window = gtk_widget_get_toplevel(leaflet);
-	GtkWidget* titleBar = gtk_window_get_titlebar(GTK_WINDOW(window));
-	GtkWidget* header_leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(titleBar))->data);
-	GtkWidget* header = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header_leaflet))->next->data);
+static bool_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
+	GString* name = g_string_new(destination);
+	g_string_append_c_inline(name, '_');
+	g_string_append(name, port);
 	
-	if (g_regex_match_simple(".*\\((GROUP)\\)", hdy_action_row_get_title(HDY_ACTION_ROW(row)), 0, 0)) {
-		GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
+	gboolean new_entry;
+	chat_state_t* state = CGTK_get_state(name, &new_entry);
+	
+	msg->timestamp = time(NULL);
+	
+	if (msg->kind == MSG_KIND_TALK) {
+		msg->sender = session.nick;
+	} else
+	if ((msg->kind == MSG_KIND_JOIN) || (msg->kind == MSG_KIND_LEAVE)) {
+		msg->who = session.nick;
+	}
+	
+	size_t buffer_len;
+	const char* buffer;
+	
+	if (state->use_json) {
+		buffer = CGTK_encode_message(msg, &buffer_len);
+	} else {
+		buffer_len = strlen(msg->content);;
+		buffer = msg->content;
+	}
+	
+	bool_t result = FALSE;
+	
+	if (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) > 0) {
+		msg->local = TRUE;
 		
-		gboolean new_entry;
-		chat_state_t* state = CGTK_get_state(name, &new_entry);
-		
-		state->use_json = TRUE;
-		state->is_group = TRUE;
-		
-		const char* destination = name->str;
-		const char* port = "\0";
-		
-		uint index = CGTK_split_name(name, &destination, &port);
-		
-		msg_t msg = {};
-		
-		msg.kind = MSG_KIND_JOIN;
-		msg.timestamp = time(NULL);
-		
-		msg.who = session.nick;
-		
-		size_t buffer_len;
-		const char* buffer = CGTK_encode_message(&msg, &buffer_len);
-		
-		CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len);
-		
-		if (name->str[index] == '\0') {
-			name->str[index] = '_';
+		if (msg->kind == MSG_KIND_TALK) {
+			CGTK_update_chat_ui(&(session.gui), destination, port, msg);
 		}
 		
-		if (!new_entry) {
-			g_string_free(name, TRUE);
-		}
-		
+		result = TRUE;
+	}
+	
+	if (!new_entry) {
+		g_string_free(name, TRUE);
+	}
+	
+	if (state->use_json) {
 		free((void*) buffer);
 	}
 	
-	CGTK_load_chat(header, chat_content, row);
-	
-	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "chat\0") != 0) {
-		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "chat\0");
-	}
-
-#ifdef HANDY_USE_ZERO_API
-	gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(leaflet)) == HDY_FOLD_UNFOLDED);
-#else
-	gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(leaflet));
-#endif
-	
-	if (unfolded) {
-		GtkWidget* back_button = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(header))->data);
-		
-		gtk_widget_set_visible(back_button, FALSE);
-	}
+	return result;
 }
 
-static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
-	GtkWidget* msg_box = gtk_widget_get_parent(msg_button);
-	GtkWidget* window = gtk_widget_get_toplevel(msg_button);
-	GtkWidget* chat_stack = GTK_WIDGET(user_data);
-	
-	GtkTextBuffer* text_buffer = CGTK_get_chat_text_buffer(msg_box);
-	
-	if (gtk_text_buffer_get_char_count(text_buffer) > 0) {
-		GtkWidget* chat_box = gtk_stack_get_visible_child(GTK_STACK(chat_stack));
-		GtkWidget* chat_list = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
-		
-		GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(chat_stack)));
-		
-		gboolean new_entry;
-		chat_state_t* state = CGTK_get_state(name, &new_entry);
-		
-		const char* destination = name->str;
-		const char* port = "\0";
-		
-		uint index = CGTK_split_name(name, &destination, &port);
-		
-		msg_t msg = {};
-		
-		msg.kind = MSG_KIND_TALK;
-		msg.timestamp = time(NULL);
-		
-		GtkTextIter start_iter, end_iter;
-		
-		gtk_text_buffer_get_start_iter(text_buffer, &start_iter);
-		gtk_text_buffer_get_end_iter(text_buffer, &end_iter);
-		
-		msg.sender = session.nick;
-		msg.content = gtk_text_buffer_get_text(text_buffer, &start_iter, &end_iter, FALSE);
-		
-		size_t buffer_len;
-		const char* buffer;
-		
-		if (state->use_json) {
-			buffer = CGTK_encode_message(&msg, &buffer_len);
-		} else {
-			buffer_len = strlen(msg.content);;
-			buffer = msg.content;
-		}
-		
-		if (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) > 0) {
-			msg.local = TRUE;
-			
-			CGTK_update_messages_ui(window, destination, port, &msg);
-			
-			gtk_text_buffer_set_text(text_buffer, "\0", 0);
-		}
-		
-		if (name->str[index] == '\0') {
-			name->str[index] = '_';
-		}
-		
-		if (!new_entry) {
-			g_string_free(name, TRUE);
-		}
-		
-		if (state->use_json) {
-			free((void*) buffer);
-		}
-	}
+static void CGTK_update_port() {
+	CGTK_send_gnunet_port(messaging, session.gui.port);
 }
 
-static void CGTK_set_port(GtkWidget* port_entry, gpointer user_data) {
-	const char* port = gtk_entry_get_text(GTK_ENTRY(port_entry));
-	
-	CGTK_send_gnunet_port(messaging, port);
-}
-
-static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
-	GtkWidget* chat_stack = GTK_WIDGET(user_data);
-	GtkWidget* window = gtk_widget_get_toplevel(chat_stack);
-	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(window))->data);
-	
-	GtkWidget* dialog = gtk_widget_get_toplevel(exit_button);
-	
-	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(chat_stack)));
-	
-	const char* destination = name->str;
-	const char* port = "\0";
-	
-	uint index = CGTK_split_name(name, &destination, &port);
-	
+static void CGTK_exit_chat(const char* destination, const char* port) {
 	CGTK_send_gnunet_exit(messaging, destination, port);
-	
-	if (name->str[index] == '\0') {
-		name->str[index] = '_';
-	}
-	
-	g_string_free(name, TRUE);
-	
-	gtk_widget_destroy(dialog);
-	
-	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "contacts\0") != 0) {
-		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "contacts\0");
-	}
 }
 
 static gboolean CGTK_idle(gpointer user_data) {
-	GtkWidget* window = GTK_WIDGET(gtk_window_list_toplevels()->data);
-	
 	msg_type_t type = CGTK_recv_gnunet_msg_type(messaging);
 	
 	switch (type) {
@@ -240,63 +131,63 @@ static gboolean CGTK_idle(gpointer user_data) {
 			const char* identity = CGTK_recv_gnunet_identity(messaging);
 			
 			if (identity == NULL) {
-				CGTK_shutdown(window, "Can't retrieve identity of peer!\0");
+				CGTK_shutdown("Can't retrieve identity of peer!\0");
 				return FALSE;
 			}
 			
-			CGTK_update_identity_ui(window, identity);
+			CGTK_update_identity_ui(&(session.gui), identity);
 			break;
 		} case MSG_GTK_CONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!\0");
+				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!\0");
+				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, port, TRUE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, TRUE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!\0");
+				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!\0");
+				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(window, source, port, FALSE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, FALSE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
-				CGTK_shutdown(window, "Can't identify connections source!\0");
+				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
 			if (port == NULL) {
-				CGTK_shutdown(window, "Can't identify connections port!\0");
+				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
 			
 			size_t length = CGTK_recv_gnunet_msg_length(messaging);
-			char buffer[60000 + 1];
+			char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
 			
 			size_t complete = 0;
 			
@@ -304,15 +195,15 @@ static gboolean CGTK_idle(gpointer user_data) {
 				ssize_t offset = 0;
 				size_t remaining = length - complete;
 				
-				if (remaining > 60000) {
-					remaining = 60000;
+				if (remaining > CGTK_MESSAGE_BUFFER_SIZE) {
+					remaining = CGTK_MESSAGE_BUFFER_SIZE;
 				}
 				
 				while (offset < remaining) {
 					ssize_t done = CGTK_recv_gnunet_message(messaging, buffer + offset, remaining - offset);
 					
 					if (done <= 0) {
-						CGTK_shutdown(window, "Transmission of message has exited!\0");
+						CGTK_shutdown("Transmission of message has exited!\0");
 						return FALSE;
 					}
 					
@@ -345,7 +236,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 					
 					msg->local = FALSE;
 					
-					CGTK_update_messages_ui(window, source, port, msg);
+					CGTK_update_chat_ui(&(session.gui), source, port, msg);
 					
 					GString* key = g_string_new(source);
 					g_string_append_c_inline(key, '_');
@@ -368,7 +259,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			break;
 		} case MSG_ERROR: {
-			CGTK_shutdown(window, "No connection!\0");
+			CGTK_shutdown("No connection!\0");
 			return FALSE;
 		} default: {
 			break;
@@ -404,19 +295,19 @@ void CGTK_state_value_free(gpointer value) {
 void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
 	
-	GtkWidget* window = gtk_application_window_new(application);
-	gtk_window_set_default_size(GTK_WINDOW(window), 320, 512);
+	session.gui.callbacks.send_message = &CGTK_send_message;
+	session.gui.callbacks.update_port = &CGTK_update_port;
+	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	
-	session.callbacks.activate_contact = &CGTK_activate_contact;
-	session.callbacks.send_message = &CGTK_send_message;
-	session.callbacks.set_port = &CGTK_set_port;
-	session.callbacks.exit_chat = &CGTK_exit_chat;
+	session.gui.app_window = gtk_application_window_new(application);
 	
-	CGTK_init_ui(window, &(session.callbacks));
+	gtk_window_set_default_size(GTK_WINDOW(session.gui.app_window), 320, 512);
 	
-	g_signal_connect(window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
+	CGTK_init_ui(&(session.gui));
 	
-	gtk_widget_show_all(window);
+	g_signal_connect(session.gui.app_window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
+	
+	gtk_widget_show_all(session.gui.app_window);
 	
 	#if(CGTK_GTK_SESSION_IDLE_DELAY_MS > 0)
 	session.idle = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_GTK_SESSION_IDLE_DELAY_MS, CGTK_idle, NULL, NULL);

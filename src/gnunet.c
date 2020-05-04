@@ -164,7 +164,7 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, v
 	
 	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), (struct GNUNET_HashCode*) cls) == 0) {
 		size_t length = CGTK_recv_gtk_msg_length(messaging);
-		char buffer[60000 + 1];
+		char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
 		
 		if (length == 0) {
 			memset(cls, 0, sizeof(struct GNUNET_HashCode));
@@ -182,8 +182,8 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* key, v
 			ssize_t offset = 0;
 			size_t remaining = length - complete;
 			
-			if (remaining > 60000) {
-				remaining = 60000;
+			if (remaining > CGTK_MESSAGE_BUFFER_SIZE) {
+				remaining = CGTK_MESSAGE_BUFFER_SIZE;
 			}
 			
 			while (offset < remaining) {

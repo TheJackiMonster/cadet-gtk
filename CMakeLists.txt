@@ -19,12 +19,14 @@ add_executable(cadet-gtk
 		
 		src/config.h
 		src/main.c
-		src/chat.h
-		src/chat.c
-		src/contacts.h
-		src/contacts.c
-		src/handy_ui.h
-		src/handy_ui.c
+		src/gui/chat.h
+		src/gui/chat.c
+		src/gui/contacts.h
+		src/gui/contacts.c
+		src/gui/util.h
+		src/gui/util.c
+		src/gui.h
+		src/gui.c
 		src/messaging.h
 		src/messaging.c
 		src/gnunet.h
