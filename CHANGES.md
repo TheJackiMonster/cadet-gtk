@@ -1,3 +1,9 @@
+## Version 0.4.0
+* Allow creating a groupchat inside the application with a selected port.
+* Groupchats can listen on separate ports.
+* Scrolling in chats is possible and text-input allows multiple lines.
+* Code is cleaner than before and some warnings and errors were fixed.
+
 ## Version 0.3.0
 * Integrating a layer with JSON or similar to allow metadata in messages.
 * Integrating the current state of functionality of the groupchat-application (client-side).
