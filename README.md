@@ -30,7 +30,6 @@ If you want to take a look at all the releases and its changes: [Release Notes](
 
 You can see all other features and bigger changes which are planned right here:
 
- * [ ] Allow creating a groupchat inside the application with a selected port.
  * [ ] Allow creating a normal chat with JSON.
  * [ ] Allow viewing all members in a groupchat more conveniently.
  * [ ] Allow changing your nickname via GUI.
