@@ -45,7 +45,9 @@ typedef struct msg_t {
 
 const char* CGTK_encode_message(const msg_t* msg, size_t* message_len);
 
-msg_t* CGTK_decode_message(const char* message);
+msg_t* CGTK_decode_message(const char* message, size_t message_len);
+
+void CGTK_repair_message(msg_t* msg, const char* message);
 
 void CGTK_free_message(msg_t* msg);
 

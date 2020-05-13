@@ -18,23 +18,7 @@
 
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
-	
-	if (g_regex_match_simple(".*\\((GROUP)\\)", hdy_action_row_get_title(HDY_ACTION_ROW(row)), 0, 0)) {
-		GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
-		
-		const char* destination = name->str;
-		const char* port = "\0";
-		
-		CGTK_split_name(name, &destination, &port);
-		
-		msg_t msg = {};
-		msg.kind = MSG_KIND_JOIN;
-		
-		gui->callbacks.send_message(destination, port, &msg);
-		
-		g_string_free(name, TRUE);
-	}
-	
+
 	CGTK_load_chat(gui, row);
 	
 	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(gui->content_leaflet)), "chat\0") != 0) {
@@ -96,12 +80,12 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) 
 }
 
 void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, contact_type_t type) {
-	GList* list = gtk_container_get_children(GTK_CONTAINER(gui->contacts_list));
+	GList *list = gtk_container_get_children(GTK_CONTAINER(gui->contacts_list));
 	
-	GString* name = CGTK_merge_name(identity, port);
+	GString *name = CGTK_merge_name(identity, port);
 	
 	while (list) {
-		GtkWidget* row = GTK_WIDGET(list->data);
+		GtkWidget *row = GTK_WIDGET(list->data);
 		
 		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
 			hdy_action_row_set_icon_name(HDY_ACTION_ROW(row), "user-available-symbolic\0");
@@ -112,7 +96,7 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 		list = list->next;
 	}
 	
-	HdyActionRow* contact = hdy_action_row_new();
+	HdyActionRow *contact = hdy_action_row_new();
 	gtk_widget_set_name(GTK_WIDGET(contact), name->str);
 	
 	g_string_free(name, TRUE);
@@ -129,7 +113,7 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 	
 	g_string_free(name, TRUE);
 	
-	gtk_container_add(GTK_CONTAINER(gui->contacts_list),  GTK_WIDGET(contact));
+	gtk_container_add(GTK_CONTAINER(gui->contacts_list), GTK_WIDGET(contact));
 	
 	gtk_widget_show_all(GTK_WIDGET(contact));
 }
@@ -151,4 +135,42 @@ void CGTK_close_contact(cgtk_gui_t* gui, const char* identity, const char* port)
 	}
 	
 	g_string_free(name, TRUE);
+}
+
+void CGTK_remove_contact(cgtk_gui_t* gui, const char* identity, const char* port) {
+	GList* list = gtk_container_get_children(GTK_CONTAINER(gui->contacts_list));
+	
+	GString* name = CGTK_merge_name(identity, port);
+	
+	while (list) {
+		GtkWidget* row = GTK_WIDGET(list->data);
+		
+		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
+			CGTK_unload_chat(gui, GTK_LIST_BOX_ROW(row));
+			
+			gtk_container_remove(GTK_CONTAINER(gui->contacts_list), row);
+			break;
+		}
+		
+		list = list->next;
+	}
+	
+	g_string_free(name, TRUE);
+	
+	const char* swap_chat = gtk_stack_get_visible_child_name(GTK_STACK(gui->chat_stack));
+	
+	if (swap_chat) {
+		list = gtk_container_get_children(GTK_CONTAINER(gui->contacts_list));
+		
+		while (list) {
+			GtkWidget* row = GTK_WIDGET(list->data);
+			
+			if (strcmp(gtk_widget_get_name(row), swap_chat) == 0) {
+				gtk_widget_activate(row);
+				break;
+			}
+			
+			list = list->next;
+		}
+	}
 }

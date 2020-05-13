@@ -26,7 +26,8 @@ typedef enum {
 	
 	MSG_GNUNET_PORT = 10,
 	MSG_GNUNET_PEERS = 20,
-	MSG_GNUNET_EXIT = 4,
+	MSG_GNUNET_GROUP = 30,
+	MSG_GNUNET_EXIT = 40,
 	MSG_GNUNET_SEND_MESSAGE = 50,
 	MSG_GNUNET_POLL_MESSAGE = 60,
 	
@@ -65,6 +66,8 @@ ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t le
 void CGTK_send_gnunet_port(messaging_t* messaging, const char* port);
 
 ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port, const char* buffer, size_t length);
+
+void CGTK_send_gnunet_group(messaging_t* messaging, const char* port);
 
 void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port);
 

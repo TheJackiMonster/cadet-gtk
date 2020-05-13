@@ -101,19 +101,26 @@ void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity) {
 	gtk_widget_set_sensitive(gui->identity_button, TRUE);
 }
 
-void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, gboolean active) {
-	if (active) {
-		CGTK_open_contact(gui, identity, port, CGTK_CONTACT_UNKNOWN);
-	} else {
-		CGTK_close_contact(gui, identity, port);
+void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, contact_state_t state) {
+	switch (state) {
+		case CONTACT_INACTIVE: {
+			CGTK_close_contact(gui, identity, port);
+			break;
+		} case CONTACT_ACTIVE: {
+			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_UNKNOWN);
+			break;
+		} case CONTACT_ACTIVE_GROUP: {
+			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_GROUP);
+			break;
+		} default: {
+			break;
+		}
 	}
 }
 
 void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port, const msg_t* msg) {
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, identity, port);
-	GtkWidget* port_label = GTK_WIDGET(gtk_container_get_children(
-			GTK_CONTAINER(gtk_widget_get_parent(chat_list)))->data
-	);
+	GtkWidget* port_label = CGTK_get_chat_label(gui, identity, port);
 	
 	switch (msg->kind) {
 		case MSG_KIND_TALK: {

@@ -153,7 +153,7 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 	if (!chat_box) {
 		chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 		
-		GtkWidget* port_label = gtk_label_new(contact_port);
+		GtkWidget* chat_label = gtk_label_new(contact_port);
 		
 		chat_list = gtk_list_box_new();
 		gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
@@ -171,7 +171,7 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 		
 		gtk_container_add(GTK_CONTAINER(scrolled), viewport);
 		
-		gtk_container_add(GTK_CONTAINER(chat_box), port_label);
+		gtk_container_add(GTK_CONTAINER(chat_box), chat_label);
 		gtk_container_add(GTK_CONTAINER(chat_box), scrolled);
 		
 		gtk_stack_add_named(GTK_STACK(gui->chat_stack), chat_box, name->str);
@@ -185,6 +185,22 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 	g_string_free(name, TRUE);
 	
 	return chat_list;
+}
+
+GtkWidget* CGTK_get_chat_label(cgtk_gui_t* gui, const char* contact_id, const char* contact_port) {
+	GString* name = CGTK_merge_name(contact_id, contact_port);
+	
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat_stack), name->str);
+	
+	if (!chat_box) {
+		CGTK_get_chat_list(gui, contact_id, contact_port);
+	}
+	
+	chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat_stack), name->str);
+	
+	g_string_free(name, TRUE);
+	
+	return GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
 }
 
 void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
@@ -213,6 +229,22 @@ void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	gtk_widget_set_sensitive(gui->msg_button, TRUE);
 	
 	g_string_free(name, TRUE);
+}
+
+void CGTK_unload_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(
+			GTK_STACK(gui->chat_stack), gtk_widget_get_name(GTK_WIDGET(row))
+	);
+	
+	gtk_container_remove(GTK_CONTAINER(gui->chat_stack), chat_box);
+	
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat_header), "\0");
+	
+	gtk_widget_show_all(gui->chat_stack);
+	gtk_widget_show_all(gui->chat_header);
+	
+	gtk_widget_set_sensitive(gui->msg_text_view, FALSE);
+	gtk_widget_set_sensitive(gui->msg_button, FALSE);
 }
 
 void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {

@@ -19,6 +19,7 @@ static messaging_t* messaging;
 
 #include "gui/chat.h"
 #include "json.h"
+#include "gui/util.h"
 
 #include <stdlib.h>
 
@@ -66,9 +67,7 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 }
 
 static bool_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
-	GString* name = g_string_new(destination);
-	g_string_append_c_inline(name, '_');
-	g_string_append(name, port);
+	GString* name = CGTK_merge_name(destination, port);
 	
 	gboolean new_entry;
 	chat_state_t* state = CGTK_get_state(name, &new_entry);
@@ -82,19 +81,20 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 		msg->who = session.nick;
 	}
 	
-	size_t buffer_len;
+	size_t buffer_len = 0;
 	const char* buffer;
 	
 	if (state->use_json) {
 		buffer = CGTK_encode_message(msg, &buffer_len);
-	} else {
-		buffer_len = strlen(msg->content);;
+	} else
+	if (msg->content) {
+		buffer_len = strlen(msg->content);
 		buffer = msg->content;
 	}
 	
 	bool_t result = FALSE;
 	
-	if (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) > 0) {
+	if ((buffer_len > 0) && (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) >= buffer_len)) {
 		msg->local = TRUE;
 		
 		if (msg->kind == MSG_KIND_TALK) {
@@ -119,7 +119,35 @@ static void CGTK_update_port() {
 	CGTK_send_gnunet_port(messaging, session.gui.port);
 }
 
+static void CGTK_open_group(const char* port) {
+	GString* name = CGTK_merge_name(session.gui.identity, port);
+	
+	gboolean new_entry;
+	chat_state_t* state = CGTK_get_state(name, &new_entry);
+	
+	if (!new_entry) {
+		g_string_free(name, TRUE);
+	}
+	
+	state->use_json = TRUE;
+	state->is_group = TRUE;
+	
+	CGTK_send_gnunet_group(messaging, port);
+}
+
 static void CGTK_exit_chat(const char* destination, const char* port) {
+	GString* name = CGTK_merge_name(session.gui.identity, port);
+	
+	gboolean new_entry;
+	chat_state_t* state = CGTK_get_state(name, &new_entry);
+	
+	if (!new_entry) {
+		g_string_free(name, TRUE);
+	}
+	
+	state->use_json = FALSE;
+	state->is_group = FALSE;
+	
 	CGTK_send_gnunet_exit(messaging, destination, port);
 }
 
@@ -152,7 +180,16 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, TRUE);
+			GString* name = CGTK_merge_name(session.gui.identity, port);
+			
+			gboolean new_entry;
+			chat_state_t* state = CGTK_get_state(name, &new_entry);
+			
+			if (!new_entry) {
+				g_string_free(name, TRUE);
+			}
+			
+			CGTK_update_contacts_ui(&(session.gui), source, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -169,7 +206,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, FALSE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_INACTIVE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
@@ -213,26 +250,9 @@ static gboolean CGTK_idle(gpointer user_data) {
 				buffer[offset] = '\0';
 				
 				if (strlen(buffer) > 0) {
-					msg_t* msg = CGTK_decode_message(buffer);
+					msg_t* msg = CGTK_decode_message(buffer, offset);
 					
-					if (!(msg->decoding & MSG_DEC_KIND_BIT)) {
-						msg->kind = MSG_KIND_TALK;
-					}
-					
-					if (!(msg->decoding & MSG_DEC_TIMESTAMP_BIT)) {
-						msg->timestamp = time(NULL);
-					}
-					
-					if (!(msg->decoding & MSG_DEC_SENDER_BIT)) {
-						msg->sender = "other\0";
-					}
-					
-					if (msg->decoding == 0) {
-						msg->content = buffer;
-					} else
-					if (!(msg->decoding & MSG_DEC_CONTENT_BIT)) {
-						msg->content = "\0";
-					}
+					CGTK_repair_message(msg, buffer);
 					
 					msg->local = FALSE;
 					
@@ -297,6 +317,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	session.gui.callbacks.send_message = &CGTK_send_message;
 	session.gui.callbacks.update_port = &CGTK_update_port;
+	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	
 	session.gui.app_window = gtk_application_window_new(application);

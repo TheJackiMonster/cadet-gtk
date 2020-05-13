@@ -2,6 +2,8 @@
 // Created by thejackimonster on 04.05.20.
 //
 
+#include "../gui/contacts.h"
+
 static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
@@ -17,6 +19,8 @@ static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 	uint index = CGTK_split_name(name, &destination, &port);
 	
 	gui->callbacks.exit_chat(destination, port);
+	
+	CGTK_remove_contact(gui, destination, port);
 	
 	if (name->str[index] == '\0') {
 		name->str[index] = '_';

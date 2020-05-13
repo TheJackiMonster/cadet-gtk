@@ -20,4 +20,6 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 
 void CGTK_close_contact(cgtk_gui_t* gui, const char* identity, const char* port);
 
+void CGTK_remove_contact(cgtk_gui_t* gui, const char* identity, const char* port);
+
 #endif //CADET_GTK_CONTACTS_H

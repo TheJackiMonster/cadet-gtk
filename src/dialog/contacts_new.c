@@ -23,12 +23,21 @@ static void CGTK_add_contact_entry(GtkWidget* confirm_button, gpointer user_data
 			type = CGTK_CONTACT_PERSON;
 		}
 		
-		CGTK_open_contact(
-				gui,
-				gtk_entry_get_text(GTK_ENTRY(id_entry)),
-				gtk_entry_get_text(GTK_ENTRY(port_entry)),
-				type
-		);
+		const char* identity = gtk_entry_get_text(GTK_ENTRY(id_entry));
+		const char* port = gtk_entry_get_text(GTK_ENTRY(port_entry));
+		
+		if ((type == CGTK_CONTACT_GROUP) && (strcmp(identity, gui->identity) == 0)) {
+			gui->callbacks.open_group(port);
+		} else {
+			CGTK_open_contact(gui, identity, port, type);
+		}
+		
+		if (type == CGTK_CONTACT_GROUP) {
+			msg_t msg = {};
+			msg.kind = MSG_KIND_JOIN;
+			
+			gui->callbacks.send_message(identity, port, &msg);
+		}
 	}
 	
 	gtk_widget_destroy(dialog);

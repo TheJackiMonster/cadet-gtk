@@ -5,6 +5,7 @@
 #include "json.h"
 
 #include <string.h>
+#include <time.h>
 
 const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 	json_t* json = json_object();
@@ -66,7 +67,7 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 	return message;
 }
 
-const char* CGTK_string_clone(const char* string) {
+static const char* CGTK_string_clone(const char* string) {
 	if (string) {
 		const size_t len = strlen(string);
 		char* clone = (char*) malloc(len + 1);
@@ -80,14 +81,12 @@ const char* CGTK_string_clone(const char* string) {
 	}
 }
 
-msg_t* CGTK_decode_message(const char* message) {
+msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 	msg_t* msg = (msg_t*) malloc(sizeof(msg_t));
 	
-	msg->kind = MSG_KIND_UNKNOWN;
+	memset(msg, 0, sizeof(msg_t));
 	
-	msg->decoding = 0;
-	
-	json_t* json = json_loads(message, 0, NULL);
+	json_t* json = json_loadb(message, message_len, 0, NULL);
 	
 	if (json) {
 		json_t* kind = json_object_get(json, "kind\0");
@@ -164,6 +163,29 @@ msg_t* CGTK_decode_message(const char* message) {
 	}
 	
 	return msg;
+}
+
+void CGTK_repair_message(msg_t* msg, const char* message) {
+	if (!(msg->decoding & MSG_DEC_KIND_BIT)) {
+		msg->kind = MSG_KIND_TALK;
+	}
+	
+	if (!(msg->decoding & MSG_DEC_TIMESTAMP_BIT)) {
+		msg->timestamp = time(NULL);
+	}
+	
+	if (msg->kind == MSG_KIND_TALK) {
+		if (!(msg->decoding & MSG_DEC_SENDER_BIT)) {
+			msg->sender = "other\0";
+		}
+		
+		if (msg->decoding == 0) {
+			msg->content = message;
+		} else
+		if (!(msg->decoding & MSG_DEC_CONTENT_BIT)) {
+			msg->content = "\0";
+		}
+	}
 }
 
 void CGTK_free_message(msg_t* msg) {
