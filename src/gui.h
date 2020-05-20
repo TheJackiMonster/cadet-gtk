@@ -13,6 +13,7 @@
 typedef struct {
 	bool_t (*send_message)(const char* destination, const char* port, msg_t* msg);
 	void (*update_host)(void);
+	void (*search_by_name)(const char* name);
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
 } cgtk_callbacks_t;
@@ -27,6 +28,9 @@ typedef struct {
 	GtkWidget* content_leaflet;
 	
 	GtkWidget* contacts_list;
+	
+	GtkWidget* search_entry;
+	GtkWidget* search_list;
 	
 	GtkWidget* add_button;
 	GtkWidget* identity_button;
@@ -50,7 +54,7 @@ void CGTK_init_ui(cgtk_gui_t* gui);
 
 void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity);
 
-void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, contact_state_t state);
+void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, const char* contact_name, contact_state_t state);
 
 void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port, const msg_t* msg);
 

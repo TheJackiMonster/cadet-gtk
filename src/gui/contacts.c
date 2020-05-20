@@ -79,10 +79,10 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) 
 	g_signal_connect(gui->contacts_list, "row-activated\0", G_CALLBACK(CGTK_activate_contact), gui);
 }
 
-void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, contact_type_t type) {
+void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, const char* contact_name, contact_type_t type) {
 	GList *list = gtk_container_get_children(GTK_CONTAINER(gui->contacts_list));
 	
-	GString *name = CGTK_merge_name(identity, port);
+	GString* name = CGTK_merge_name(identity, port);
 	
 	while (list) {
 		GtkWidget *row = GTK_WIDGET(list->data);
@@ -101,7 +101,7 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 	
 	g_string_free(name, TRUE);
 	
-	name = g_string_new(port);
+	name = g_string_new(contact_name);
 	
 	if (type == CGTK_CONTACT_GROUP) {
 		g_string_append(name, " (GROUP)\0");

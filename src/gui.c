@@ -101,16 +101,16 @@ void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity) {
 	gtk_widget_set_sensitive(gui->identity_button, TRUE);
 }
 
-void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, contact_state_t state) {
+void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, const char* contact_name, contact_state_t state) {
 	switch (state) {
 		case CONTACT_INACTIVE: {
 			CGTK_close_contact(gui, identity, port);
 			break;
 		} case CONTACT_ACTIVE: {
-			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_UNKNOWN);
+			CGTK_open_contact(gui, identity, port, contact_name, CGTK_CONTACT_UNKNOWN);
 			break;
 		} case CONTACT_ACTIVE_GROUP: {
-			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_GROUP);
+			CGTK_open_contact(gui, identity, port, contact_name, CGTK_CONTACT_GROUP);
 			break;
 		} default: {
 			break;

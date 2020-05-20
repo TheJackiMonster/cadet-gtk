@@ -119,6 +119,12 @@ static void CGTK_update_host() {
 	CGTK_send_gnunet_host(messaging, session.gui.port, session.nick);
 }
 
+static void CGTK_search_by_name(const char* name) {
+	if ((name) && (strlen(name) > 0)) {
+		CGTK_send_gnunet_search(messaging, name);
+	}
+}
+
 static void CGTK_open_group(const char* port) {
 	GString* name = CGTK_merge_name(session.gui.identity, port);
 	
@@ -177,9 +183,45 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			// TODO: Add result to the list in GUI (update)
+			guint cmp_hash = (hash + 1);
+			const char* name = NULL;
 			
-			printf("FOUND: %u %s\n", hash, identity);
+			if (session.gui.search_entry) {
+				name = gtk_entry_get_text(GTK_ENTRY(session.gui.search_entry));
+				
+				GString* search_str = g_string_new(name);
+				cmp_hash = g_string_hash(search_str);
+				g_string_free(search_str, TRUE);
+			}
+			
+			if ((hash == cmp_hash) && (name) && (session.gui.search_list)) {
+				GList *list = gtk_container_get_children(GTK_CONTAINER(session.gui.search_list));
+				gboolean duplicate = FALSE;
+				
+				while (list) {
+					GtkWidget *row = GTK_WIDGET(list->data);
+					
+					if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+						duplicate = TRUE;
+						break;
+					}
+					
+					list = list->next;
+				}
+				
+				if (!duplicate) {
+					HdyActionRow *contact = hdy_action_row_new();
+					gtk_widget_set_name(GTK_WIDGET(contact), identity);
+					
+					hdy_action_row_set_title(contact, name);
+					hdy_action_row_set_subtitle(contact, identity);
+					hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
+					
+					gtk_container_add(GTK_CONTAINER(session.gui.search_list), GTK_WIDGET(contact));
+					
+					gtk_widget_show_all(GTK_WIDGET(contact));
+				}
+			}
 			
 			break;
 		} case MSG_GTK_CONNECT: {
@@ -206,7 +248,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				g_string_free(name, TRUE);
 			}
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -223,7 +265,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_INACTIVE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, port, CONTACT_INACTIVE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
@@ -334,6 +376,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	session.gui.callbacks.send_message = &CGTK_send_message;
 	session.gui.callbacks.update_host = &CGTK_update_host;
+	session.gui.callbacks.search_by_name = &CGTK_search_by_name;
 	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	

@@ -56,7 +56,7 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, const char* port, const ch
 ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
 	const size_t length = (name? strlen(name) : 0);
 	
-	msg_type_t type = MSG_GNUNET_SEND_MESSAGE;
+	msg_type_t type = MSG_GNUNET_SEARCH;
 	
 	write(messaging->pipe_gnunet[1], &type, sizeof(type));
 	write(messaging->pipe_gnunet[1], &length, sizeof(length));

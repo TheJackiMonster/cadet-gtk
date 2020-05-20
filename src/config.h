@@ -6,7 +6,7 @@
 #define CADET_GTK_CONFIG_H
 
 #define CGTK_BINARY_NAME "cadet-gtk\0"
-#define CGTK_APPLICATION_ID "org.gnunet.CADET\0"
+#define CGTK_APPLICATION_ID "com.gitlab.thejackimonster.CADET-GTK\0"
 #define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet.\0"
 
 /*
