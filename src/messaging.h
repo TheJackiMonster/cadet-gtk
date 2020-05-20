@@ -5,8 +5,10 @@
 #ifndef CADET_GTK_MESSAGING_H
 #define CADET_GTK_MESSAGING_H
 
+#include <gtk/gtk.h>
 #include <gnunet/gnunet_config.h>
 #include <gnunet/gnunet_cadet_service.h>
+#include <gnunet/gnunet_regex_service.h>
 #include <gnunet/gnunet_protocols.h>
 
 typedef struct messaging_t {
@@ -18,14 +20,14 @@ typedef enum {
 	MSG_NONE = 0,
 	
 	MSG_GTK_IDENTITY = 1,
-	MSG_GTK_PEERS = 2,
+	MSG_GTK_FOUND = 2,
 	MSG_GTK_CONNECT = 3,
 	MSG_GTK_DISCONNECT = 4,
 	MSG_GTK_SEND_COMPLETE = 5,
 	MSG_GTK_RECV_MESSAGE = 6,
 	
-	MSG_GNUNET_PORT = 10,
-	MSG_GNUNET_PEERS = 20,
+	MSG_GNUNET_HOST = 10,
+	MSG_GNUNET_SEARCH = 20,
 	MSG_GNUNET_GROUP = 30,
 	MSG_GNUNET_EXIT = 40,
 	MSG_GNUNET_SEND_MESSAGE = 50,
@@ -36,48 +38,8 @@ typedef enum {
 
 void CGTK_init_messaging(messaging_t* messaging);
 
-void CGTK_prepare_gtk(messaging_t* messaging);
-
-void CGTK_prepare_gnunet(messaging_t* messaging);
-
-msg_type_t CGTK_recv_gtk_msg_type(messaging_t* messaging);
-
-msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging);
-
-void CGTK_send_gtk_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity);
-
-void CGTK_send_gtk_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
-	   	const struct GNUNET_HashCode* port);
-
-void CGTK_send_gtk_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
-		const struct GNUNET_HashCode* port);
-
-ssize_t CGTK_send_gtk_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
-		const struct GNUNET_HashCode* port, const char* buffer, size_t length);
-
-const char* CGTK_recv_gnunet_identity(messaging_t* messaging);
-
-const char* CGTK_recv_gnunet_port(messaging_t* messaging);
-
-size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging);
-
-ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length);
-
-void CGTK_send_gnunet_port(messaging_t* messaging, const char* port);
-
-ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port, const char* buffer, size_t length);
-
-void CGTK_send_gnunet_group(messaging_t* messaging, const char* port);
-
-void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port);
-
-const struct GNUNET_HashCode* CGTK_recv_gtk_hashcode(messaging_t* messaging);
-
-const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging);
-
-size_t CGTK_recv_gtk_msg_length(messaging_t* messaging);
-
-ssize_t CGTK_recv_gtk_message(messaging_t* messaging, char* buffer, size_t length);
+#include "messaging/gtk.h"
+#include "messaging/gnunet.h"
 
 void CGTK_close_messaging(messaging_t* messaging);
 

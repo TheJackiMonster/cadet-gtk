@@ -12,7 +12,7 @@
 
 typedef struct {
 	bool_t (*send_message)(const char* destination, const char* port, msg_t* msg);
-	void (*update_port)(void);
+	void (*update_host)(void);
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
 } cgtk_callbacks_t;

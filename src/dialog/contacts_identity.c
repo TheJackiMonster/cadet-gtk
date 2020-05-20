@@ -13,7 +13,7 @@ static void CGTK_writeback_port(GtkWidget* id_entry, gpointer user_data) {
 	strncpy(gui->port, port, CGTK_PORT_BUFFER_SIZE - 1);
 	gui->port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
-	gui->callbacks.update_port();
+	gui->callbacks.update_host();
 	
 	gtk_widget_destroy(dialog);
 }

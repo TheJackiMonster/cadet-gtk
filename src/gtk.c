@@ -115,8 +115,8 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 	return result;
 }
 
-static void CGTK_update_port() {
-	CGTK_send_gnunet_port(messaging, session.gui.port);
+static void CGTK_update_host() {
+	CGTK_send_gnunet_host(messaging, session.gui.port, session.nick);
 }
 
 static void CGTK_open_group(const char* port) {
@@ -156,14 +156,31 @@ static gboolean CGTK_idle(gpointer user_data) {
 	
 	switch (type) {
 		case MSG_GTK_IDENTITY: {
-			const char* identity = CGTK_recv_gnunet_identity(messaging);
+			const char *identity = CGTK_recv_gnunet_identity(messaging);
 			
 			if (identity == NULL) {
 				CGTK_shutdown("Can't retrieve identity of peer!\0");
 				return FALSE;
 			}
 			
+			CGTK_update_host();
+			
 			CGTK_update_identity_ui(&(session.gui), identity);
+			break;
+		} case MSG_GTK_FOUND: {
+			const guint hash = CGTK_recv_gnunet_hash(messaging);
+			
+			const char* identity = CGTK_recv_gnunet_identity(messaging);
+			
+			if (identity == NULL) {
+				CGTK_shutdown("Can't identify search result!\0");
+				return FALSE;
+			}
+			
+			// TODO: Add result to the list in GUI (update)
+			
+			printf("FOUND: %u %s\n", hash, identity);
+			
 			break;
 		} case MSG_GTK_CONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -316,7 +333,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
 	
 	session.gui.callbacks.send_message = &CGTK_send_message;
-	session.gui.callbacks.update_port = &CGTK_update_port;
+	session.gui.callbacks.update_host = &CGTK_update_host;
 	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	

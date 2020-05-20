@@ -14,6 +14,10 @@ static struct {
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
 	struct GNUNET_CADET_Handle* cadet;
 	
+	struct GNUNET_REGEX_Announcement* name_announcement;
+	struct GNUNET_REGEX_Search* name_search;
+	char* name_needle;
+	
 	struct GNUNET_HashCode port;
 	struct GNUNET_CADET_Port* listen;
 	
@@ -26,7 +30,8 @@ static struct {
 } session;
 
 typedef struct {
-	struct GNUNET_PeerIdentity identity;
+	GNUNET_PEER_Id identity;
+	
 	struct GNUNET_HashCode port;
 	struct GNUNET_CADET_Channel* channel;
 	
@@ -53,51 +58,26 @@ static void CGTK_fatal_error(const char* error_message) {
 	}
 }
 
-static connection_t* CGTK_connection_create(const struct GNUNET_PeerIdentity* identity, const struct GNUNET_HashCode* port,
-		struct GNUNET_CADET_Channel* channel) {
-	connection_t* connection = GNUNET_malloc(sizeof(connection_t));
-	
-	GNUNET_memcpy(&(connection->identity), identity, sizeof(struct GNUNET_PeerIdentity));
-	GNUNET_memcpy(&(connection->port), port, sizeof(struct GNUNET_HashCode));
-	
-	connection->channel = channel;
-	connection->group = NULL;
-	
-	const char* identity_str = GNUNET_i2s_full(identity);
-	
-	strncpy(connection->name, identity_str, GNUNET_CRYPTO_PKEY_ASCII_LENGTH);
-	connection->name[GNUNET_CRYPTO_PKEY_ASCII_LENGTH] = '\0';
-	
-	return connection;
-}
-
-static void CGTK_connection_destroy(connection_t* connection, bool close_channel) {
-	if ((close_channel) && (connection->channel)) {
-		GNUNET_CADET_channel_destroy(connection->channel);
-		connection->channel = NULL;
-	}
-	
-	GNUNET_free(connection);
-}
-
-static void CGTK_group_destroy(group_t* group);
-
-static int CGTK_clear_connection(void *cls, const struct GNUNET_PeerIdentity* identity, void* value) {
-	CGTK_connection_destroy((connection_t*) value, true);
-	return GNUNET_YES;
-}
-
-static int CGTK_group_clear_connection(void* cls, const struct GNUNET_HashCode* group, void* value) {
-	CGTK_connection_destroy((connection_t*) value, true);
-	return GNUNET_YES;
-}
-
-static int CGTK_group_clear_port(void* cls, const struct GNUNET_HashCode* group, void* value) {
-	CGTK_group_destroy((group_t*) value);
-	return GNUNET_YES;
-}
+#include "gnunet/name.c"
+#include "gnunet/connection.c"
+#include "gnunet/group.c"
 
 static void CGTK_shutdown(void* cls) {
+	if (session.name_announcement) {
+		GNUNET_REGEX_announce_cancel(session.name_announcement);
+		session.name_announcement = NULL;
+	}
+	
+	if (session.name_search) {
+		GNUNET_REGEX_search_cancel(session.name_search);
+		session.name_search = NULL;
+	}
+	
+	if (session.name_needle) {
+		GNUNET_free(session.name_needle);
+		session.name_needle = NULL;
+	}
+	
 	if (session.idle) {
 		GNUNET_SCHEDULER_cancel(session.idle);
 		session.idle = NULL;
@@ -132,112 +112,7 @@ static void CGTK_shutdown(void* cls) {
 	CGTK_close_messaging(messaging);
 }
 
-static int CGTK_add_new_connection(connection_t* connection) {
-	if (!session.connections) {
-		session.connections = GNUNET_CONTAINER_multipeermap_create(8, GNUNET_NO);
-	}
-	
-	return GNUNET_CONTAINER_multipeermap_put(
-			session.connections,
-			&(connection->identity),
-			connection,
-			GNUNET_CONTAINER_MULTIHASHMAPOPTION_MULTIPLE
-	);
-}
-
-static int CGTK_group_add_new_connection(connection_t* connection) {
-	if (!session.groups) {
-		session.groups = GNUNET_CONTAINER_multihashmap_create(4, GNUNET_NO);
-	}
-	
-	connection->group = &(connection->port);
-	
-	return GNUNET_CONTAINER_multihashmap_put(
-			session.groups,
-			connection->group,
-			connection,
-			GNUNET_CONTAINER_MULTIHASHMAPOPTION_MULTIPLE
-	);
-}
-
-static int CGTK_remove_connection(connection_t* connection) {
-	if (session.connections) {
-		return GNUNET_CONTAINER_multipeermap_remove(session.connections, &(connection->identity), connection);
-	} else {
-		return GNUNET_NO;
-	}
-}
-
-static int CGTK_group_remove_connection(connection_t* connection) {
-	if (session.groups) {
-		return GNUNET_CONTAINER_multihashmap_remove(session.groups, connection->group, connection);
-	} else {
-		return GNUNET_NO;
-	}
-}
-
 static void CGTK_idle(void* cls);
-
-static int CGTK_group_push_message(void * cls, const struct GNUNET_HashCode* group, void* value) {
-	const connection_t* connection = (const connection_t*) value;
-	const group_message_t* message = (const group_message_t*) cls;
-	
-	if (connection != message->sender) {
-		struct GNUNET_MessageHeader *header;
-		struct GNUNET_MQ_Envelope* env = NULL;
-		
-		env = GNUNET_MQ_msg_extra(header, message->content_length, GNUNET_MESSAGE_TYPE_CADET_CLI);
-		
-		GNUNET_memcpy(&(header[1]), message->content, message->content_length);
-		
-		struct GNUNET_MQ_Handle* mq = GNUNET_CADET_get_mq(connection->channel);
-		
-		GNUNET_MQ_send(mq, env);
-		GNUNET_MQ_notify_sent(env, NULL, NULL);
-	}
-	
-	return GNUNET_YES;
-}
-
-static void CGTK_group_send_message(const connection_t* sender, const struct GNUNET_HashCode* group, const msg_t* msg) {
-	group_message_t message;
-	
-	message.sender = sender;
-	message.content = CGTK_encode_message(msg, &(message.content_length));
-	
-	if (message.content_length > 0) {
-		GNUNET_CONTAINER_multihashmap_get_multiple(session.groups, group, CGTK_group_push_message, (void*) &message);
-	}
-	
-	free((void*) message.content);
-}
-
-static void CGTK_group_recv_message(const connection_t* receiver, const msg_t* msg) {
-	group_message_t message;
-	
-	message.sender = NULL;
-	message.content = CGTK_encode_message(msg, &(message.content_length));
-	
-	if (message.content_length > 0) {
-		CGTK_group_push_message((void*) &message, receiver->group, (void*) receiver);
-	}
-	
-	free((void*) message.content);
-}
-
-static int CGTK_group_count(void* cls, const struct GNUNET_HashCode* group, void* value) {
-	return GNUNET_YES;
-}
-
-static int CGTK_group_participants(void* cls, const struct GNUNET_HashCode* group, void* value) {
-	connection_t* connection = (connection_t*) value;
-	char*** participants = (char***) cls;
-	
-	**participants = connection->name;
-	*participants = (*participants + 1);
-	
-	return GNUNET_YES;
-}
 
 static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* source) {
 	const struct GNUNET_HashCode* group = (const struct GNUNET_HashCode*) cls;
@@ -281,7 +156,7 @@ static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, co
 		
 		CGTK_group_recv_message(connection, &info_msg);
 	} else {
-		CGTK_send_gtk_connect(messaging, &(connection->identity), &(connection->port));
+		CGTK_send_gtk_connect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
 	}
 	
 	return connection;
@@ -303,7 +178,7 @@ static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* cha
 			CGTK_group_send_message(connection, connection->group, &leave_msg);
 		}
 	} else {
-		CGTK_send_gtk_disconnect(messaging, &(connection->identity), &(connection->port));
+		CGTK_send_gtk_disconnect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
 		CGTK_remove_connection(connection);
 	}
 	
@@ -334,7 +209,7 @@ static void CGTK_handle_message(connection_t* connection, const struct GNUNET_Me
 		
 		CGTK_free_message(msg);
 	} else {
-		ssize_t result = CGTK_send_gtk_message(messaging, &(connection->identity), &(connection->port), buffer, length);
+		ssize_t result = CGTK_send_gtk_message(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port), buffer, length);
 		
 		if (result < 0) {
 			CGTK_fatal_error("No connection!\0");
@@ -351,7 +226,7 @@ static int check_channel_message(void* cls, const struct GNUNET_MessageHeader* m
 		))? GNUNET_OK : GNUNET_NO;
 	} else {
 		return (session.connections) && (GNUNET_CONTAINER_multipeermap_contains_value(
-				session.connections, &(connection->identity), connection
+				session.connections, GNUNET_PEER_resolve2(connection->identity), connection
 		))? GNUNET_OK : GNUNET_NO;
 	}
 }
@@ -366,82 +241,6 @@ static int check_port_message(void* cls, const struct GNUNET_MessageHeader* mess
 
 static void handle_port_message(void* cls, const struct GNUNET_MessageHeader* message) {
 	CGTK_handle_message((connection_t*) cls, message);
-}
-
-static group_t* CGTK_group_create(const struct GNUNET_HashCode* port) {
-	struct GNUNET_MQ_MessageHandler handlers[] = {
-			GNUNET_MQ_hd_var_size(
-					channel_message,
-					GNUNET_MESSAGE_TYPE_CADET_CLI,
-					struct GNUNET_MessageHeader,
-					NULL
-			), GNUNET_MQ_handler_end()
-	};
-	
-	group_t* group = GNUNET_malloc(sizeof(group_t));
-	
-	GNUNET_memcpy(&(group->port), port, sizeof(struct GNUNET_HashCode));
-	
-	group->listen = GNUNET_CADET_open_port(
-			session.cadet,
-			&(group->port),
-			&CGTK_on_connect,
-			(void*) &(group->port),
-			NULL,
-			&CGTK_on_disconnect,
-			handlers
-	);
-	
-	return group;
-}
-
-static void CGTK_group_destroy(group_t* group) {
-	GNUNET_CADET_close_port(group->listen);
-	
-	GNUNET_free(group);
-}
-
-static bool CGTK_group_open(const struct GNUNET_HashCode* port) {
-	if (session.group_ports) {
-		if (GNUNET_CONTAINER_multihashmap_contains(session.group_ports, port) == GNUNET_YES) {
-			return false;
-		}
-	} else {
-		session.group_ports = GNUNET_CONTAINER_multihashmap_create(8, GNUNET_NO);
-	}
-	
-	group_t* group = CGTK_group_create(port);
-	
-	int res = GNUNET_CONTAINER_multihashmap_put(
-			session.group_ports, &(group->port), group, GNUNET_CONTAINER_MULTIHASHMAPOPTION_UNIQUE_FAST
-	);
-	
-	if (res == GNUNET_SYSERR) {
-		CGTK_group_destroy(group);
-	}
-	
-	return (res == GNUNET_YES);
-}
-
-static bool CGTK_group_close(const struct GNUNET_HashCode* port) {
-	if (session.groups) {
-		GNUNET_CONTAINER_multihashmap_get_multiple(session.groups, port, CGTK_group_clear_connection, NULL);
-		GNUNET_CONTAINER_multihashmap_remove_all(session.groups, port);
-	}
-	
-	if (session.group_ports) {
-		group_t* group = (group_t*) GNUNET_CONTAINER_multihashmap_get(
-				session.group_ports, port
-		);
-		
-		if (group) {
-			CGTK_group_destroy(group);
-		}
-		
-		return (GNUNET_CONTAINER_multihashmap_remove_all(session.group_ports, port) == GNUNET_YES);
-	} else {
-		return false;
-	}
 }
 
 static void CGTK_done_message(void* cls) {
@@ -508,17 +307,31 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* identi
 	}
 }
 
-static int CGTK_exit_connection(void *cls, const struct GNUNET_PeerIdentity* identity, void* value) {
-	connection_t* connection = (connection_t*) value;
+static const char* CGTK_receive_name() {
+	static char buffer[CGTK_NAME_SEARCH_SIZE + 1];
 	
-	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), (struct GNUNET_HashCode*) cls) == 0) {
-		CGTK_remove_connection(connection);
-		
-		CGTK_connection_destroy(connection, true);
-		return GNUNET_NO;
-	} else {
-		return GNUNET_YES;
+	size_t length = CGTK_recv_gtk_msg_length(messaging);
+	
+	if (length > CGTK_NAME_SEARCH_SIZE) {
+		length = CGTK_NAME_SEARCH_SIZE;
 	}
+	
+	ssize_t offset = 0;
+	
+	while (offset < length) {
+		ssize_t done = CGTK_recv_gtk_message(messaging, buffer + offset, length - offset);
+		
+		if (done <= 0) {
+			CGTK_fatal_error("Connection lost!\0");
+			return NULL;
+		}
+		
+		offset += done;
+	}
+	
+	buffer[offset] = '\0';
+	
+	return buffer;
 }
 
 static void CGTK_idle(void* cls) {
@@ -527,11 +340,18 @@ static void CGTK_idle(void* cls) {
 	msg_type_t type = CGTK_recv_gtk_msg_type(messaging);
 	
 	switch (type) {
-		case MSG_GNUNET_PORT: {
-			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
+		case MSG_GNUNET_HOST: {
+			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
 			
 			if (!port) {
-				CGTK_fatal_error("Can't identify connections port!\0");
+				CGTK_fatal_error("Can't identify hosts port!\0");
+				return;
+			}
+			
+			const char* name_regex = CGTK_receive_name();
+			
+			if (!name_regex) {
+				CGTK_fatal_error("Can't identify hosts name!\0");
 				return;
 			}
 			
@@ -561,6 +381,12 @@ static void CGTK_idle(void* cls) {
 					handlers
 			);
 			
+			CGTK_name_call(name_regex);
+			break;
+		} case MSG_GNUNET_SEARCH: {
+			const char* name = CGTK_receive_name();
+			
+			CGTK_name_search(name);
 			break;
 		} case MSG_GNUNET_GROUP: {
 			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
@@ -664,7 +490,7 @@ static void CGTK_idle(void* cls) {
 				connection->channel = GNUNET_CADET_channel_create(
 						session.cadet,
 						connection,
-						&(connection->identity),
+						GNUNET_PEER_resolve2(connection->identity),
 						&(connection->port),
 						NULL,
 						&CGTK_on_disconnect,
@@ -700,10 +526,24 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 	
 	session.cfg = cfg;
 	session.cadet = GNUNET_CADET_connect(cfg);
+	
+	session.name_announcement = NULL;
+	session.name_search = NULL;
+	session.name_needle = NULL;
+	
 	memset(&(session.port), 0, sizeof(struct GNUNET_HashCode));
 	session.listen = NULL;
+	
 	session.connections = NULL;
+	session.group_ports = NULL;
+	session.groups = NULL;
+	
 	session.idle = NULL;
+	
+	session.delay = GNUNET_TIME_relative_multiply(
+			GNUNET_TIME_UNIT_MILLISECONDS,
+			CGTK_GNUNET_SESSION_IDLE_DELAY_MS
+	);
 	
 	if (!session.cadet) {
 		CGTK_fatal_error("Service unavailable!\0");
@@ -741,15 +581,12 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 			handlers
 	);
 	
-	session.delay = GNUNET_TIME_relative_multiply(
-			GNUNET_TIME_UNIT_MILLISECONDS,
-			CGTK_GNUNET_SESSION_IDLE_DELAY_MS
-	);
-	
 	session.idle = GNUNET_SCHEDULER_add_delayed_with_priority(
 			session.delay,
 			GNUNET_SCHEDULER_PRIORITY_IDLE,
 			&CGTK_idle,
 			NULL
 	);
+	
+	CGTK_name_search("thejackimonster");
 }
