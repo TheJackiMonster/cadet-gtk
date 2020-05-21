@@ -28,6 +28,35 @@ static void CGTK_id_search_select(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	gtk_widget_destroy(gui->id_search.dialog);
 }
 
+void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* identity) {
+	GList *list = gtk_container_get_children(GTK_CONTAINER(gui->id_search.list));
+	gboolean duplicate = FALSE;
+	
+	while (list) {
+		GtkWidget *row = GTK_WIDGET(list->data);
+		
+		if (strcmp(gtk_widget_get_name(row), identity) == 0) {
+			duplicate = TRUE;
+			break;
+		}
+		
+		list = list->next;
+	}
+	
+	if (!duplicate) {
+		HdyActionRow *contact = hdy_action_row_new();
+		gtk_widget_set_name(GTK_WIDGET(contact), identity);
+		
+		hdy_action_row_set_title(contact, name);
+		hdy_action_row_set_subtitle(contact, identity);
+		hdy_action_row_set_icon_name(contact, "avatar-default-symbolic\0");
+		
+		gtk_container_add(GTK_CONTAINER(gui->id_search.list), GTK_WIDGET(contact));
+		
+		gtk_widget_show_all(GTK_WIDGET(contact));
+	}
+}
+
 static void CGTK_id_search_dialog(GtkWidget* search_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 

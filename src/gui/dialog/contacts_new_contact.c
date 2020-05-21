@@ -2,40 +2,46 @@
 // Created by thejackimonster on 04.05.20.
 //
 
+static void CGTK_new_contact_cancel(GtkWidget* cancel_button, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	gtk_widget_destroy(gui->new_contact.dialog);
+}
+
 static void CGTK_new_contact_confirm(GtkWidget* confirm_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	if (gui) {
-		contact_type_t type;
+	contact_type_t type;
+	
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check))) {
+		type = CGTK_CONTACT_GROUP;
+	} else {
+		type = CGTK_CONTACT_PERSON;
+	}
+	
+	const char* identity = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.identity_entry));
+	const char* port = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.port_entry));
+	const char* name;
+	
+	if (gtk_entry_get_text_length(GTK_ENTRY(gui->new_contact.name_entry)) > 0) {
+		name = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.name_entry));
+	} else {
+		name = gtk_entry_get_placeholder_text(GTK_ENTRY(gui->new_contact.name_entry));
+	}
+	
+	gui->callbacks.set_name(identity, port, name);
+	
+	if ((type == CGTK_CONTACT_GROUP) && (strcmp(identity, gui->attributes.identity) == 0)) {
+		gui->callbacks.open_group(port);
+	} else {
+		CGTK_open_contact(gui, identity, port, type);
+	}
+	
+	if (type == CGTK_CONTACT_GROUP) {
+		msg_t msg = {};
+		msg.kind = MSG_KIND_JOIN;
 		
-		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check))) {
-			type = CGTK_CONTACT_GROUP;
-		} else {
-			type = CGTK_CONTACT_PERSON;
-		}
-		
-		const char* identity = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.identity_entry));
-		const char* port = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.port_entry));
-		const char* name;
-		
-		if (gtk_entry_get_text_length(GTK_ENTRY(gui->new_contact.name_entry)) > 0) {
-			name = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.name_entry));
-		} else {
-			name = gtk_entry_get_placeholder_text(GTK_ENTRY(gui->new_contact.name_entry));
-		}
-		
-		if ((type == CGTK_CONTACT_GROUP) && (strcmp(identity, gui->attributes.identity) == 0)) {
-			gui->callbacks.open_group(port);
-		} else {
-			CGTK_open_contact(gui, identity, port, name, type);
-		}
-		
-		if (type == CGTK_CONTACT_GROUP) {
-			msg_t msg = {};
-			msg.kind = MSG_KIND_JOIN;
-			
-			gui->callbacks.send_message(identity, port, &msg);
-		}
+		gui->callbacks.send_message(identity, port, &msg);
 	}
 	
 	gtk_widget_destroy(gui->new_contact.dialog);
@@ -133,7 +139,7 @@ static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	
 	g_signal_connect(gui->new_contact.identity_entry, "changed\0", G_CALLBACK(CGTK_new_contact_id_changed), gui);
 	
-	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_new_contact_confirm), NULL);
+	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_new_contact_cancel), gui);
 	g_signal_connect(confirm_button, "clicked\0", G_CALLBACK(CGTK_new_contact_confirm), gui);
 	
 	gtk_widget_show_all(gui->new_contact.dialog);

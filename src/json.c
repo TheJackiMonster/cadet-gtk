@@ -165,7 +165,7 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 	return msg;
 }
 
-void CGTK_repair_message(msg_t* msg, const char* message) {
+void CGTK_repair_message(msg_t* msg, const char* message, const char* sender) {
 	if (!(msg->decoding & MSG_DEC_KIND_BIT)) {
 		msg->kind = MSG_KIND_TALK;
 	}
@@ -176,7 +176,7 @@ void CGTK_repair_message(msg_t* msg, const char* message) {
 	
 	if (msg->kind == MSG_KIND_TALK) {
 		if (!(msg->decoding & MSG_DEC_SENDER_BIT)) {
-			msg->sender = "other\0";
+			msg->sender = sender;
 		}
 		
 		if (msg->decoding == 0) {

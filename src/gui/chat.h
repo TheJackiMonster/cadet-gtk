@@ -7,6 +7,8 @@
 
 #include "../gui.h"
 
+void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* identity);
+
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui);
 
 GtkTextBuffer* CGTK_get_chat_text_buffer(cgtk_gui_t* gui);

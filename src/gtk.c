@@ -23,6 +23,8 @@ static messaging_t* messaging;
 #include <stdlib.h>
 
 typedef struct chat_state_t {
+	gchar name [CGTK_NAME_SEARCH_SIZE + 1];
+	
 	gboolean use_json;
 	gboolean is_group;
 } chat_state_t;
@@ -31,7 +33,6 @@ static struct {
 	cgtk_gui_t gui;
 	
 	guint idle;
-	const char* nick;
 	GHashTable* states;
 } session;
 
@@ -42,6 +43,14 @@ static void CGTK_shutdown(const char* error_message) {
 	
 	if (session.gui.new_contact.dialog) {
 		gtk_widget_destroy(session.gui.new_contact.dialog);
+	}
+	
+	if (session.gui.identity.dialog) {
+		gtk_widget_destroy(session.gui.identity.dialog);
+	}
+	
+	if (session.gui.management.dialog) {
+		gtk_widget_destroy(session.gui.management.dialog);
 	}
 	
 	if (session.gui.main.window) {
@@ -62,6 +71,8 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 	} else {
 		state = (chat_state_t*) malloc(sizeof(chat_state_t));
 		
+		memset(state->name, '\0', CGTK_NAME_SEARCH_SIZE + 1);
+		
 		state->use_json = FALSE;
 		state->is_group = FALSE;
 		
@@ -75,19 +86,49 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 	}
 }
 
-static bool_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
-	GString* name = CGTK_merge_name(destination, port);
+static chat_state_t* CGTK_select_state(const char* identity, const char* port) {
+	GString* name = CGTK_merge_name(identity, port);
 	
 	gboolean new_entry;
 	chat_state_t* state = CGTK_get_state(name, &new_entry);
 	
+	if (!new_entry) {
+		g_string_free(name, TRUE);
+	}
+	
+	return state;
+}
+
+static void CGTK_set_name(const char* identity, const char* port, const char* name) {
+	chat_state_t* state = CGTK_select_state(identity, port);
+	
+	strncpy(state->name, name, CGTK_NAME_SEARCH_SIZE);
+}
+
+static const char* CGTK_get_name(const char* identity, const char* port) {
+	chat_state_t* state = CGTK_select_state(identity, port);
+	
+	return state->name;
+}
+
+static void CGTK_set_nick(const char* name) {
+	CGTK_set_name(session.gui.attributes.identity, session.gui.attributes.port, name);
+}
+
+static const char* CGTK_get_nick() {
+	return CGTK_get_name(session.gui.attributes.identity, session.gui.attributes.port);
+}
+
+static bool_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
+	chat_state_t* state = CGTK_select_state(destination, port);
+	
 	msg->timestamp = time(NULL);
 	
 	if (msg->kind == MSG_KIND_TALK) {
-		msg->sender = session.nick;
+		msg->sender = CGTK_get_nick();
 	} else
 	if ((msg->kind == MSG_KIND_JOIN) || (msg->kind == MSG_KIND_LEAVE)) {
-		msg->who = session.nick;
+		msg->who = CGTK_get_nick();
 	}
 	
 	size_t buffer_len = 0;
@@ -113,10 +154,6 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 		result = TRUE;
 	}
 	
-	if (!new_entry) {
-		g_string_free(name, TRUE);
-	}
-	
 	if (state->use_json) {
 		free((void*) buffer);
 	}
@@ -125,7 +162,7 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 }
 
 static void CGTK_update_host() {
-	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, session.nick);
+	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, CGTK_get_nick());
 }
 
 static void CGTK_search_by_name(const char* name) {
@@ -135,14 +172,7 @@ static void CGTK_search_by_name(const char* name) {
 }
 
 static void CGTK_open_group(const char* port) {
-	GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
-	
-	gboolean new_entry;
-	chat_state_t* state = CGTK_get_state(name, &new_entry);
-	
-	if (!new_entry) {
-		g_string_free(name, TRUE);
-	}
+	chat_state_t* state = CGTK_select_state(session.gui.attributes.identity, port);
 	
 	state->use_json = TRUE;
 	state->is_group = TRUE;
@@ -151,14 +181,7 @@ static void CGTK_open_group(const char* port) {
 }
 
 static void CGTK_exit_chat(const char* destination, const char* port) {
-	GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
-	
-	gboolean new_entry;
-	chat_state_t* state = CGTK_get_state(name, &new_entry);
-	
-	if (!new_entry) {
-		g_string_free(name, TRUE);
-	}
+	chat_state_t* state = CGTK_select_state(destination, port);
 	
 	state->use_json = FALSE;
 	state->is_group = FALSE;
@@ -178,9 +201,13 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_host();
-			
 			CGTK_update_identity_ui(&(session.gui), identity);
+			
+			if (strlen(CGTK_get_nick()) == 0) {
+				CGTK_set_nick(getenv("USER\0"));
+			}
+			
+			CGTK_update_host();
 			break;
 		} case MSG_GTK_FOUND: {
 			const guint hash = CGTK_recv_gnunet_hash(messaging);
@@ -192,46 +219,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			guint cmp_hash = (hash + 1);
-			const char* name = NULL;
-			
-			if (session.gui.id_search.entry) {
-				name = gtk_entry_get_text(GTK_ENTRY(session.gui.id_search.entry));
-				
-				GString* search_str = g_string_new(name);
-				cmp_hash = g_string_hash(search_str);
-				g_string_free(search_str, TRUE);
-			}
-			
-			if ((hash == cmp_hash) && (name) && (session.gui.id_search.list)) {
-				GList *list = gtk_container_get_children(GTK_CONTAINER(session.gui.id_search.list));
-				gboolean duplicate = FALSE;
-				
-				while (list) {
-					GtkWidget *row = GTK_WIDGET(list->data);
-					
-					if (strcmp(gtk_widget_get_name(row), identity) == 0) {
-						duplicate = TRUE;
-						break;
-					}
-					
-					list = list->next;
-				}
-				
-				if (!duplicate) {
-					HdyActionRow *contact = hdy_action_row_new();
-					gtk_widget_set_name(GTK_WIDGET(contact), identity);
-					
-					hdy_action_row_set_title(contact, name);
-					hdy_action_row_set_subtitle(contact, identity);
-					hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
-					
-					gtk_container_add(GTK_CONTAINER(session.gui.id_search.list), GTK_WIDGET(contact));
-					
-					gtk_widget_show_all(GTK_WIDGET(contact));
-				}
-			}
-			
+			CGTK_update_id_search_ui(&(session.gui), hash, identity);
 			break;
 		} case MSG_GTK_CONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -248,16 +236,9 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
+			chat_state_t* state = CGTK_select_state(session.gui.attributes.identity, port);
 			
-			gboolean new_entry;
-			chat_state_t* state = CGTK_get_state(name, &new_entry);
-			
-			if (!new_entry) {
-				g_string_free(name, TRUE);
-			}
-			
-			CGTK_update_contacts_ui(&(session.gui), source, port, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -274,7 +255,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, port, CONTACT_INACTIVE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_INACTIVE);
 			break;
 		} case MSG_GTK_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
@@ -320,24 +301,15 @@ static gboolean CGTK_idle(gpointer user_data) {
 				if (strlen(buffer) > 0) {
 					msg_t* msg = CGTK_decode_message(buffer, offset);
 					
-					CGTK_repair_message(msg, buffer);
+					chat_state_t* state = CGTK_select_state(source, port);
+					
+					state->use_json = msg->decoding? TRUE : FALSE;
+					
+					CGTK_repair_message(msg, buffer, state->name);
 					
 					msg->local = FALSE;
 					
 					CGTK_update_chat_ui(&(session.gui), source, port, msg);
-					
-					GString* key = g_string_new(source);
-					g_string_append_c_inline(key, '_');
-					g_string_append(key, port);
-					
-					gboolean new_entry;
-					chat_state_t* state = CGTK_get_state(key, &new_entry);
-					
-					if (!new_entry) {
-						g_string_free(key, TRUE);
-					}
-					
-					state->use_json = msg->decoding? TRUE : FALSE;
 					
 					CGTK_free_message(msg);
 				}
@@ -383,6 +355,8 @@ void CGTK_state_value_free(gpointer value) {
 void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
 	
+	session.gui.callbacks.set_name = &CGTK_set_name;
+	session.gui.callbacks.get_name = &CGTK_get_name;
 	session.gui.callbacks.send_message = &CGTK_send_message;
 	session.gui.callbacks.update_host = &CGTK_update_host;
 	session.gui.callbacks.search_by_name = &CGTK_search_by_name;
@@ -404,12 +378,6 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	#else
 	session.idle = g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_idle, NULL, NULL);
 	#endif
-	
-	session.nick = getenv("USER\0");
-	
-	if (!session.nick) {
-		session.nick = "me\0";
-	}
 	
 	session.states = g_hash_table_new_full(
 			(GHashFunc) g_string_hash,

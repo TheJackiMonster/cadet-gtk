@@ -195,7 +195,7 @@ static void CGTK_handle_message(connection_t* connection, const struct GNUNET_Me
 	if (connection->group) {
 		msg_t* msg = CGTK_decode_message(buffer, length);
 		
-		CGTK_repair_message(msg, buffer);
+		CGTK_repair_message(msg, buffer, connection->name);
 		
 		if (msg->kind == MSG_KIND_TALK) {
 			const char* origin_sender = msg->sender;

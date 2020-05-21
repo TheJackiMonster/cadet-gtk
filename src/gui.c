@@ -94,6 +94,23 @@ void CGTK_init_ui(cgtk_gui_t* gui) {
 	gtk_widget_show_all(GTK_WIDGET(titleBar));
 }
 
+void CGTK_update_id_search_ui(cgtk_gui_t* gui, guint hash, const char* identity) {
+	guint cmp_hash = (hash + 1);
+	const char* name = NULL;
+	
+	if (gui->id_search.entry) {
+		name = gtk_entry_get_text(GTK_ENTRY(gui->id_search.entry));
+		
+		GString* search_str = g_string_new(name);
+		cmp_hash = g_string_hash(search_str);
+		g_string_free(search_str, TRUE);
+	}
+	
+	if ((hash == cmp_hash) && (name) && (gui->id_search.list)) {
+		CGTK_id_search_entry_found(gui, name, identity);
+	}
+}
+
 void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity) {
 	strncpy(gui->attributes.identity, identity, CGTK_IDENTITY_BUFFER_SIZE - 1);
 	gui->attributes.identity[CGTK_IDENTITY_BUFFER_SIZE - 1] = '\0';
@@ -101,16 +118,16 @@ void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity) {
 	gtk_widget_set_sensitive(gui->contacts.identity_button, TRUE);
 }
 
-void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, const char* contact_name, contact_state_t state) {
+void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, contact_state_t state) {
 	switch (state) {
 		case CONTACT_INACTIVE: {
 			CGTK_close_contact(gui, identity, port);
 			break;
 		} case CONTACT_ACTIVE: {
-			CGTK_open_contact(gui, identity, port, contact_name, CGTK_CONTACT_UNKNOWN);
+			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_UNKNOWN);
 			break;
 		} case CONTACT_ACTIVE_GROUP: {
-			CGTK_open_contact(gui, identity, port, contact_name, CGTK_CONTACT_GROUP);
+			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_GROUP);
 			break;
 		} default: {
 			break;
