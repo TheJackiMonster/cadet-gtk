@@ -26,7 +26,6 @@ typedef struct {
 	struct {
 		char identity [CGTK_IDENTITY_BUFFER_SIZE];
 		char port [CGTK_PORT_BUFFER_SIZE];
-		char name [CGTK_NAME_SEARCH_SIZE];
 	} attributes;
 	
 	struct {

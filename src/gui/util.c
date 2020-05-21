@@ -28,3 +28,13 @@ uint CGTK_split_name(GString* name, const char** identity, const char** port) {
 GString* CGTK_merge_name(const char* identity, const char* port) {
 	return g_string_append(g_string_append_c_inline(g_string_new(identity), '_'), port);
 }
+
+const char* CGTK_get_entry_text(GtkWidget* entry_widget) {
+	GtkEntry* entry = GTK_ENTRY(entry_widget);
+	
+	if (gtk_entry_get_text_length(entry) > 0) {
+		return gtk_entry_get_text(entry);
+	} else {
+		return gtk_entry_get_placeholder_text(entry);
+	}
+}

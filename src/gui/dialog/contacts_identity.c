@@ -5,9 +5,8 @@
 static void CGTK_identity_port_confirm(GtkWidget* id_entry, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	const char* port = gtk_entry_get_text(GTK_ENTRY(id_entry));
-	size_t port_length = strlen(port);
-	
+	const char* port = CGTK_get_entry_text(id_entry);
+
 	strncpy(gui->attributes.port, port, CGTK_PORT_BUFFER_SIZE - 1);
 	gui->attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	

@@ -11,4 +11,6 @@ uint CGTK_split_name(GString* name, const char** identity, const char** port);
 
 GString* CGTK_merge_name(const char* identity, const char* port);
 
+const char* CGTK_get_entry_text(GtkWidget* entry_widget);
+
 #endif //CADET_GTK_UTIL_H

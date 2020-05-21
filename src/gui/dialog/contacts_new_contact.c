@@ -19,15 +19,9 @@ static void CGTK_new_contact_confirm(GtkWidget* confirm_button, gpointer user_da
 		type = CGTK_CONTACT_PERSON;
 	}
 	
-	const char* identity = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.identity_entry));
-	const char* port = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.port_entry));
-	const char* name;
-	
-	if (gtk_entry_get_text_length(GTK_ENTRY(gui->new_contact.name_entry)) > 0) {
-		name = gtk_entry_get_text(GTK_ENTRY(gui->new_contact.name_entry));
-	} else {
-		name = gtk_entry_get_placeholder_text(GTK_ENTRY(gui->new_contact.name_entry));
-	}
+	const char* identity = CGTK_get_entry_text(gui->new_contact.identity_entry);
+	const char* port = CGTK_get_entry_text(gui->new_contact.port_entry);
+	const char* name = CGTK_get_entry_text(gui->new_contact.name_entry);
 	
 	gui->callbacks.set_name(identity, port, name);
 	
