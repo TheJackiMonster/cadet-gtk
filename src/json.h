@@ -16,6 +16,7 @@ typedef unsigned long msg_decoding_t;
 #define MSG_DEC_CONTENT_BIT 0x08L
 #define MSG_DEC_WHO_BIT 0x10L
 #define MSG_DEC_PARTICIPANTS_BIT 0x20L
+#define MSG_DEC_
 
 #define MSG_DEC_COMPLETE_BITS 0x3FL
 
@@ -24,6 +25,7 @@ typedef enum {
 	MSG_KIND_JOIN = 2,
 	MSG_KIND_LEAVE = 3,
 	MSG_KIND_INFO = 4,
+	MSG_KIND_FILE = 5,
 	
 	MSG_KIND_UNKNOWN = 0
 } msg_kind_t;

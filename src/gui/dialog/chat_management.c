@@ -6,23 +6,13 @@
 
 static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
-	
-	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));
-	
-	const char* destination = name->str;
-	const char* port = "\0";
-	
-	uint index = CGTK_split_name(name, &destination, &port);
+
+	const char* destination = gtk_label_get_text(GTK_LABEL(gui->management.identity_label));
+	const char* port = gtk_label_get_text(GTK_LABEL(gui->management.port_label));
 	
 	gui->callbacks.exit_chat(destination, port);
 	
 	CGTK_remove_contact(gui, destination, port);
-	
-	if (name->str[index] == '\0') {
-		name->str[index] = '_';
-	}
-	
-	g_string_free(name, TRUE);
 	
 	gtk_widget_destroy(gui->management.dialog);
 	
@@ -33,6 +23,13 @@ static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 
 static void CGTK_manage_chat_dialog(GtkWidget* manage_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));
+	
+	const char* destination = name->str;
+	const char* port = "\0";
+	
+	uint index = CGTK_split_name(name, &destination, &port);
 	
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
 	
@@ -56,9 +53,30 @@ static void CGTK_manage_chat_dialog(GtkWidget* manage_button, gpointer user_data
 	GtkWidget* exit_button = gtk_button_new_with_label("Exit Chat\0");
 	gtk_widget_set_halign(exit_button, GTK_ALIGN_END);
 	
-	gtk_container_add(GTK_CONTAINER(main_box), exit_button);
+	gui->management.identity_label = gtk_label_new(destination);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->management.identity_label), PANGO_WRAP_CHAR);
+	gtk_label_set_line_wrap(GTK_LABEL(gui->management.identity_label), TRUE);
+	gtk_label_set_selectable(GTK_LABEL(gui->management.identity_label), TRUE);
 	
-	gtk_box_set_child_packing(GTK_BOX(main_box), exit_button, FALSE, FALSE, 2, GTK_PACK_END);
+	gui->management.port_label = gtk_label_new(port);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->management.port_label), PANGO_WRAP_CHAR);
+	gtk_label_set_line_wrap(GTK_LABEL(gui->management.port_label), TRUE);
+	gtk_label_set_selectable(GTK_LABEL(gui->management.port_label), TRUE);
+	
+	gui->management.name_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->management.name_entry), gui->callbacks.get_name(destination, port));
+	
+	if (name->str[index] == '\0') {
+		name->str[index] = '_';
+	}
+	
+	g_string_free(name, TRUE);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), gui->management.identity_label);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->management.port_label);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->management.name_entry);
+	
+	gtk_box_pack_end(GTK_BOX(main_box), exit_button, FALSE, FALSE, 2);
 	
 	g_signal_connect(exit_button, "clicked\0", G_CALLBACK(CGTK_exit_chat), gui);
 	

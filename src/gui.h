@@ -85,6 +85,10 @@ typedef struct {
 	
 	struct {
 		GtkWidget* dialog;
+		
+		GtkWidget* identity_label;
+		GtkWidget* port_label;
+		GtkWidget* name_entry;
 	} management;
 } cgtk_gui_t;
 
