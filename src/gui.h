@@ -21,27 +21,58 @@ typedef struct {
 typedef struct {
 	cgtk_callbacks_t callbacks;
 	
-	char identity [CGTK_IDENTITY_BUFFER_SIZE];
-	char port [CGTK_PORT_BUFFER_SIZE];
+	struct {
+		char identity [CGTK_IDENTITY_BUFFER_SIZE];
+		char port [CGTK_PORT_BUFFER_SIZE];
+		char name [CGTK_NAME_SEARCH_SIZE];
+	} attributes;
 	
-	GtkWidget* app_window;
-	GtkWidget* content_leaflet;
+	struct {
+		GtkWidget* window;
+		GtkWidget* leaflet;
+	} main;
 	
-	GtkWidget* contacts_list;
+	struct {
+		GtkWidget* add_button;
+		GtkWidget* identity_button;
+		
+		GtkWidget* list;
+	} contacts;
 	
-	GtkWidget* search_entry;
-	GtkWidget* search_list;
+	struct {
+		GtkWidget* back_button;
+		GtkWidget* options_button;
+		
+		GtkWidget* header;
+		GtkWidget* stack;
+		
+		GtkWidget* msg_button;
+		GtkWidget* msg_text_view;
+	} chat;
 	
-	GtkWidget* add_button;
-	GtkWidget* identity_button;
-	GtkWidget* back_button;
-	GtkWidget* options_button;
+	struct {
+		GtkWidget* dialog;
+		
+		GtkWidget* identity_entry;
+		GtkWidget* port_entry;
+		GtkWidget* name_entry;
+		GtkWidget* group_check;
+	} new_contact;
 	
-	GtkWidget* chat_header;
-	GtkWidget* chat_stack;
+	struct {
+		GtkWidget* dialog;
+		
+		GtkWidget* entry;
+		GtkWidget* list;
+	} id_search;
 	
-	GtkWidget* msg_button;
-	GtkWidget* msg_text_view;
+	struct {
+		GtkWidget* dialog;
+	} identity;
+	
+	struct {
+		GtkWidget* dialog;
+	} management;
 } cgtk_gui_t;
 
 typedef enum {

@@ -17,7 +17,6 @@ static messaging_t* messaging;
 #include <libhandy-1/handy.h>
 #endif
 
-#include "gui/chat.h"
 #include "json.h"
 #include "gui/util.h"
 
@@ -37,7 +36,17 @@ static struct {
 } session;
 
 static void CGTK_shutdown(const char* error_message) {
-	gtk_widget_destroy(session.gui.app_window);
+	if (session.gui.id_search.dialog) {
+		gtk_widget_destroy(session.gui.id_search.dialog);
+	}
+	
+	if (session.gui.new_contact.dialog) {
+		gtk_widget_destroy(session.gui.new_contact.dialog);
+	}
+	
+	if (session.gui.main.window) {
+		gtk_widget_destroy(session.gui.main.window);
+	}
 	
 	perror(error_message);
 }
@@ -116,7 +125,7 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 }
 
 static void CGTK_update_host() {
-	CGTK_send_gnunet_host(messaging, session.gui.port, session.nick);
+	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, session.nick);
 }
 
 static void CGTK_search_by_name(const char* name) {
@@ -126,7 +135,7 @@ static void CGTK_search_by_name(const char* name) {
 }
 
 static void CGTK_open_group(const char* port) {
-	GString* name = CGTK_merge_name(session.gui.identity, port);
+	GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
 	
 	gboolean new_entry;
 	chat_state_t* state = CGTK_get_state(name, &new_entry);
@@ -142,7 +151,7 @@ static void CGTK_open_group(const char* port) {
 }
 
 static void CGTK_exit_chat(const char* destination, const char* port) {
-	GString* name = CGTK_merge_name(session.gui.identity, port);
+	GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
 	
 	gboolean new_entry;
 	chat_state_t* state = CGTK_get_state(name, &new_entry);
@@ -186,16 +195,16 @@ static gboolean CGTK_idle(gpointer user_data) {
 			guint cmp_hash = (hash + 1);
 			const char* name = NULL;
 			
-			if (session.gui.search_entry) {
-				name = gtk_entry_get_text(GTK_ENTRY(session.gui.search_entry));
+			if (session.gui.id_search.entry) {
+				name = gtk_entry_get_text(GTK_ENTRY(session.gui.id_search.entry));
 				
 				GString* search_str = g_string_new(name);
 				cmp_hash = g_string_hash(search_str);
 				g_string_free(search_str, TRUE);
 			}
 			
-			if ((hash == cmp_hash) && (name) && (session.gui.search_list)) {
-				GList *list = gtk_container_get_children(GTK_CONTAINER(session.gui.search_list));
+			if ((hash == cmp_hash) && (name) && (session.gui.id_search.list)) {
+				GList *list = gtk_container_get_children(GTK_CONTAINER(session.gui.id_search.list));
 				gboolean duplicate = FALSE;
 				
 				while (list) {
@@ -217,7 +226,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 					hdy_action_row_set_subtitle(contact, identity);
 					hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
 					
-					gtk_container_add(GTK_CONTAINER(session.gui.search_list), GTK_WIDGET(contact));
+					gtk_container_add(GTK_CONTAINER(session.gui.id_search.list), GTK_WIDGET(contact));
 					
 					gtk_widget_show_all(GTK_WIDGET(contact));
 				}
@@ -239,7 +248,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			GString* name = CGTK_merge_name(session.gui.identity, port);
+			GString* name = CGTK_merge_name(session.gui.attributes.identity, port);
 			
 			gboolean new_entry;
 			chat_state_t* state = CGTK_get_state(name, &new_entry);
@@ -380,15 +389,15 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	
-	session.gui.app_window = gtk_application_window_new(application);
+	session.gui.main.window = gtk_application_window_new(application);
 	
-	gtk_window_set_default_size(GTK_WINDOW(session.gui.app_window), 320, 512);
+	gtk_window_set_default_size(GTK_WINDOW(session.gui.main.window), 320, 512);
 	
 	CGTK_init_ui(&(session.gui));
 	
-	g_signal_connect(session.gui.app_window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
+	g_signal_connect(session.gui.main.window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	
-	gtk_widget_show_all(session.gui.app_window);
+	gtk_widget_show_all(session.gui.main.window);
 	
 	#if(CGTK_GTK_SESSION_IDLE_DELAY_MS > 0)
 	session.idle = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_GTK_SESSION_IDLE_DELAY_MS, CGTK_idle, NULL, NULL);

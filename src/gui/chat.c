@@ -12,12 +12,12 @@
 
 #include "util.h"
 
-#include "../dialog/chat_management.c"
+#include "dialog/chat_management.c"
 
 static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->content_leaflet), "contacts\0");
+	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "contacts\0");
 }
 
 static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
@@ -27,7 +27,7 @@ static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
 	
 	if (gtk_text_buffer_get_char_count(text_buffer) > 0) {
 		GString* name = g_string_new(gtk_stack_get_visible_child_name(
-				GTK_STACK(gui->chat_stack)
+				GTK_STACK(gui->chat.stack)
 		));
 		
 		const char* destination = name->str;
@@ -63,7 +63,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "\0");
 	gtk_widget_set_hexpand(header, TRUE);
 	
-	gui->back_button = gtk_button_new_from_icon_name("go-previous-symbolic\0", GTK_ICON_SIZE_MENU);
+	gui->chat.back_button = gtk_button_new_from_icon_name("go-previous-symbolic\0", GTK_ICON_SIZE_MENU);
 	
 	GtkWidget* options = gtk_popover_menu_new();
 	GtkWidget* options_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 1);
@@ -80,31 +80,31 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	
 	GtkWidget* options_icon = gtk_image_new_from_icon_name("view-more-symbolic\0", GTK_ICON_SIZE_MENU);
 	
-	gui->options_button = gtk_menu_button_new();
-	gtk_menu_button_set_popover(GTK_MENU_BUTTON(gui->options_button), options);
-	gtk_button_set_image(GTK_BUTTON(gui->options_button), options_icon);
+	gui->chat.options_button = gtk_menu_button_new();
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(gui->chat.options_button), options);
+	gtk_button_set_image(GTK_BUTTON(gui->chat.options_button), options_icon);
 	
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), gui->back_button);
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), gui->options_button);
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), gui->chat.back_button);
+	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), gui->chat.options_button);
 	
 	gtk_widget_set_hexpand(content, TRUE);
 	gtk_widget_set_vexpand(content, TRUE);
 	
-	gui->chat_stack = gtk_stack_new();
+	gui->chat.stack = gtk_stack_new();
 	
-	gtk_widget_set_hexpand(gui->chat_stack, TRUE);
-	gtk_widget_set_vexpand(gui->chat_stack, TRUE);
+	gtk_widget_set_hexpand(gui->chat.stack, TRUE);
+	gtk_widget_set_vexpand(gui->chat.stack, TRUE);
 	
 	GtkWidget* msg_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	
-	gui->msg_text_view = gtk_text_view_new();
-	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(gui->msg_text_view), 4);
-	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(gui->msg_text_view), 4);
-	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(gui->msg_text_view), 4);
-	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(gui->msg_text_view), 4);
-	gtk_widget_set_margin_bottom(gui->msg_text_view, 2);
-	gtk_widget_set_margin_top(gui->msg_text_view, 2);
-	gtk_widget_set_sensitive(gui->msg_text_view, FALSE);
+	gui->chat.msg_text_view = gtk_text_view_new();
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
+	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
+	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
+	gtk_widget_set_margin_bottom(gui->chat.msg_text_view, 2);
+	gtk_widget_set_margin_top(gui->chat.msg_text_view, 2);
+	gtk_widget_set_sensitive(gui->chat.msg_text_view, FALSE);
 	
 	GtkWidget* msg_scrolled = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(msg_scrolled), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -116,38 +116,38 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_widget_set_margin_end(msg_scrolled, 2);
 	gtk_widget_set_margin_top(msg_scrolled, 2);
 	
-	gui->msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
-	gtk_widget_set_valign(gui->msg_button, GTK_ALIGN_END);
-	gtk_widget_set_margin_start(gui->msg_button, 2);
-	gtk_widget_set_margin_bottom(gui->msg_button, 4);
-	gtk_widget_set_margin_end(gui->msg_button, 4);
-	gtk_widget_set_margin_top(gui->msg_button, 4);
-	gtk_widget_set_sensitive(gui->msg_button, FALSE);
+	gui->chat.msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
+	gtk_widget_set_valign(gui->chat.msg_button, GTK_ALIGN_END);
+	gtk_widget_set_margin_start(gui->chat.msg_button, 2);
+	gtk_widget_set_margin_bottom(gui->chat.msg_button, 4);
+	gtk_widget_set_margin_end(gui->chat.msg_button, 4);
+	gtk_widget_set_margin_top(gui->chat.msg_button, 4);
+	gtk_widget_set_sensitive(gui->chat.msg_button, FALSE);
 	
-	gtk_container_add(GTK_CONTAINER(msg_scrolled), gui->msg_text_view);
+	gtk_container_add(GTK_CONTAINER(msg_scrolled), gui->chat.msg_text_view);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_scrolled);
-	gtk_container_add(GTK_CONTAINER(msg_box), gui->msg_button);
+	gtk_container_add(GTK_CONTAINER(msg_box), gui->chat.msg_button);
 	
-	gtk_container_add(GTK_CONTAINER(content), gui->chat_stack);
+	gtk_container_add(GTK_CONTAINER(content), gui->chat.stack);
 	gtk_container_add(GTK_CONTAINER(content), msg_box);
 	
 	GtkSizeGroup* sizeGroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(gui->msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
+	g_signal_connect(gui->chat.msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
 	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_manage_chat_dialog), gui);
-	g_signal_connect(gui->back_button, "clicked\0", G_CALLBACK(CGTK_back), gui);
+	g_signal_connect(gui->chat.back_button, "clicked\0", G_CALLBACK(CGTK_back), gui);
 }
 
 GtkTextBuffer* CGTK_get_chat_text_buffer(cgtk_gui_t* gui) {
-	return gtk_text_view_get_buffer(GTK_TEXT_VIEW(gui->msg_text_view));
+	return gtk_text_view_get_buffer(GTK_TEXT_VIEW(gui->chat.msg_text_view));
 }
 
 GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const char* contact_port) {
 	GString* name = CGTK_merge_name(contact_id, contact_port);
 	
-	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat_stack), name->str);
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat.stack), name->str);
 	GtkWidget* chat_list;
 	
 	if (!chat_box) {
@@ -174,7 +174,7 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 		gtk_container_add(GTK_CONTAINER(chat_box), chat_label);
 		gtk_container_add(GTK_CONTAINER(chat_box), scrolled);
 		
-		gtk_stack_add_named(GTK_STACK(gui->chat_stack), chat_box, name->str);
+		gtk_stack_add_named(GTK_STACK(gui->chat.stack), chat_box, name->str);
 	} else {
 		GtkWidget* scrolled = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->next->data);
 		GtkWidget* viewport = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(scrolled))->data);
@@ -190,13 +190,13 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 GtkWidget* CGTK_get_chat_label(cgtk_gui_t* gui, const char* contact_id, const char* contact_port) {
 	GString* name = CGTK_merge_name(contact_id, contact_port);
 	
-	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat_stack), name->str);
+	GtkWidget* chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat.stack), name->str);
 	
 	if (!chat_box) {
 		CGTK_get_chat_list(gui, contact_id, contact_port);
 	}
 	
-	chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat_stack), name->str);
+	chat_box = gtk_stack_get_child_by_name(GTK_STACK(gui->chat.stack), name->str);
 	
 	g_string_free(name, TRUE);
 	
@@ -211,7 +211,7 @@ void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	
 	size_t index = CGTK_split_name(name, &contact_id, &contact_port);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat_header), contact_id);
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), contact_id);
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, contact_id, contact_port);
 	
@@ -220,31 +220,31 @@ void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	}
 	
 	gtk_widget_show_all(chat_list);
-	gtk_widget_show_all(gui->chat_stack);
-	gtk_widget_show_all(gui->chat_header);
+	gtk_widget_show_all(gui->chat.stack);
+	gtk_widget_show_all(gui->chat.header);
 	
-	gtk_stack_set_visible_child_name(GTK_STACK(gui->chat_stack), name->str);
+	gtk_stack_set_visible_child_name(GTK_STACK(gui->chat.stack), name->str);
 	
-	gtk_widget_set_sensitive(gui->msg_text_view, TRUE);
-	gtk_widget_set_sensitive(gui->msg_button, TRUE);
+	gtk_widget_set_sensitive(gui->chat.msg_text_view, TRUE);
+	gtk_widget_set_sensitive(gui->chat.msg_button, TRUE);
 	
 	g_string_free(name, TRUE);
 }
 
 void CGTK_unload_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	GtkWidget* chat_box = gtk_stack_get_child_by_name(
-			GTK_STACK(gui->chat_stack), gtk_widget_get_name(GTK_WIDGET(row))
+			GTK_STACK(gui->chat.stack), gtk_widget_get_name(GTK_WIDGET(row))
 	);
 	
-	gtk_container_remove(GTK_CONTAINER(gui->chat_stack), chat_box);
+	gtk_container_remove(GTK_CONTAINER(gui->chat.stack), chat_box);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat_header), "\0");
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), "\0");
 	
-	gtk_widget_show_all(gui->chat_stack);
-	gtk_widget_show_all(gui->chat_header);
+	gtk_widget_show_all(gui->chat.stack);
+	gtk_widget_show_all(gui->chat.header);
 	
-	gtk_widget_set_sensitive(gui->msg_text_view, FALSE);
-	gtk_widget_set_sensitive(gui->msg_button, FALSE);
+	gtk_widget_set_sensitive(gui->chat.msg_text_view, FALSE);
+	gtk_widget_set_sensitive(gui->chat.msg_button, FALSE);
 }
 
 void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {

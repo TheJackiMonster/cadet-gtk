@@ -2,16 +2,12 @@
 // Created by thejackimonster on 04.05.20.
 //
 
-#include "../gui/contacts.h"
+#include "../contacts.h"
 
 static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	GtkWidget* leaflet = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(gui->app_window))->data);
-	
-	GtkWidget* dialog = gtk_widget_get_toplevel(exit_button);
-	
-	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat_stack)));
+	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));
 	
 	const char* destination = name->str;
 	const char* port = "\0";
@@ -28,28 +24,28 @@ static void CGTK_exit_chat(GtkWidget* exit_button, gpointer user_data) {
 	
 	g_string_free(name, TRUE);
 	
-	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(gui->management.dialog);
 	
-	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(leaflet)), "contacts\0") != 0) {
-		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(leaflet), "contacts\0");
+	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(gui->main.leaflet)), "contacts\0") != 0) {
+		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "contacts\0");
 	}
 }
 
 static void CGTK_manage_chat_dialog(GtkWidget* manage_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->options_button), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
 	
 	#ifdef HANDY_USE_ZERO_API
-	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(gui->app_window));
+	gui->management.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
 	#else
-	GtkWidget* dialog = gtk_dialog_new();
+	gui->management.dialog = gtk_dialog_new();
 	#endif
 	
-	gtk_window_set_title(GTK_WINDOW(dialog), "Manage Chat\0");
-	gtk_widget_set_size_request(dialog, 320, 0);
+	gtk_window_set_title(GTK_WINDOW(gui->management.dialog), "Manage Chat\0");
+	gtk_widget_set_size_request(gui->management.dialog, 320, 0);
 	
-	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(dialog))->data);
+	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(gui->management.dialog))->data);
 	gtk_box_set_spacing(GTK_BOX(main_box), 2);
 	gtk_widget_set_margin_start(main_box, 4);
 	gtk_widget_set_margin_bottom(main_box, 4);
@@ -66,5 +62,5 @@ static void CGTK_manage_chat_dialog(GtkWidget* manage_button, gpointer user_data
 	
 	g_signal_connect(exit_button, "clicked\0", G_CALLBACK(CGTK_exit_chat), gui);
 	
-	gtk_widget_show_all(dialog);
+	gtk_widget_show_all(gui->management.dialog);
 }
