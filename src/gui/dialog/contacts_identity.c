@@ -2,15 +2,27 @@
 // Created by thejackimonster on 04.05.20.
 //
 
-static void CGTK_identity_port_confirm(GtkWidget* id_entry, gpointer user_data) {
+static void CGTK_identity_port_confirm(GtkWidget* port_entry, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
-	
-	const char* port = CGTK_get_entry_text(id_entry);
 
-	strncpy(gui->attributes.port, port, CGTK_PORT_BUFFER_SIZE - 1);
+	strncpy(gui->attributes.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
 	gui->attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
-	gui->callbacks.update_host();
+	uint8_t host_announcement = HOST_ANNOUNCE_NONE;
+	
+	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.name_entry)) > 0) {
+		host_announcement |= HOST_ANNOUNCE_NAME;
+	}
+	
+	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.mail_entry)) > 0) {
+		host_announcement |= HOST_ANNOUNCE_MAIL;
+	}
+	
+	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.phone_entry)) > 0) {
+		host_announcement |= HOST_ANNOUNCE_PHONE;
+	}
+	
+	gui->callbacks.update_host(host_announcement);
 	
 	gtk_widget_destroy(gui->identity.dialog);
 }
@@ -60,18 +72,35 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gtk_container_add(GTK_CONTAINER(main_box), avatar);
 #endif
 	
-	GtkWidget* id_label = gtk_label_new(gui->attributes.identity);
-	gtk_label_set_line_wrap_mode(GTK_LABEL(id_label), PANGO_WRAP_CHAR);
-	gtk_label_set_line_wrap(GTK_LABEL(id_label), TRUE);
-	gtk_label_set_selectable(GTK_LABEL(id_label), TRUE);
 	
-	GtkWidget* port_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(port_entry), gui->attributes.port);
 	
-	gtk_container_add(GTK_CONTAINER(main_box), id_label);
-	gtk_container_add(GTK_CONTAINER(main_box), port_entry);
+	gui->identity.label = gtk_label_new(gui->attributes.identity);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->identity.label), PANGO_WRAP_CHAR);
+	gtk_label_set_line_wrap(GTK_LABEL(gui->identity.label), TRUE);
+	gtk_label_set_selectable(GTK_LABEL(gui->identity.label), TRUE);
 	
-	g_signal_connect(port_entry, "activate\0", G_CALLBACK(CGTK_identity_port_confirm), gui);
+	gui->identity.port_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.port_entry), gui->attributes.port);
+	
+	gui->identity.name_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.name_entry), gui->callbacks.get_name(gui->attributes.identity, gui->attributes.port));
+	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.name_entry), GTK_INPUT_PURPOSE_NAME);
+	
+	gui->identity.mail_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.mail_entry), "\0");
+	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.mail_entry), GTK_INPUT_PURPOSE_EMAIL);
+	
+	gui->identity.phone_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.phone_entry), "\0");
+	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.phone_entry), GTK_INPUT_PURPOSE_PHONE);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.label);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.port_entry);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.name_entry);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.mail_entry);
+	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.phone_entry);
+	
+	g_signal_connect(gui->identity.port_entry, "activate\0", G_CALLBACK(CGTK_identity_port_confirm), gui);
 	
 	gtk_widget_show_all(gui->identity.dialog);
 }

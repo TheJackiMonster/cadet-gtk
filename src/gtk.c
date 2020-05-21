@@ -30,6 +30,8 @@ typedef struct chat_state_t {
 } chat_state_t;
 
 static struct {
+	uint8_t host_announcement;
+	
 	cgtk_gui_t gui;
 	
 	guint idle;
@@ -161,8 +163,52 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 	return result;
 }
 
-static void CGTK_update_host() {
-	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, CGTK_get_nick());
+static void CGTK_update_host(uint8_t host_announcement) {
+	const uint8_t bits = (host_announcement & HOST_ANNOUNCE_BIT_MASK);
+	
+	GString* regex_string = g_string_new("\0");
+	
+	const char* nick = CGTK_get_nick();
+	
+	if ((bits & HOST_ANNOUNCE_NAME) && (strlen(nick) > 0)) {
+		g_string_append_c_inline(regex_string, '(');
+		g_string_append(regex_string, nick);
+		g_string_append_c_inline(regex_string, ')');
+	}
+	
+	if (session.gui.identity.mail_entry) {
+		const char* mail = CGTK_get_entry_text(session.gui.identity.mail_entry);
+		
+		if ((bits & HOST_ANNOUNCE_MAIL) && (strlen(mail) > 0)) {
+			if (regex_string->len > 0) {
+				g_string_append_c_inline(regex_string, '|');
+			}
+			
+			g_string_append_c_inline(regex_string, '(');
+			g_string_append(regex_string, mail);
+			g_string_append_c_inline(regex_string, ')');
+		}
+	}
+	
+	if (session.gui.identity.phone_entry) {
+		const char* phone = CGTK_get_entry_text(session.gui.identity.phone_entry);
+		
+		if ((bits & HOST_ANNOUNCE_PHONE) && (strlen(phone) > 0)) {
+			if (regex_string->len > 0) {
+				g_string_append_c_inline(regex_string, '|');
+			}
+			
+			g_string_append_c_inline(regex_string, '(');
+			g_string_append(regex_string, phone);
+			g_string_append_c_inline(regex_string, ')');
+		}
+	}
+	
+	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, regex_string->str);
+	
+	session.host_announcement = bits;
+	
+	g_string_free(regex_string, TRUE);
 }
 
 static void CGTK_search_by_name(const char* name) {
@@ -207,7 +253,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				CGTK_set_nick(getenv("USER\0"));
 			}
 			
-			CGTK_update_host();
+			CGTK_update_host(session.host_announcement);
 			break;
 		} case MSG_GTK_FOUND: {
 			const guint hash = CGTK_recv_gnunet_hash(messaging);
@@ -354,6 +400,10 @@ void CGTK_state_value_free(gpointer value) {
 
 void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
+	
+	session.host_announcement = HOST_ANNOUNCE_NONE;
+	
+	memset(&(session.gui), 0, sizeof(session.gui));
 	
 	session.gui.callbacks.set_name = &CGTK_set_name;
 	session.gui.callbacks.get_name = &CGTK_get_name;

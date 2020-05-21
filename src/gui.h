@@ -10,11 +10,17 @@
 #include "config.h"
 #include "json.h"
 
+#define HOST_ANNOUNCE_NONE 0x00u
+#define HOST_ANNOUNCE_NAME 0x01u
+#define HOST_ANNOUNCE_MAIL 0x02u
+#define HOST_ANNOUNCE_PHONE 0x04u
+#define HOST_ANNOUNCE_BIT_MASK 0x07u
+
 typedef struct {
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
 	bool_t (*send_message)(const char* destination, const char* port, msg_t* msg);
-	void (*update_host)(void);
+	void (*update_host)(uint8_t host_announcement);
 	void (*search_by_name)(const char* name);
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
@@ -69,6 +75,12 @@ typedef struct {
 	
 	struct {
 		GtkWidget* dialog;
+		
+		GtkWidget* label;
+		GtkWidget* port_entry;
+		GtkWidget* name_entry;
+		GtkWidget* mail_entry;
+		GtkWidget* phone_entry;
 	} identity;
 	
 	struct {

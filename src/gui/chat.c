@@ -98,6 +98,8 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	GtkWidget* msg_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	
 	gui->chat.msg_text_view = gtk_text_view_new();
+	gtk_text_view_set_input_purpose(GTK_TEXT_VIEW(gui->chat.msg_text_view), GTK_INPUT_PURPOSE_FREE_FORM);
+	gtk_text_view_set_input_hints(GTK_TEXT_VIEW(gui->chat.msg_text_view), GTK_INPUT_HINT_EMOJI);
 	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
 	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
 	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);

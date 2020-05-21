@@ -587,6 +587,4 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 			&CGTK_idle,
 			NULL
 	);
-	
-	CGTK_name_search("thejackimonster");
 }
