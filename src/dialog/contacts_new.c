@@ -42,8 +42,10 @@ static void CGTK_select_found_contact(GtkListBox* box, GtkListBoxRow* row, gpoin
 static void CGTK_search_contact_dialog(GtkWidget* search_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
+	GtkWidget* contact_dialog = gtk_widget_get_toplevel(search_button);
+	
 #ifdef HANDY_USE_ZERO_API
-	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(gui->app_window));
+	GtkWidget* dialog = hdy_dialog_new(GTK_WINDOW(contact_dialog));
 #else
 	GtkWidget* dialog = gtk_dialog_new();
 #endif
