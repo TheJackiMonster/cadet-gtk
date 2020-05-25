@@ -6,6 +6,7 @@
 #define CADET_GTK_GUI_H
 
 #include <gtk/gtk.h>
+#include <stdint.h>
 
 #include "config.h"
 #include "json.h"
