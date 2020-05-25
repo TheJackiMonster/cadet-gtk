@@ -6,8 +6,9 @@ A GTK based GUI for the CADET subsystem of GNUnet.
 ![Example for adding a contact](examples/mobile_add_contact.png "Adding a contact")
 ![Example for chat](examples/mobile_chat.png "Chat between you and one contact")
 
-This application uses early and unstable additions to [GTK](https://www.gtk.org/) 
-from [libhandy](https://source.puri.sm/Librem5/libhandy) to make it work as mobile application too.
+This application requires [libhandy](https://gitlab.gnome.org/GNOME/libhandy/)
+0.0.12 or later, as it uses it in order to make it work as a mobile application
+too.
 
 It runs the actual handling of CADET as second process and communicates to the main process with the GUI
 via unix specific pipes.
