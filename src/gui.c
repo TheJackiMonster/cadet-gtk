@@ -17,6 +17,7 @@
 void CGTK_init_ui(cgtk_gui_t* gui) {
 	memset(gui->attributes.identity, '\0', CGTK_IDENTITY_BUFFER_SIZE);
 	memset(gui->attributes.port, '\0', CGTK_PORT_BUFFER_SIZE);
+	memset(gui->attributes.regex, '\0', CGTK_REGEX_BUFFER_SIZE);
 	
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* contacts_header = gtk_header_bar_new();

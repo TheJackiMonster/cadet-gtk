@@ -23,15 +23,13 @@ static messaging_t* messaging;
 #include <stdlib.h>
 
 typedef struct chat_state_t {
-	gchar name [CGTK_NAME_SEARCH_SIZE + 1];
+	gchar name [CGTK_NAME_BUFFER_SIZE];
 	
 	gboolean use_json;
 	gboolean is_group;
 } chat_state_t;
 
 static struct {
-	uint8_t host_announcement;
-	
 	cgtk_gui_t gui;
 	
 	guint idle;
@@ -73,7 +71,7 @@ static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
 	} else {
 		state = (chat_state_t*) malloc(sizeof(chat_state_t));
 		
-		memset(state->name, '\0', CGTK_NAME_SEARCH_SIZE + 1);
+		memset(state->name, '\0', CGTK_NAME_BUFFER_SIZE);
 		
 		state->use_json = FALSE;
 		state->is_group = FALSE;
@@ -104,7 +102,8 @@ static chat_state_t* CGTK_select_state(const char* identity, const char* port) {
 static void CGTK_set_name(const char* identity, const char* port, const char* name) {
 	chat_state_t* state = CGTK_select_state(identity, port);
 	
-	strncpy(state->name, name, CGTK_NAME_SEARCH_SIZE);
+	strncpy(state->name, name, CGTK_NAME_BUFFER_SIZE);
+	state->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
 }
 
 static const char* CGTK_get_name(const char* identity, const char* port) {
@@ -163,52 +162,22 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 	return result;
 }
 
-static void CGTK_update_host(uint8_t host_announcement) {
-	const uint8_t bits = (host_announcement & HOST_ANNOUNCE_BIT_MASK);
-	
-	GString* regex_string = g_string_new("\0");
-	
-	const char* nick = CGTK_get_nick();
-	
-	if ((bits & HOST_ANNOUNCE_NAME) && (strlen(nick) > 0)) {
-		g_string_append_c_inline(regex_string, '(');
-		g_string_append(regex_string, nick);
-		g_string_append_c_inline(regex_string, ')');
+static void CGTK_update_host(const char* host_port, const char* announce_regex) {
+	if (!host_port) {
+		host_port = "\0";
 	}
 	
-	if (session.gui.identity.mail_entry) {
-		const char* mail = CGTK_get_entry_text(session.gui.identity.mail_entry);
-		
-		if ((bits & HOST_ANNOUNCE_MAIL) && (strlen(mail) > 0)) {
-			if (regex_string->len > 0) {
-				g_string_append_c_inline(regex_string, '|');
-			}
-			
-			g_string_append_c_inline(regex_string, '(');
-			g_string_append(regex_string, mail);
-			g_string_append_c_inline(regex_string, ')');
-		}
+	if (!announce_regex) {
+		announce_regex = "\0";
 	}
 	
-	if (session.gui.identity.phone_entry) {
-		const char* phone = CGTK_get_entry_text(session.gui.identity.phone_entry);
-		
-		if ((bits & HOST_ANNOUNCE_PHONE) && (strlen(phone) > 0)) {
-			if (regex_string->len > 0) {
-				g_string_append_c_inline(regex_string, '|');
-			}
-			
-			g_string_append_c_inline(regex_string, '(');
-			g_string_append(regex_string, phone);
-			g_string_append_c_inline(regex_string, ')');
-		}
-	}
+	strncpy(session.gui.attributes.port, host_port, CGTK_PORT_BUFFER_SIZE);
+	session.gui.attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
-	CGTK_send_gnunet_host(messaging, session.gui.attributes.port, regex_string->str);
+	strncpy(session.gui.attributes.regex, announce_regex, CGTK_REGEX_BUFFER_SIZE);
+	session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
 	
-	session.host_announcement = bits;
-	
-	g_string_free(regex_string, TRUE);
+	CGTK_send_gnunet_host(messaging, host_port, announce_regex);
 }
 
 static void CGTK_search_by_name(const char* name) {
@@ -251,9 +220,16 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			if (strlen(CGTK_get_nick()) == 0) {
 				CGTK_set_nick(getenv("USER\0"));
+				
+				GString* regex = CGTK_regex_append_escaped(NULL, CGTK_get_nick());
+				
+				strncpy(session.gui.attributes.regex, regex->str, CGTK_REGEX_BUFFER_SIZE);
+				session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
+				
+				g_string_free(regex, TRUE);
 			}
 			
-			CGTK_update_host(session.host_announcement);
+			CGTK_update_host(session.gui.attributes.port, session.gui.attributes.regex);
 			break;
 		} case MSG_GTK_FOUND: {
 			const guint hash = CGTK_recv_gnunet_hash(messaging);
@@ -400,8 +376,6 @@ void CGTK_state_value_free(gpointer value) {
 
 void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
-	
-	session.host_announcement = HOST_ANNOUNCE_NONE;
 	
 	memset(&(session.gui), 0, sizeof(session.gui));
 	

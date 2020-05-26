@@ -44,3 +44,32 @@ const char* CGTK_get_entry_text(GtkWidget* entry_widget) {
 		}
 	}
 }
+
+GString* CGTK_regex_append_escaped(GString* base, const char* chars) {
+	GString* escaped = base? base : g_string_new("\0");
+	
+	if (base) {
+		g_string_append_c(escaped, '|');
+	}
+	
+	g_string_append_c(escaped, '(');
+	
+	if (chars) {
+		while (*chars) {
+			char needle [2];
+			needle[0] = *chars;
+			needle[1] = '\0';
+			
+			if (strstr("^$\\.*+?()[]{}|\0", needle)) {
+				g_string_append_c(escaped, '\\');
+			}
+			
+			g_string_append_c(escaped, *chars);
+			chars++;
+		}
+	}
+	
+	g_string_append_c(escaped, ')');
+	
+	return escaped;
+}

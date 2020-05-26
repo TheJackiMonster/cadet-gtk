@@ -308,12 +308,12 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* identi
 }
 
 static const char* CGTK_receive_name() {
-	static char buffer[CGTK_NAME_SEARCH_SIZE + 1];
+	static char buffer[CGTK_NAME_BUFFER_SIZE];
 	
 	size_t length = CGTK_recv_gtk_msg_length(messaging);
 	
-	if (length > CGTK_NAME_SEARCH_SIZE) {
-		length = CGTK_NAME_SEARCH_SIZE;
+	if (length >= CGTK_NAME_BUFFER_SIZE) {
+		length = CGTK_NAME_BUFFER_SIZE - 1;
 	}
 	
 	ssize_t offset = 0;

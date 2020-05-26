@@ -42,12 +42,17 @@
 #define CGTK_NAME_SEARCH_PREFIX "cadet-gtk://\0"
 #define CGTK_NAME_SEARCH_PREFIX_SIZE 12
 
+/*
+ * The prefix for the regex does not have to differentiate
+ * until it contains characters which need to be escaped.
+ */
 #define CGTK_NAME_SEARCH_PREFIX_REG CGTK_NAME_SEARCH_PREFIX
 #define CGTK_NAME_SEARCH_PREFIX_REG_SIZE CGTK_NAME_SEARCH_PREFIX_SIZE
 
 #define CGTK_IDENTITY_BUFFER_SIZE 1024
 #define CGTK_PORT_BUFFER_SIZE 512
-#define CGTK_NAME_SEARCH_SIZE 128
+#define CGTK_NAME_BUFFER_SIZE 128
+#define CGTK_REGEX_BUFFER_SIZE 1024
 #define CGTK_MESSAGE_BUFFER_SIZE 60000
 
 #endif //CADET_GTK_CONFIG_H

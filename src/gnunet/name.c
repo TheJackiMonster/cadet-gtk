@@ -12,19 +12,19 @@ static void CGTK_name_call(const char* name_regex) {
 	const size_t name_regex_len = strlen(name_regex);
 	
 	if (name_regex_len > 0) {
-		static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_REG_SIZE + CGTK_NAME_SEARCH_SIZE + 5];
+		static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_REG_SIZE + CGTK_REGEX_BUFFER_SIZE + 4];
 		
 		name_prefixed[0] = '(';
 		
 		strncpy(name_prefixed + 1, CGTK_NAME_SEARCH_PREFIX_REG, CGTK_NAME_SEARCH_PREFIX_REG_SIZE);
 		
-		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + 1] = ')';
-		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + 2] = '(';
+		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + 1] = ')';
+		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + 2] = '(';
 		
-		strcpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_SIZE + 3, name_regex);
+		strncpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_REG_SIZE + 3, name_regex, CGTK_REGEX_BUFFER_SIZE);
 		
-		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + name_regex_len + 3] = ')';
-		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_SEARCH_SIZE + 4] = '\0';
+		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + name_regex_len + 3] = ')';
+		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + CGTK_REGEX_BUFFER_SIZE + 3] = '\0';
 		
 		session.name_announcement = GNUNET_REGEX_announce(
 				session.cfg,
@@ -57,19 +57,26 @@ static void CGTK_name_search(const char* name) {
 		GNUNET_free(session.name_needle);
 	}
 	
-	session.name_needle = GNUNET_strdup(name);
+	size_t name_len = strlen(name);
 	
-	static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_SEARCH_SIZE + 1];
-	
-	strcpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX);
-	strcpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_SIZE, name);
-	
-	name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_SEARCH_SIZE] = '\0';
-	
-	session.name_search = GNUNET_REGEX_search(
-			session.cfg,
-			name_prefixed,
-			CGTK_name_found,
-			session.name_needle
-	);
+	if (name_len > 0) {
+		session.name_needle = GNUNET_strdup(name);
+		
+		static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE];
+		
+		strcpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX);
+		strncpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_SIZE, name, CGTK_NAME_BUFFER_SIZE);
+		
+		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+		
+		session.name_search = GNUNET_REGEX_search(
+				session.cfg,
+				name_prefixed,
+				CGTK_name_found,
+				session.name_needle
+		);
+	} else {
+		session.name_needle = NULL;
+		session.name_search = NULL;
+	}
 }

@@ -2,27 +2,41 @@
 // Created by thejackimonster on 04.05.20.
 //
 
+#include "../util.h"
+
 static void CGTK_identity_port_confirm(GtkWidget* port_entry, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
 	strncpy(gui->attributes.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
 	gui->attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
-	uint8_t host_announcement = HOST_ANNOUNCE_NONE;
+	GString* regex = NULL;
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.name_entry)) > 0) {
-		host_announcement |= HOST_ANNOUNCE_NAME;
+		const char * name = gtk_entry_get_text(GTK_ENTRY(gui->identity.name_entry));
+		
+		regex = CGTK_regex_append_escaped(regex, name);
+		
+		gui->callbacks.set_name(gui->attributes.identity, gui->attributes.port, name);
 	}
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.mail_entry)) > 0) {
-		host_announcement |= HOST_ANNOUNCE_MAIL;
+		regex = CGTK_regex_append_escaped(regex, gtk_entry_get_text(GTK_ENTRY(gui->identity.mail_entry)));
 	}
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.phone_entry)) > 0) {
-		host_announcement |= HOST_ANNOUNCE_PHONE;
+		regex = CGTK_regex_append_escaped(regex, gtk_entry_get_text(GTK_ENTRY(gui->identity.phone_entry)));
 	}
 	
-	gui->callbacks.update_host(host_announcement);
+	if (regex) {
+		g_string_append_c(regex, '\0');
+	}
+	
+	gui->callbacks.update_host(gui->attributes.port, regex? regex->str : NULL);
+	
+	if (regex) {
+		g_string_free(regex, TRUE);
+	}
 	
 	gtk_widget_destroy(gui->identity.dialog);
 }
@@ -71,8 +85,6 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	
 	gtk_container_add(GTK_CONTAINER(main_box), avatar);
 #endif
-	
-	
 	
 	gui->identity.label = gtk_label_new(gui->attributes.identity);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->identity.label), PANGO_WRAP_CHAR);
