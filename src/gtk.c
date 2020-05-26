@@ -30,6 +30,8 @@ typedef struct chat_state_t {
 } chat_state_t;
 
 static struct {
+	config_t config;
+	
 	cgtk_gui_t gui;
 	
 	guint idle;
@@ -219,7 +221,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			CGTK_update_identity_ui(&(session.gui), identity);
 			
 			if (strlen(CGTK_get_nick()) == 0) {
-				CGTK_set_nick(getenv("USER\0"));
+				CGTK_set_nick(session.config.nick);
 				
 				GString* regex = CGTK_regex_append_escaped(NULL, CGTK_get_nick());
 				
@@ -352,6 +354,8 @@ static gboolean CGTK_idle(gpointer user_data) {
 }
 
 static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
+	CGTK_config_save(&(session.config));
+	
 	if (session.idle) {
 		g_source_remove(session.idle);
 		session.idle = 0;
@@ -394,6 +398,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	CGTK_init_ui(&(session.gui));
 	
 	// TODO: load configuration for name, port and others
+	CGTK_config_load(&(session.config));
 	
 	g_signal_connect(session.gui.main.window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	

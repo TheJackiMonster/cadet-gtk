@@ -8,7 +8,11 @@
 #include "config/internal.h"
 
 typedef struct config_t {
-
+	char port [CGTK_PORT_BUFFER_SIZE];
+	
+	char nick [CGTK_NAME_BUFFER_SIZE];
+	char email [CGTK_NAME_BUFFER_SIZE];
+	char phone [CGTK_NAME_BUFFER_SIZE];
 } config_t;
 
 #include "config/file.h"

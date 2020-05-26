@@ -4,10 +4,24 @@
 
 #include "messaging.h"
 
-#include <unistd.h>
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <fcntl.h>
+#include <unistd.h>
 
 static struct GNUNET_CONTAINER_MultiHashMap* port_lookup;
+
+static int pipe2(int pipefd[2], int flags) {
+	int result = pipe(pipefd);
+	
+	if (result == 0) {
+		result = fcntl(pipefd[0], F_SETFL, flags) | fcntl(pipefd[1], F_SETFL, flags);
+	}
+	
+	return result;
+}
 
 void CGTK_init_messaging(messaging_t* messaging) {
 	if ((pipe2(messaging->pipe_gnunet, O_NONBLOCK) == -1) ||
