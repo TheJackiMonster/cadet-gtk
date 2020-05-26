@@ -5,7 +5,7 @@
 #include "gnunet.h"
 
 #include "config.h"
-#include "json.h"
+#include "msg.h"
 #include "messaging.h"
 
 static messaging_t* messaging;

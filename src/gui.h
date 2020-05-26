@@ -9,12 +9,12 @@
 #include <stdint.h>
 
 #include "config.h"
-#include "json.h"
+#include "msg.h"
 
 typedef struct {
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
-	bool_t (*send_message)(const char* destination, const char* port, msg_t* msg);
+	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
 	void (*update_host)(const char* host_port, const char* announce_regex);
 	void (*search_by_name)(const char* name);
 	void (*open_group)(const char* port);

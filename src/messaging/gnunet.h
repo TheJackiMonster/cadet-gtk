@@ -2,6 +2,9 @@
 // Created by thejackimonster on 20.05.20.
 //
 
+#ifndef CADET_GTK_MESSAGING_GNUNET_H
+#define CADET_GTK_MESSAGING_GNUNET_H
+
 void CGTK_prepare_gnunet(messaging_t* messaging);
 
 ssize_t CGTK_send_gnunet_host(messaging_t* messaging, const char* port, const char* name_regex);
@@ -25,3 +28,5 @@ guint CGTK_recv_gnunet_hash(messaging_t* messaging);
 size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging);
 
 ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length);
+
+#endif //CADET_GTK_MESSAGING_GNUNET_H

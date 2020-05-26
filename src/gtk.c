@@ -17,7 +17,7 @@ static messaging_t* messaging;
 #include <libhandy-1/handy.h>
 #endif
 
-#include "json.h"
+#include "msg.h"
 #include "gui/util.h"
 
 #include <stdlib.h>
@@ -120,7 +120,7 @@ static const char* CGTK_get_nick() {
 	return CGTK_get_name(session.gui.attributes.identity, session.gui.attributes.port);
 }
 
-static bool_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
+static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
 	chat_state_t* state = CGTK_select_state(destination, port);
 	
 	msg->timestamp = time(NULL);
@@ -143,7 +143,7 @@ static bool_t CGTK_send_message(const char* destination, const char* port, msg_t
 		buffer = msg->content;
 	}
 	
-	bool_t result = FALSE;
+	uint8_t result = FALSE;
 	
 	if ((buffer_len > 0) && (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) >= buffer_len)) {
 		msg->local = TRUE;
@@ -392,6 +392,8 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	gtk_window_set_default_size(GTK_WINDOW(session.gui.main.window), 320, 512);
 	
 	CGTK_init_ui(&(session.gui));
+	
+	// TODO: load configuration for name, port and others
 	
 	g_signal_connect(session.gui.main.window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	

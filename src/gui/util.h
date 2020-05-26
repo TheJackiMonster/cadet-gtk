@@ -2,8 +2,8 @@
 // Created by thejackimonster on 04.05.20.
 //
 
-#ifndef CADET_GTK_UTIL_H
-#define CADET_GTK_UTIL_H
+#ifndef CADET_GTK_GUI_UTIL_H
+#define CADET_GTK_GUI_UTIL_H
 
 #include <gtk/gtk.h>
 
@@ -15,4 +15,4 @@ const char* CGTK_get_entry_text(GtkWidget* entry_widget);
 
 GString* CGTK_regex_append_escaped(GString* base, const char* chars);
 
-#endif //CADET_GTK_UTIL_H
+#endif //CADET_GTK_GUI_UTIL_H

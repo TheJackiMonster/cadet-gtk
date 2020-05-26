@@ -2,8 +2,8 @@
 // Created by thejackimonster on 12.04.20.
 //
 
-#ifndef CADET_GTK_CHAT_H
-#define CADET_GTK_CHAT_H
+#ifndef CADET_GTK_GUI_CHAT_H
+#define CADET_GTK_GUI_CHAT_H
 
 #include "../gui.h"
 
@@ -23,4 +23,4 @@ void CGTK_unload_chat(cgtk_gui_t* gui, GtkListBoxRow* row);
 
 void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg);
 
-#endif //CADET_GTK_CHAT_H
+#endif //CADET_GTK_GUI_CHAT_H

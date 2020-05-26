@@ -2,6 +2,9 @@
 // Created by thejackimonster on 20.05.20.
 //
 
+#ifndef CADET_GTK_MESSAGING_GTK_H
+#define CADET_GTK_MESSAGING_GTK_H
+
 void CGTK_prepare_gtk(messaging_t* messaging);
 
 void CGTK_send_gtk_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity);
@@ -26,3 +29,5 @@ const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging)
 size_t CGTK_recv_gtk_msg_length(messaging_t* messaging);
 
 ssize_t CGTK_recv_gtk_message(messaging_t* messaging, char* buffer, size_t length);
+
+#endif //CADET_GTK_MESSAGING_GTK_H
