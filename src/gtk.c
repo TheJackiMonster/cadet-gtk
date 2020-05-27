@@ -115,11 +115,11 @@ static const char* CGTK_get_name(const char* identity, const char* port) {
 }
 
 static void CGTK_set_nick(const char* name) {
-	CGTK_set_name(session.gui.attributes.identity, session.gui.attributes.port, name);
+	CGTK_set_name(session.gui.attributes.identity, session.config.port, name);
 }
 
 static const char* CGTK_get_nick() {
-	return CGTK_get_name(session.gui.attributes.identity, session.gui.attributes.port);
+	return CGTK_get_name(session.gui.attributes.identity, session.config.port);
 }
 
 static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
@@ -164,22 +164,18 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	return result;
 }
 
-static void CGTK_update_host(const char* host_port, const char* announce_regex) {
-	if (!host_port) {
-		host_port = "\0";
-	}
-	
+static void CGTK_update_host(const char* announce_regex) {
 	if (!announce_regex) {
 		announce_regex = "\0";
 	}
 	
-	strncpy(session.gui.attributes.port, host_port, CGTK_PORT_BUFFER_SIZE);
-	session.gui.attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
-	
 	strncpy(session.gui.attributes.regex, announce_regex, CGTK_REGEX_BUFFER_SIZE);
 	session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
 	
-	CGTK_send_gnunet_host(messaging, host_port, announce_regex);
+	CGTK_config_update(&(session.gui.config), &(session.config));
+	CGTK_send_gnunet_host(messaging, session.config.port, announce_regex);
+	
+	CGTK_set_nick(session.config.nick);
 }
 
 static void CGTK_search_by_name(const char* name) {
@@ -231,7 +227,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				g_string_free(regex, TRUE);
 			}
 			
-			CGTK_update_host(session.gui.attributes.port, session.gui.attributes.regex);
+			CGTK_update_host(session.gui.attributes.regex);
 			break;
 		} case MSG_GTK_FOUND: {
 			const guint hash = CGTK_recv_gnunet_hash(messaging);
@@ -391,14 +387,15 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
 	
+	CGTK_config_load(&(session.config));
+	
+	memcpy(&(session.gui.config), &(session.config), sizeof(config_t));
+	
 	session.gui.main.window = gtk_application_window_new(application);
 	
 	gtk_window_set_default_size(GTK_WINDOW(session.gui.main.window), 320, 512);
-	
+
 	CGTK_init_ui(&(session.gui));
-	
-	// TODO: load configuration for name, port and others
-	CGTK_config_load(&(session.config));
 	
 	g_signal_connect(session.gui.main.window, "destroy\0", G_CALLBACK(CGTK_end_thread), NULL);
 	

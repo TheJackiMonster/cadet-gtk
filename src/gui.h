@@ -15,7 +15,7 @@ typedef struct {
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
 	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
-	void (*update_host)(const char* host_port, const char* announce_regex);
+	void (*update_host)(const char* announce_regex);
 	void (*search_by_name)(const char* name);
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
@@ -23,10 +23,10 @@ typedef struct {
 
 typedef struct {
 	cgtk_callbacks_t callbacks;
+	config_t config;
 	
 	struct {
 		char identity [CGTK_IDENTITY_BUFFER_SIZE];
-		char port [CGTK_PORT_BUFFER_SIZE];
 		char regex [CGTK_REGEX_BUFFER_SIZE];
 	} attributes;
 	

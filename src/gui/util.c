@@ -61,7 +61,10 @@ GString* CGTK_regex_append_escaped(GString* base, const char* chars) {
 			needle[1] = '\0';
 			
 			// TODO: This needs more investigation how GNUnets REGEX works in detail!
-			if (strstr("^$\\.*+?()[]{}|\0", needle)) {
+			/*
+			 * original haystack: "^$\\.*+?()[]{}|\0"
+			 */
+			if (strstr("^$\\*+?(){}|\0", needle)) {
 				g_string_append_c(escaped, '\\');
 			}
 			

@@ -7,32 +7,41 @@
 static void CGTK_identity_port_confirm(GtkWidget* port_entry, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
-	strncpy(gui->attributes.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
-	gui->attributes.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
+	strncpy(gui->config.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
+	gui->config.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
+	
+	const char* name = gtk_entry_get_text(GTK_ENTRY(gui->identity.name_entry));
+	const char* mail = gtk_entry_get_text(GTK_ENTRY(gui->identity.mail_entry));
+	const char* phone = gtk_entry_get_text(GTK_ENTRY(gui->identity.phone_entry));
 	
 	GString* regex = NULL;
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.name_entry)) > 0) {
-		const char * name = gtk_entry_get_text(GTK_ENTRY(gui->identity.name_entry));
-		
 		regex = CGTK_regex_append_escaped(regex, name);
-		
-		gui->callbacks.set_name(gui->attributes.identity, gui->attributes.port, name);
 	}
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.mail_entry)) > 0) {
-		regex = CGTK_regex_append_escaped(regex, gtk_entry_get_text(GTK_ENTRY(gui->identity.mail_entry)));
+		regex = CGTK_regex_append_escaped(regex, mail);
 	}
 	
 	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.phone_entry)) > 0) {
-		regex = CGTK_regex_append_escaped(regex, gtk_entry_get_text(GTK_ENTRY(gui->identity.phone_entry)));
+		regex = CGTK_regex_append_escaped(regex, phone);
 	}
 	
 	if (regex) {
 		g_string_append_c(regex, '\0');
 	}
 	
-	gui->callbacks.update_host(gui->attributes.port, regex? regex->str : NULL);
+	strncpy(gui->config.nick, name, CGTK_NAME_BUFFER_SIZE);
+	gui->config.nick[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	
+	strncpy(gui->config.email, mail, CGTK_NAME_BUFFER_SIZE);
+	gui->config.email[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	
+	strncpy(gui->config.phone, phone, CGTK_NAME_BUFFER_SIZE);
+	gui->config.phone[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	
+	gui->callbacks.update_host(regex? regex->str : NULL);
 	
 	if (regex) {
 		g_string_free(regex, TRUE);
@@ -92,18 +101,18 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gtk_label_set_selectable(GTK_LABEL(gui->identity.label), TRUE);
 	
 	gui->identity.port_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->identity.port_entry), gui->attributes.port);
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.port_entry), gui->config.port);
 	
 	gui->identity.name_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->identity.name_entry), gui->callbacks.get_name(gui->attributes.identity, gui->attributes.port));
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.name_entry), gui->config.nick);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.name_entry), GTK_INPUT_PURPOSE_NAME);
 	
 	gui->identity.mail_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->identity.mail_entry), "\0");
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.mail_entry), gui->config.email);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.mail_entry), GTK_INPUT_PURPOSE_EMAIL);
 	
 	gui->identity.phone_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->identity.phone_entry), "\0");
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.phone_entry), gui->config.phone);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.phone_entry), GTK_INPUT_PURPOSE_PHONE);
 	
 	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.label);
