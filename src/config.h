@@ -12,11 +12,12 @@
 typedef struct config_t {
 	uint8_t autosave;
 	
-	char port [CGTK_PORT_BUFFER_SIZE];
-	
 	char nick [CGTK_NAME_BUFFER_SIZE];
 	char email [CGTK_NAME_BUFFER_SIZE];
 	char phone [CGTK_NAME_BUFFER_SIZE];
+	
+	uint8_t visibility;
+	char port [CGTK_PORT_BUFFER_SIZE];
 } config_t;
 
 #include "config/file.h"

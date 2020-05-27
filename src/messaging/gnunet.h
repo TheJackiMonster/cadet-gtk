@@ -7,7 +7,7 @@
 
 void CGTK_prepare_gnunet(messaging_t* messaging);
 
-ssize_t CGTK_send_gnunet_host(messaging_t* messaging, const char* port, const char* name_regex);
+ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const char* port, const char* name_regex);
 
 ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name);
 

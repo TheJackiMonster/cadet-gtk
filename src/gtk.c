@@ -173,7 +173,7 @@ static void CGTK_update_host(const char* announce_regex) {
 	session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
 	
 	CGTK_config_update(&(session.gui.config), &(session.config));
-	CGTK_send_gnunet_host(messaging, session.config.port, announce_regex);
+	CGTK_send_gnunet_host(messaging, session.config.visibility, session.config.port, announce_regex);
 	
 	CGTK_set_nick(session.config.nick);
 }

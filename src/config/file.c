@@ -18,6 +18,8 @@ static void CGTK_config_default(config_t* config) {
 	
 	strncpy(config->nick, getenv("USER\0"), CGTK_NAME_BUFFER_SIZE);
 	config->nick[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	
+	config->visibility = 1;
 }
 
 static const char* CGTK_config_path() {
@@ -51,13 +53,6 @@ uint8_t CGTK_config_load(config_t* config) {
 			config->autosave = json_boolean_value(autosave);
 		}
 		
-		json_t* port = json_object_get(json, "port\0");
-		
-		if (json_is_string(port)) {
-			strncpy(config->port, json_string_value(port), CGTK_NAME_BUFFER_SIZE);
-			config->port[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
-		}
-		
 		json_t* nick = json_object_get(json, "nick\0");
 		
 		if (json_is_string(nick)) {
@@ -79,8 +74,30 @@ uint8_t CGTK_config_load(config_t* config) {
 			config->phone[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
 		}
 		
-		json_delete(json);
+		json_t* visibility = json_object_get(json, "visibility\0");
 		
+		if (json_is_string(visibility)) {
+			const char* visibility_string = json_string_value(visibility);
+			
+			if (strcmp(visibility_string, "public\0") == 0) {
+				config->visibility = 0;
+			} else
+			if (strcmp(visibility_string, "private\0") == 0) {
+				config->visibility = 1;
+			} else
+			if (strcmp(visibility_string, "cat\0") == 0) {
+				config->visibility = 2;
+			}
+		}
+		
+		json_t* port = json_object_get(json, "port\0");
+		
+		if (json_is_string(port)) {
+			strncpy(config->port, json_string_value(port), CGTK_NAME_BUFFER_SIZE);
+			config->port[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+		}
+		
+		json_delete(json);
 		return 1;
 	} else {
 		return 0;
@@ -92,11 +109,31 @@ uint8_t CGTK_config_save(const config_t* config) {
 	
 	json_object_set(json, "autosave\0", json_boolean(config->autosave));
 	
-	json_object_set(json, "port\0", json_string(config->port));
-	
 	json_object_set(json, "nick\0", json_string(config->nick));
 	json_object_set(json, "email\0", json_string(config->email));
 	json_object_set(json, "phone\0", json_string(config->phone));
+	
+	json_t* visibility_string = NULL;
+	
+	switch (config->visibility) {
+		case 0:
+			visibility_string = json_string("public\0");
+			break;
+		case 1:
+			visibility_string = json_string("private\0");
+			break;
+		case 2:
+			visibility_string = json_string("cat\0");
+			break;
+		default:
+			break;
+	}
+	
+	if (visibility_string) {
+		json_object_set(json, "visibility\0", visibility_string);
+	}
+	
+	json_object_set(json, "port\0", json_string(config->port));
 	
 	const char* path = CGTK_config_path();
 	char directory [PATH_MAX];

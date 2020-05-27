@@ -73,10 +73,11 @@ typedef struct {
 		GtkWidget* dialog;
 		
 		GtkWidget* label;
-		GtkWidget* port_entry;
 		GtkWidget* name_entry;
 		GtkWidget* mail_entry;
 		GtkWidget* phone_entry;
+		GtkWidget* visibility_combobox;
+		GtkWidget* port_entry;
 	} identity;
 	
 	struct {

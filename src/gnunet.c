@@ -341,6 +341,8 @@ static void CGTK_idle(void* cls) {
 	
 	switch (type) {
 		case MSG_GNUNET_HOST: {
+			const uint8_t visibility = CGTK_recv_gtk_code(messaging);
+			
 			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
 			
 			if (!port) {
@@ -362,24 +364,30 @@ static void CGTK_idle(void* cls) {
 			
 			GNUNET_memcpy(&(session.port), port, sizeof(struct GNUNET_HashCode));
 			
-			struct GNUNET_MQ_MessageHandler handlers[] = {
-					GNUNET_MQ_hd_var_size(
-							port_message,
-							GNUNET_MESSAGE_TYPE_CADET_CLI,
-							struct GNUNET_MessageHeader,
-							NULL
-					), GNUNET_MQ_handler_end()
-			};
+			if (visibility != 2) {
+				struct GNUNET_MQ_MessageHandler handlers[] = {
+						GNUNET_MQ_hd_var_size(
+								port_message,
+								GNUNET_MESSAGE_TYPE_CADET_CLI,
+								struct GNUNET_MessageHeader,
+								NULL
+						), GNUNET_MQ_handler_end()
+				};
+				
+				session.listen = GNUNET_CADET_open_port(
+						session.cadet,
+						&(session.port),
+						&CGTK_on_connect,
+						NULL,
+						NULL,
+						&CGTK_on_disconnect,
+						handlers
+				);
+			}
 			
-			session.listen = GNUNET_CADET_open_port(
-					session.cadet,
-					&(session.port),
-					&CGTK_on_connect,
-					NULL,
-					NULL,
-					&CGTK_on_disconnect,
-					handlers
-			);
+			if (visibility != 0) {
+				name_regex = "\0";
+			}
 			
 			CGTK_name_call(name_regex);
 			break;

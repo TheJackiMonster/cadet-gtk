@@ -22,6 +22,8 @@ ssize_t CGTK_send_gtk_message(messaging_t* messaging, const struct GNUNET_PeerId
 
 msg_type_t CGTK_recv_gtk_msg_type(messaging_t* messaging);
 
+uint8_t CGTK_recv_gtk_code(messaging_t* messaging);
+
 const struct GNUNET_HashCode* CGTK_recv_gtk_hashcode(messaging_t* messaging);
 
 const struct GNUNET_PeerIdentity* CGTK_recv_gtk_identity(messaging_t* messaging);

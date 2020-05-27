@@ -4,9 +4,27 @@
 
 #include "../util.h"
 
-static void CGTK_identity_port_confirm(GtkWidget* port_entry, gpointer user_data) {
+static void CGTK_identity_cancel(GtkWidget* cancel_button, gpointer user_data) {
+	cgtk_gui_t *gui = (cgtk_gui_t *) user_data;
+	
+	gtk_widget_destroy(gui->identity.dialog);
+}
+
+static void CGTK_identity_confirm(GtkWidget* confirm_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
+	const char* visibility_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(gui->identity.visibility_combobox));
+	
+	if (strcmp(visibility_id, "public\0") == 0) {
+		gui->config.visibility = 0;
+	} else
+	if (strcmp(visibility_id, "private\0") == 0) {
+		gui->config.visibility = 1;
+	} else
+	if (strcmp(visibility_id, "cat\0") == 0) {
+		gui->config.visibility = 2;
+	}
+	
 	strncpy(gui->config.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
 	gui->config.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
@@ -62,14 +80,20 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gtk_window_set_title(GTK_WINDOW(gui->identity.dialog), "Identity\0");
 	gtk_widget_set_size_request(gui->identity.dialog, 300, 0);
 	
-	GtkWidget* main_box = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(gui->identity.dialog))->data);
+	GtkWidget* main_box = gtk_dialog_get_content_area(GTK_DIALOG(gui->identity.dialog));
 	gtk_box_set_spacing(GTK_BOX(main_box), 2);
 	gtk_widget_set_margin_start(main_box, 4);
 	gtk_widget_set_margin_bottom(main_box, 4);
 	gtk_widget_set_margin_end(main_box, 4);
 	gtk_widget_set_margin_top(main_box, 4);
 	gtk_widget_set_vexpand(main_box, TRUE);
+	
+	GtkWidget* button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_END);
+	gtk_box_set_spacing(GTK_BOX(button_box), 2);
 
+	// TODO: Maybe put identity as QR code in here (backside of the avatar which can be shown via swipe)?
+	
 #ifndef HANDY_USE_ZERO_API
 	char capitals [8];
 	
@@ -95,33 +119,117 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gtk_container_add(GTK_CONTAINER(main_box), avatar);
 #endif
 	
+	GtkWidget* grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+	
+	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
+	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
+	
+	GtkWidget* advanced_grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
+	
 	gui->identity.label = gtk_label_new(gui->attributes.identity);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->identity.label), PANGO_WRAP_CHAR);
 	gtk_label_set_line_wrap(GTK_LABEL(gui->identity.label), TRUE);
 	gtk_label_set_selectable(GTK_LABEL(gui->identity.label), TRUE);
 	
-	gui->identity.port_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->identity.port_entry), gui->config.port);
+	GtkWidget* name_label = gtk_label_new("Name\0");
+	gtk_widget_set_hexpand(name_label, TRUE);
+	
+	GtkWidget* mail_label = gtk_label_new("Email\0");
+	gtk_widget_set_hexpand(name_label, TRUE);
+	
+	GtkWidget* phone_label = gtk_label_new("Phone\0");
+	gtk_widget_set_hexpand(phone_label, TRUE);
 	
 	gui->identity.name_entry = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(gui->identity.name_entry), gui->config.nick);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.name_entry), GTK_INPUT_PURPOSE_NAME);
+	gtk_widget_set_hexpand(gui->identity.name_entry, TRUE);
 	
 	gui->identity.mail_entry = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(gui->identity.mail_entry), gui->config.email);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.mail_entry), GTK_INPUT_PURPOSE_EMAIL);
+	gtk_widget_set_hexpand(gui->identity.mail_entry, TRUE);
 	
 	gui->identity.phone_entry = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(gui->identity.phone_entry), gui->config.phone);
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.phone_entry), GTK_INPUT_PURPOSE_PHONE);
+	gtk_widget_set_hexpand(gui->identity.phone_entry, TRUE);
 	
-	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.label);
-	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.port_entry);
-	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.name_entry);
-	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.mail_entry);
-	gtk_container_add(GTK_CONTAINER(main_box), gui->identity.phone_entry);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.label, 0, 0, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), mail_label, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), phone_label, 0, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.name_entry, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.mail_entry, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.phone_entry, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), advanced_expand, 0, 4, 2, 1);
 	
-	g_signal_connect(gui->identity.port_entry, "activate\0", G_CALLBACK(CGTK_identity_port_confirm), gui);
+	GtkWidget* visibility_label = gtk_label_new("Visibility\0");
+	gtk_widget_set_hexpand(visibility_label, TRUE);
+	
+	GtkWidget* port_label = gtk_label_new("Port\0");
+	gtk_widget_set_hexpand(port_label, TRUE);
+	
+	const char* visibility_id = NULL;
+	
+	switch (gui->config.visibility) {
+		case 0:
+			visibility_id = "public\0";
+			break;
+		case 1:
+			visibility_id = "private\0";
+			break;
+		case 2:
+			visibility_id = "cat\0";
+			break;
+		default:
+			break;
+	}
+	
+	gui->identity.visibility_combobox = gtk_combo_box_text_new();
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "public", "Public");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "private", "Hidden");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "cat", "Cat");
+	
+	if (visibility_id) {
+		gtk_combo_box_set_active_id(GTK_COMBO_BOX(gui->identity.visibility_combobox), visibility_id);
+	}
+	
+	gui->identity.port_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->identity.port_entry), gui->config.port);
+	gtk_widget_set_hexpand(gui->identity.port_entry, TRUE);
+	
+	gtk_grid_attach(GTK_GRID(advanced_grid), visibility_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), port_label, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), gui->identity.visibility_combobox, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), gui->identity.port_entry, 1, 1, 1, 1);
+	
+	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
+	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
+	
+	gtk_container_add(GTK_CONTAINER(advanced_expand), advanced_grid);
+	gtk_container_add(GTK_CONTAINER(main_box), grid);
+	gtk_container_add(GTK_CONTAINER(main_box), button_box);
+	
+	gtk_box_set_child_packing(GTK_BOX(main_box), grid, TRUE, TRUE, 2, GTK_PACK_START);
+	gtk_box_set_child_packing(GTK_BOX(main_box), button_box, FALSE, FALSE, 2, GTK_PACK_END);
+	
+	gtk_container_add(GTK_CONTAINER(button_box), cancel_button);
+	gtk_container_add(GTK_CONTAINER(button_box), confirm_button);
+	
+	gtk_box_set_child_packing(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 2, GTK_PACK_START);
+	gtk_box_set_child_packing(GTK_BOX(button_box), confirm_button, FALSE, FALSE, 2, GTK_PACK_START);
+	
+	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_identity_cancel), gui);
+	g_signal_connect(confirm_button, "clicked\0", G_CALLBACK(CGTK_identity_confirm), gui);
 	
 	gtk_widget_show_all(gui->identity.dialog);
 }

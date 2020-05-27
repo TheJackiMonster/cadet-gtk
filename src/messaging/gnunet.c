@@ -22,7 +22,7 @@ static void CGTK_add_port_to_lookup(const char* port, size_t port_len, const str
 	}
 }
 
-ssize_t CGTK_send_gnunet_host(messaging_t* messaging, const char* port, const char* name_regex) {
+ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const char* port, const char* name_regex) {
 	const size_t length = (name_regex? strlen(name_regex) : 0);
 	
 	size_t port_len = strlen(port);
@@ -35,6 +35,7 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, const char* port, const ch
 	msg_type_t type = MSG_GNUNET_HOST;
 	
 	write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	write(messaging->pipe_gnunet[1], &visibility, sizeof(visibility));
 	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
 	write(messaging->pipe_gnunet[1], &length, sizeof(length));
 	
