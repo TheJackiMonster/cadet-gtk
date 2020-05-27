@@ -15,14 +15,14 @@ static void CGTK_identity_confirm(GtkWidget* confirm_button, gpointer user_data)
 
 	const char* visibility_id = gtk_combo_box_get_active_id(GTK_COMBO_BOX(gui->identity.visibility_combobox));
 	
-	if (strcmp(visibility_id, "public\0") == 0) {
-		gui->config.visibility = 0;
+	if (strcmp(visibility_id, CGTK_VISIBILITY_PUBLIC_ID) == 0) {
+		gui->config.visibility = CGTK_VISIBILITY_PUBLIC;
 	} else
-	if (strcmp(visibility_id, "private\0") == 0) {
-		gui->config.visibility = 1;
+	if (strcmp(visibility_id, CGTK_VISIBILITY_PRIVATE_ID) == 0) {
+		gui->config.visibility = CGTK_VISIBILITY_PRIVATE;
 	} else
-	if (strcmp(visibility_id, "cat\0") == 0) {
-		gui->config.visibility = 2;
+	if (strcmp(visibility_id, CGTK_VISIBILITY_CAT_ID) == 0) {
+		gui->config.visibility = CGTK_VISIBILITY_CAT;
 	}
 	
 	strncpy(gui->config.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
@@ -181,23 +181,23 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	const char* visibility_id = NULL;
 	
 	switch (gui->config.visibility) {
-		case 0:
-			visibility_id = "public\0";
+		case CGTK_VISIBILITY_PUBLIC:
+			visibility_id = CGTK_VISIBILITY_PUBLIC_ID;
 			break;
-		case 1:
-			visibility_id = "private\0";
+		case CGTK_VISIBILITY_PRIVATE:
+			visibility_id = CGTK_VISIBILITY_PRIVATE_ID;
 			break;
-		case 2:
-			visibility_id = "cat\0";
+		case CGTK_VISIBILITY_CAT:
+			visibility_id = CGTK_VISIBILITY_CAT_ID;
 			break;
 		default:
 			break;
 	}
 	
 	gui->identity.visibility_combobox = gtk_combo_box_text_new();
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "public", "Public");
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "private", "Hidden");
-	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), "cat", "Cat");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), CGTK_VISIBILITY_PUBLIC_ID, "Public\0");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), CGTK_VISIBILITY_PRIVATE_ID, "Hidden\0");
+	gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(gui->identity.visibility_combobox), CGTK_VISIBILITY_CAT_ID, "Cat\0");
 	
 	if (visibility_id) {
 		gtk_combo_box_set_active_id(GTK_COMBO_BOX(gui->identity.visibility_combobox), visibility_id);

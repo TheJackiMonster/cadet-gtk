@@ -364,7 +364,7 @@ static void CGTK_idle(void* cls) {
 			
 			GNUNET_memcpy(&(session.port), port, sizeof(struct GNUNET_HashCode));
 			
-			if (visibility != 2) {
+			if (visibility != CGTK_VISIBILITY_CAT) {
 				struct GNUNET_MQ_MessageHandler handlers[] = {
 						GNUNET_MQ_hd_var_size(
 								port_message,
@@ -385,7 +385,7 @@ static void CGTK_idle(void* cls) {
 				);
 			}
 			
-			if (visibility != 0) {
+			if (visibility != CGTK_VISIBILITY_PUBLIC) {
 				name_regex = "\0";
 			}
 			

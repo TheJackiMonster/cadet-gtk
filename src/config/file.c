@@ -79,14 +79,14 @@ uint8_t CGTK_config_load(config_t* config) {
 		if (json_is_string(visibility)) {
 			const char* visibility_string = json_string_value(visibility);
 			
-			if (strcmp(visibility_string, "public\0") == 0) {
-				config->visibility = 0;
+			if (strcmp(visibility_string, CGTK_VISIBILITY_PUBLIC_ID) == 0) {
+				config->visibility = CGTK_VISIBILITY_PUBLIC;
 			} else
-			if (strcmp(visibility_string, "private\0") == 0) {
-				config->visibility = 1;
+			if (strcmp(visibility_string, CGTK_VISIBILITY_PRIVATE_ID) == 0) {
+				config->visibility = CGTK_VISIBILITY_PRIVATE;
 			} else
-			if (strcmp(visibility_string, "cat\0") == 0) {
-				config->visibility = 2;
+			if (strcmp(visibility_string, CGTK_VISIBILITY_CAT_ID) == 0) {
+				config->visibility = CGTK_VISIBILITY_CAT;
 			}
 		}
 		
@@ -116,14 +116,14 @@ uint8_t CGTK_config_save(const config_t* config) {
 	json_t* visibility_string = NULL;
 	
 	switch (config->visibility) {
-		case 0:
-			visibility_string = json_string("public\0");
+		case CGTK_VISIBILITY_PUBLIC:
+			visibility_string = json_string(CGTK_VISIBILITY_PUBLIC_ID);
 			break;
-		case 1:
-			visibility_string = json_string("private\0");
+		case CGTK_VISIBILITY_PRIVATE:
+			visibility_string = json_string(CGTK_VISIBILITY_PRIVATE_ID);
 			break;
-		case 2:
-			visibility_string = json_string("cat\0");
+		case CGTK_VISIBILITY_CAT:
+			visibility_string = json_string(CGTK_VISIBILITY_CAT_ID);
 			break;
 		default:
 			break;
