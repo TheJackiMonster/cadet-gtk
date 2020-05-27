@@ -80,7 +80,7 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) 
 	g_signal_connect(gui->contacts.list, "row-activated\0", G_CALLBACK(CGTK_activate_contact), gui);
 }
 
-void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, contact_type_t type) {
+void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) {
 	GList *list = gtk_container_get_children(GTK_CONTAINER(gui->contacts.list));
 	
 	GString* name = CGTK_merge_name(identity, port);
@@ -102,9 +102,11 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 	
 	g_string_free(name, TRUE);
 	
-	name = g_string_new(gui->callbacks.get_name(identity, port));
+	const chat_state_t* state = gui->callbacks.select_state(identity, port);
 	
-	if (type == CGTK_CONTACT_GROUP) {
+	name = g_string_new(state->name);
+	
+	if (state->is_group) {
 		g_string_append(name, " (GROUP)\0");
 	}
 	
@@ -117,6 +119,35 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port, 
 	gtk_container_add(GTK_CONTAINER(gui->contacts.list), GTK_WIDGET(contact));
 	
 	gtk_widget_show_all(GTK_WIDGET(contact));
+}
+
+void CGTK_reload_contact(cgtk_gui_t* gui, const char* identity, const char* port) {
+	GList* list = gtk_container_get_children(GTK_CONTAINER(gui->contacts.list));
+	
+	GString* name = CGTK_merge_name(identity, port);
+	
+	while (list) {
+		GtkWidget* row = GTK_WIDGET(list->data);
+		
+		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
+			g_string_free(name, TRUE);
+			
+			const chat_state_t* state = gui->callbacks.select_state(identity, port);
+			
+			name = g_string_new(state->name);
+			
+			if (state->is_group) {
+				g_string_append(name, " (GROUP)\0");
+			}
+			
+			hdy_action_row_set_title(HDY_ACTION_ROW(row), name->str);
+			break;
+		}
+		
+		list = list->next;
+	}
+	
+	g_string_free(name, TRUE);
 }
 
 void CGTK_close_contact(cgtk_gui_t* gui, const char* identity, const char* port) {

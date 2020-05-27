@@ -138,7 +138,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_size_group_add_widget(sizeGroup, content);
 	
 	g_signal_connect(gui->chat.msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
-	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_manage_chat_dialog), gui);
+	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_management_dialog), gui);
 	g_signal_connect(gui->chat.back_button, "clicked\0", G_CALLBACK(CGTK_back), gui);
 }
 

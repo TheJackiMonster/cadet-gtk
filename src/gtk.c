@@ -22,13 +22,6 @@ static messaging_t* messaging;
 
 #include <stdlib.h>
 
-typedef struct chat_state_t {
-	gchar name [CGTK_NAME_BUFFER_SIZE];
-	
-	gboolean use_json;
-	gboolean is_group;
-} chat_state_t;
-
 static struct {
 	config_t config;
 	
@@ -106,6 +99,8 @@ static void CGTK_set_name(const char* identity, const char* port, const char* na
 	
 	strncpy(state->name, name, CGTK_NAME_BUFFER_SIZE);
 	state->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	
+	CGTK_update_contacts_ui(&(session.gui), identity, port, CONTACT_RELOAD);
 }
 
 static const char* CGTK_get_name(const char* identity, const char* port) {
@@ -258,7 +253,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			chat_state_t* state = CGTK_select_state(session.gui.attributes.identity, port);
 			
-			CGTK_update_contacts_ui(&(session.gui), source, port, state->is_group? CONTACT_ACTIVE_GROUP : CONTACT_ACTIVE);
+			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_ACTIVE);
 			break;
 		} case MSG_GTK_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
@@ -379,6 +374,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	memset(&(session.gui), 0, sizeof(session.gui));
 	
+	session.gui.callbacks.select_state = &CGTK_select_state;
 	session.gui.callbacks.set_name = &CGTK_set_name;
 	session.gui.callbacks.get_name = &CGTK_get_name;
 	session.gui.callbacks.send_message = &CGTK_send_message;

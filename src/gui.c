@@ -124,10 +124,10 @@ void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* 
 			CGTK_close_contact(gui, identity, port);
 			break;
 		} case CONTACT_ACTIVE: {
-			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_UNKNOWN);
+			CGTK_open_contact(gui, identity, port);
 			break;
-		} case CONTACT_ACTIVE_GROUP: {
-			CGTK_open_contact(gui, identity, port, CGTK_CONTACT_GROUP);
+		} case CONTACT_RELOAD: {
+			CGTK_reload_contact(gui, identity, port);
 			break;
 		} default: {
 			break;

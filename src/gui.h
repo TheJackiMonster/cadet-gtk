@@ -11,7 +11,15 @@
 #include "config.h"
 #include "msg.h"
 
+typedef struct chat_state_t {
+	gchar name [CGTK_NAME_BUFFER_SIZE];
+	
+	gboolean use_json;
+	gboolean is_group;
+} chat_state_t;
+
 typedef struct {
+	chat_state_t* (*select_state)(const char* destination, const char* port);
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
 	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
@@ -92,7 +100,7 @@ typedef struct {
 typedef enum {
 	CONTACT_INACTIVE = 0,
 	CONTACT_ACTIVE = 1,
-	CONTACT_ACTIVE_GROUP = 2
+	CONTACT_RELOAD = 2
 } contact_state_t;
 
 void CGTK_init_ui(cgtk_gui_t* gui);

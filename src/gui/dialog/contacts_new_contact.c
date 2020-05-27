@@ -11,27 +11,24 @@ static void CGTK_new_contact_cancel(GtkWidget* cancel_button, gpointer user_data
 static void CGTK_new_contact_confirm(GtkWidget* confirm_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	contact_type_t type;
-	
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check))) {
-		type = CGTK_CONTACT_GROUP;
-	} else {
-		type = CGTK_CONTACT_PERSON;
-	}
-	
 	const char* identity = CGTK_get_entry_text(gui->new_contact.identity_entry);
 	const char* port = CGTK_get_entry_text(gui->new_contact.port_entry);
 	const char* name = CGTK_get_entry_text(gui->new_contact.name_entry);
+	gboolean is_group = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check));
+	
+	chat_state_t* state = gui->callbacks.select_state(identity, port);
+	
+	state->is_group = is_group;
 	
 	gui->callbacks.set_name(identity, port, name);
 	
-	if ((type == CGTK_CONTACT_GROUP) && (strcmp(identity, gui->attributes.identity) == 0)) {
+	if ((is_group) && (strcmp(identity, gui->attributes.identity) == 0)) {
 		gui->callbacks.open_group(port);
 	} else {
-		CGTK_open_contact(gui, identity, port, type);
+		CGTK_open_contact(gui, identity, port);
 	}
 	
-	if (type == CGTK_CONTACT_GROUP) {
+	if (is_group) {
 		msg_t msg = {};
 		msg.kind = MSG_KIND_JOIN;
 		
