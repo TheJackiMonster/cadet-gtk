@@ -16,10 +16,10 @@ typedef struct chat_state_t {
 	
 	gboolean use_json;
 	gboolean is_group;
-} chat_state_t;
+} cgtk_chat_t;
 
 typedef struct {
-	chat_state_t* (*select_state)(const char* destination, const char* port);
+	cgtk_chat_t* (*select_chat)(const char* destination, const char* port);
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
 	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);

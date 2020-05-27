@@ -55,58 +55,58 @@ static void CGTK_shutdown(const char* error_message) {
 	perror(error_message);
 }
 
-static chat_state_t* CGTK_get_state(GString* key, gboolean* new_entry) {
-	chat_state_t* state = (chat_state_t*) g_hash_table_lookup(
+static cgtk_chat_t* CGTK_get_chat(GString* key, gboolean* new_entry) {
+	cgtk_chat_t* chat = (cgtk_chat_t*) g_hash_table_lookup(
 			session.states, key
 	);
 	
-	if (state) {
+	if (chat) {
 		if (new_entry) *new_entry = FALSE;
-		return state;
+		return chat;
 	} else {
-		state = (chat_state_t*) malloc(sizeof(chat_state_t));
+		chat = (cgtk_chat_t*) malloc(sizeof(cgtk_chat_t));
 		
-		memset(state->name, '\0', CGTK_NAME_BUFFER_SIZE);
+		memset(chat->name, '\0', CGTK_NAME_BUFFER_SIZE);
 		
-		state->use_json = FALSE;
-		state->is_group = FALSE;
+		chat->use_json = FALSE;
+		chat->is_group = FALSE;
 		
-		if (g_hash_table_insert(session.states, key, state)) {
+		if (g_hash_table_insert(session.states, key, chat)) {
 			if (new_entry) *new_entry = TRUE;
-			return state;
+			return chat;
 		} else {
-			free((void*) state);
+			free((void*) chat);
 			return NULL;
 		}
 	}
 }
 
-static chat_state_t* CGTK_select_state(const char* identity, const char* port) {
+static cgtk_chat_t* CGTK_select_chat(const char* identity, const char* port) {
 	GString* name = CGTK_merge_name(identity, port);
 	
 	gboolean new_entry;
-	chat_state_t* state = CGTK_get_state(name, &new_entry);
+	cgtk_chat_t* chat = CGTK_get_chat(name, &new_entry);
 	
 	if (!new_entry) {
 		g_string_free(name, TRUE);
 	}
 	
-	return state;
+	return chat;
 }
 
 static void CGTK_set_name(const char* identity, const char* port, const char* name) {
-	chat_state_t* state = CGTK_select_state(identity, port);
+	cgtk_chat_t* chat = CGTK_select_chat(identity, port);
 	
-	strncpy(state->name, name, CGTK_NAME_BUFFER_SIZE);
-	state->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+	strncpy(chat->name, name, CGTK_NAME_BUFFER_SIZE);
+	chat->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
 	
 	CGTK_update_contacts_ui(&(session.gui), identity, port, CONTACT_RELOAD);
 }
 
 static const char* CGTK_get_name(const char* identity, const char* port) {
-	chat_state_t* state = CGTK_select_state(identity, port);
+	const cgtk_chat_t* chat = CGTK_select_chat(identity, port);
 	
-	return state->name;
+	return chat->name;
 }
 
 static void CGTK_set_nick(const char* name) {
@@ -118,7 +118,7 @@ static const char* CGTK_get_nick() {
 }
 
 static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
-	chat_state_t* state = CGTK_select_state(destination, port);
+	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
 	
 	msg->timestamp = time(NULL);
 	
@@ -132,7 +132,7 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	size_t buffer_len = 0;
 	const char* buffer;
 	
-	if (state->use_json) {
+	if (chat->use_json) {
 		buffer = CGTK_encode_message(msg, &buffer_len);
 	} else
 	if (msg->content) {
@@ -152,7 +152,7 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 		result = TRUE;
 	}
 	
-	if (state->use_json) {
+	if (chat->use_json) {
 		free((void*) buffer);
 	}
 	
@@ -180,19 +180,19 @@ static void CGTK_search_by_name(const char* name) {
 }
 
 static void CGTK_open_group(const char* port) {
-	chat_state_t* state = CGTK_select_state(session.gui.attributes.identity, port);
+	cgtk_chat_t* chat = CGTK_select_chat(session.gui.attributes.identity, port);
 	
-	state->use_json = TRUE;
-	state->is_group = TRUE;
+	chat->use_json = TRUE;
+	chat->is_group = TRUE;
 	
 	CGTK_send_gnunet_group(messaging, port);
 }
 
 static void CGTK_exit_chat(const char* destination, const char* port) {
-	chat_state_t* state = CGTK_select_state(destination, port);
+	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
 	
-	state->use_json = FALSE;
-	state->is_group = FALSE;
+	chat->use_json = FALSE;
+	chat->is_group = FALSE;
 	
 	CGTK_send_gnunet_exit(messaging, destination, port);
 }
@@ -251,7 +251,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			chat_state_t* state = CGTK_select_state(session.gui.attributes.identity, port);
+			cgtk_chat_t* chat = CGTK_select_chat(session.gui.attributes.identity, port);
 			
 			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_ACTIVE);
 			break;
@@ -316,11 +316,11 @@ static gboolean CGTK_idle(gpointer user_data) {
 				if (strlen(buffer) > 0) {
 					msg_t* msg = CGTK_decode_message(buffer, offset);
 					
-					chat_state_t* state = CGTK_select_state(source, port);
+					cgtk_chat_t* chat = CGTK_select_chat(source, port);
 					
-					state->use_json = msg->decoding? TRUE : FALSE;
+					chat->use_json = msg->decoding? TRUE : FALSE;
 					
-					CGTK_repair_message(msg, buffer, state->name);
+					CGTK_repair_message(msg, buffer, chat->name);
 					
 					msg->local = FALSE;
 					
@@ -374,7 +374,7 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	
 	memset(&(session.gui), 0, sizeof(session.gui));
 	
-	session.gui.callbacks.select_state = &CGTK_select_state;
+	session.gui.callbacks.select_chat = &CGTK_select_chat;
 	session.gui.callbacks.set_name = &CGTK_set_name;
 	session.gui.callbacks.get_name = &CGTK_get_name;
 	session.gui.callbacks.send_message = &CGTK_send_message;

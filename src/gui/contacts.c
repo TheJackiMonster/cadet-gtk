@@ -102,11 +102,11 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) 
 	
 	g_string_free(name, TRUE);
 	
-	const chat_state_t* state = gui->callbacks.select_state(identity, port);
+	const cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
 	
-	name = g_string_new(state->name);
+	name = g_string_new(chat->name);
 	
-	if (state->is_group) {
+	if (chat->is_group) {
 		g_string_append(name, " (GROUP)\0");
 	}
 	
@@ -132,11 +132,11 @@ void CGTK_reload_contact(cgtk_gui_t* gui, const char* identity, const char* port
 		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
 			g_string_free(name, TRUE);
 			
-			const chat_state_t* state = gui->callbacks.select_state(identity, port);
+			const cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
 			
-			name = g_string_new(state->name);
+			name = g_string_new(chat->name);
 			
-			if (state->is_group) {
+			if (chat->is_group) {
 				g_string_append(name, " (GROUP)\0");
 			}
 			

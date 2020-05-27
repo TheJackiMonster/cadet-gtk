@@ -16,9 +16,8 @@ static void CGTK_new_contact_confirm(GtkWidget* confirm_button, gpointer user_da
 	const char* name = CGTK_get_entry_text(gui->new_contact.name_entry);
 	gboolean is_group = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check));
 	
-	chat_state_t* state = gui->callbacks.select_state(identity, port);
-	
-	state->is_group = is_group;
+	cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
+	chat->is_group = is_group;
 	
 	gui->callbacks.set_name(identity, port, name);
 	
