@@ -2,7 +2,7 @@
 
 A GTK based GUI for the CADET subsystem of GNUnet.
 
-![Example for contacts-list](examples/mobile_contacts.png "List of contacts")
+![Example for editing the profile](examples/desktop_profile.png "Editing profile on desktop")
 ![Example for adding a contact](examples/mobile_add_contact.png "Adding a contact")
 ![Example for chat](examples/mobile_chat.png "Chat between you and one contact")
 
