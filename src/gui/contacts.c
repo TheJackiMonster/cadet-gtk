@@ -97,7 +97,7 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) 
 		list = list->next;
 	}
 	
-	HdyActionRow *contact = hdy_action_row_new();
+	HdyActionRow* contact = hdy_action_row_new();
 	gtk_widget_set_name(GTK_WIDGET(contact), name->str);
 	
 	g_string_free(name, TRUE);

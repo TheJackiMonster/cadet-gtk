@@ -258,6 +258,9 @@ void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
 	gtk_widget_set_size_request(msg_frame, 100, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(msg_frame), 4);
 	
+	GtkWidget* label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_frame))->data);
+	gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
+	
 	GtkWidget* text = gtk_label_new(msg->content);
 	gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);

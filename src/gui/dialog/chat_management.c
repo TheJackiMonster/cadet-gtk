@@ -44,10 +44,10 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	
 	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));
 	
-	const char* destination = name->str;
+	const char* identity = name->str;
 	const char* port = "\0";
 	
-	uint index = CGTK_split_name(name, &destination, &port);
+	uint index = CGTK_split_name(name, &identity, &port);
 	
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
 	
@@ -78,13 +78,34 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
 	
+	const cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
+	
+	GtkWidget* members_list = gtk_list_box_new();
+	const GList* members = chat->members;
+	
+	while (members) {
+		const cgtk_member_t* member = (cgtk_member_t*) members->data;
+		
+		HdyActionRow* contact = hdy_action_row_new();
+		
+		hdy_action_row_set_title(contact, member->name);
+		hdy_action_row_set_subtitle(contact, member->identity);
+		hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
+		
+		gtk_container_add(GTK_CONTAINER(members_list), GTK_WIDGET(contact));
+		
+		gtk_widget_show_all(GTK_WIDGET(contact));
+		
+		members = members->next;
+	}
+	
 	GtkWidget* port_label = gtk_label_new("Port\0");
 	gtk_widget_set_hexpand(port_label, TRUE);
 	
 	GtkWidget* name_label = gtk_label_new("Name\0");
 	gtk_widget_set_hexpand(name_label, TRUE);
 	
-	gui->management.identity_label = gtk_label_new(destination);
+	gui->management.identity_label = gtk_label_new(identity);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->management.identity_label), PANGO_WRAP_CHAR);
 	gtk_label_set_line_wrap(GTK_LABEL(gui->management.identity_label), TRUE);
 	gtk_label_set_selectable(GTK_LABEL(gui->management.identity_label), TRUE);
@@ -97,7 +118,7 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	gtk_widget_set_hexpand(gui->management.port_label, TRUE);
 	
 	gui->management.name_entry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(gui->management.name_entry), gui->callbacks.get_name(destination, port));
+	gtk_entry_set_text(GTK_ENTRY(gui->management.name_entry), gui->callbacks.get_name(identity, port));
 	gtk_widget_set_hexpand(gui->management.name_entry, TRUE);
 	
 	if (name->str[index] == '\0') {
@@ -109,11 +130,12 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	GtkWidget* exit_button = gtk_button_new_with_label("Exit Chat\0");
 	
 	gtk_grid_attach(GTK_GRID(grid), gui->management.identity_label, 0, 0, 2, 1);
-	gtk_grid_attach(GTK_GRID(grid), port_label, 0, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->management.port_label, 1, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->management.name_entry, 1, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), exit_button, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), members_list, 0, 1, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), port_label, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->management.port_label, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->management.name_entry, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), exit_button, 1, 4, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");

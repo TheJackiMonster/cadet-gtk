@@ -28,7 +28,7 @@ static struct {
 	cgtk_gui_t gui;
 	
 	guint idle;
-	GHashTable* states;
+	GHashTable* chats;
 } session;
 
 static void CGTK_shutdown(const char* error_message) {
@@ -57,7 +57,7 @@ static void CGTK_shutdown(const char* error_message) {
 
 static cgtk_chat_t* CGTK_get_chat(GString* key, gboolean* new_entry) {
 	cgtk_chat_t* chat = (cgtk_chat_t*) g_hash_table_lookup(
-			session.states, key
+			session.chats, key
 	);
 	
 	if (chat) {
@@ -66,12 +66,9 @@ static cgtk_chat_t* CGTK_get_chat(GString* key, gboolean* new_entry) {
 	} else {
 		chat = (cgtk_chat_t*) malloc(sizeof(cgtk_chat_t));
 		
-		memset(chat->name, '\0', CGTK_NAME_BUFFER_SIZE);
+		memset(chat, 0, sizeof(cgtk_chat_t));
 		
-		chat->use_json = FALSE;
-		chat->is_group = FALSE;
-		
-		if (g_hash_table_insert(session.states, key, chat)) {
+		if (g_hash_table_insert(session.chats, key, chat)) {
 			if (new_entry) *new_entry = TRUE;
 			return chat;
 		} else {
@@ -320,7 +317,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 					
 					chat->use_json = msg->decoding? TRUE : FALSE;
 					
-					CGTK_repair_message(msg, buffer, chat->name);
+					CGTK_repair_message(msg, buffer, offset, chat->name);
 					
 					msg->local = FALSE;
 					
@@ -352,21 +349,27 @@ static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
 		session.idle = 0;
 	}
 	
-	if (session.states) {
-		g_hash_table_destroy(session.states);
+	if (session.chats) {
+		g_hash_table_destroy(session.chats);
 		
-		session.states = NULL;
+		session.chats = NULL;
 	}
 	
 	CGTK_close_messaging(messaging);
 }
 
-void CGTK_state_key_free(gpointer key) {
+void CGTK_chat_key_free(gpointer key) {
 	g_string_free((GString*) key, TRUE);
 }
 
-void CGTK_state_value_free(gpointer value) {
-	free(value);
+void CGTK_chat_value_free(gpointer value) {
+	cgtk_chat_t* chat = (cgtk_chat_t*) value;
+	
+	if (chat->members) {
+		g_list_free_full(chat->members, g_free);
+	}
+	
+	free(chat);
 }
 
 void CGTK_activate(GtkApplication* application, gpointer user_data) {
@@ -403,10 +406,10 @@ void CGTK_activate(GtkApplication* application, gpointer user_data) {
 	session.idle = g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, CGTK_idle, NULL, NULL);
 	#endif
 	
-	session.states = g_hash_table_new_full(
+	session.chats = g_hash_table_new_full(
 			(GHashFunc) g_string_hash,
 			(GEqualFunc) g_string_equal,
-			CGTK_state_key_free,
-			CGTK_state_value_free
+			CGTK_chat_key_free,
+			CGTK_chat_value_free
 	);
 }

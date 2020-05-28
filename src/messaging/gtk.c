@@ -8,6 +8,10 @@ void CGTK_prepare_gtk(messaging_t* messaging) {
 }
 
 void CGTK_send_gtk_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gtk_identity()\n");
+#endif
+	
 	msg_type_t type = MSG_GTK_IDENTITY;
 	
 	write(messaging->pipe_gtk[1], &type, sizeof(type));
@@ -15,6 +19,10 @@ void CGTK_send_gtk_identity(messaging_t* messaging, const struct GNUNET_PeerIden
 }
 
 void CGTK_send_gtk_found(messaging_t* messaging, const char* name, const struct GNUNET_PeerIdentity* identity) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gtk_found()\n");
+#endif
+	
 	GString* string = g_string_new(name);
 	guint hash = g_string_hash(string);
 	g_string_free(string, TRUE);
@@ -28,6 +36,10 @@ void CGTK_send_gtk_found(messaging_t* messaging, const char* name, const struct 
 
 void CGTK_send_gtk_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 						   const struct GNUNET_HashCode* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gtk_connect()\n");
+#endif
+	
 	msg_type_t type = MSG_GTK_CONNECT;
 	
 	write(messaging->pipe_gtk[1], &type, sizeof(type));
@@ -37,6 +49,10 @@ void CGTK_send_gtk_connect(messaging_t* messaging, const struct GNUNET_PeerIdent
 
 void CGTK_send_gtk_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 							  const struct GNUNET_HashCode* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gtk_disconnect()\n");
+#endif
+	
 	msg_type_t type = MSG_GTK_DISCONNECT;
 	
 	write(messaging->pipe_gtk[1], &type, sizeof(type));
@@ -46,6 +62,10 @@ void CGTK_send_gtk_disconnect(messaging_t* messaging, const struct GNUNET_PeerId
 
 ssize_t CGTK_send_gtk_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 							  const struct GNUNET_HashCode* port, const char* buffer, size_t length) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gtk_message()\n");
+#endif
+	
 	msg_type_t type = MSG_GTK_RECV_MESSAGE;
 	
 	write(messaging->pipe_gtk[1], &type, sizeof(type));

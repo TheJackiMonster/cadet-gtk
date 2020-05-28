@@ -139,73 +139,70 @@ void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, identity, port);
 	GtkWidget* port_label = CGTK_get_chat_label(gui, identity, port);
 	
+	cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
+	
 	switch (msg->kind) {
 		case MSG_KIND_TALK: {
 			CGTK_add_message(chat_list, msg);
 			break;
 		} case MSG_KIND_JOIN: {
-			GString* members = g_string_new(gtk_label_get_text(GTK_LABEL(port_label)));
+			cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
 			
-			if (members->len > 0) {
-				g_string_append(members, ", \0");
-			}
+			memset(member, 0, sizeof(cgtk_member_t));
 			
-			g_string_append(members, msg->who);
+			strncpy(member->name, msg->who, CGTK_NAME_BUFFER_SIZE);
+			member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
 			
-			gtk_label_set_text(GTK_LABEL(port_label), members->str);
-			g_string_free(members, TRUE);
+			printf("join: %s\n", member->name);
+			
+			chat->members = g_list_append(chat->members, member);
 			break;
 		} case MSG_KIND_LEAVE: {
-			GString* members = g_string_new(gtk_label_get_text(GTK_LABEL(port_label)));
+			GList* filtered = NULL;
+			GList* iter = chat->members;
 			
-			const size_t who_len = strlen(msg->who);
-			
-			char* pos = members->str;
-			
-			while (pos) {
-				pos = strstr(pos, msg->who);
+			while (iter) {
+				cgtk_member_t* member = (cgtk_member_t*) iter->data;
 				
-				if (pos) {
-					if (((pos == msg->who) || (*(pos - 1) == ' ')) &&
-						((pos[who_len] == '\0') || ((pos[who_len] == ',') && (pos[who_len + 1] == ' ')))) {
-						break;
-					} else {
-						pos++;
-					}
-				}
-			}
-			
-			if (pos) {
-				if (pos[who_len] == '\0') {
-					if (pos == msg->who) {
-						g_string_erase(members, 0, who_len);
-					} else {
-						g_string_erase(members, (ssize_t) (pos - msg->who) - 2, who_len + 2);
-					}
+				if (strcmp(member->name, msg->who) == 0) {
+					printf("leave: %s\n", member->name);
+					
+					g_free(member);
 				} else {
-					g_string_erase(members, (ssize_t) (pos - msg->who), who_len + 2);
+					filtered = g_list_append(filtered, member);
 				}
 				
-				gtk_label_set_text(GTK_LABEL(port_label), members->str);
+				iter = iter->next;
 			}
 			
-			g_string_free(members, TRUE);
+			if (chat->members) {
+				g_list_free(chat->members);
+			}
+			
+			chat->members = filtered;
 			break;
 		} case MSG_KIND_INFO: {
-			GString* members = g_string_new("\0");
+			if (chat->members) {
+				g_list_free_full(chat->members, g_free);
+				chat->members = NULL;
+			}
+			
 			const char** part = msg->participants;
 			
 			while (*part) {
-				if (members->len > 0) {
-					g_string_append(members, ", \0");
-				}
+				cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
 				
-				g_string_append(members, *part);
+				memset(member, 0, sizeof(cgtk_member_t));
+				
+				strncpy(member->name, *part, CGTK_NAME_BUFFER_SIZE);
+				member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+				
+				printf("info: %s\n", member->name);
+				
+				chat->members = g_list_append(chat->members, member);
 				part++;
 			}
 			
-			gtk_label_set_text(GTK_LABEL(port_label), members->str);
-			g_string_free(members, TRUE);
 			break;
 		} default: {
 			break;

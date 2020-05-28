@@ -5,6 +5,13 @@
 #ifndef CADET_GTK_CONFIG_INTERNAL_H
 #define CADET_GTK_CONFIG_INTERNAL_H
 
+/*
+ * Only necessary for debug builds if something needs to get found by logging every call.
+ */
+#ifndef NDEBUG
+//#define CGTK_ALL_DEBUG
+#endif
+
 #define CGTK_BINARY_NAME "cadet-gtk\0"
 #define CGTK_APPLICATION_ID "com.gitlab.thejackimonster.CADET-GTK\0"
 #define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet.\0"

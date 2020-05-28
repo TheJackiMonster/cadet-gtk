@@ -42,6 +42,10 @@ static void CGTK_group_destroy(group_t* group) {
 }
 
 static bool CGTK_group_open(const struct GNUNET_HashCode* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_group_open()\n");
+#endif
+	
 	if (session.group_ports) {
 		if (GNUNET_CONTAINER_multihashmap_contains(session.group_ports, port) == GNUNET_YES) {
 			return false;
@@ -66,6 +70,10 @@ static bool CGTK_group_open(const struct GNUNET_HashCode* port) {
 static int CGTK_group_clear_connection(void* cls, const struct GNUNET_HashCode* group, void* value);
 
 static bool CGTK_group_close(const struct GNUNET_HashCode* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_group_close()\n");
+#endif
+	
 	if (session.groups) {
 		GNUNET_CONTAINER_multihashmap_get_multiple(session.groups, port, CGTK_group_clear_connection, NULL);
 		GNUNET_CONTAINER_multihashmap_remove_all(session.groups, port);
@@ -120,6 +128,10 @@ static int CGTK_group_remove_connection(connection_t* connection) {
 }
 
 static int CGTK_group_push_message(void * cls, const struct GNUNET_HashCode* group, void* value) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_group_push_message()\n");
+#endif
+	
 	const connection_t* connection = (const connection_t*) value;
 	const group_message_t* message = (const group_message_t*) cls;
 	
@@ -141,6 +153,10 @@ static int CGTK_group_push_message(void * cls, const struct GNUNET_HashCode* gro
 }
 
 static void CGTK_group_send_message(const connection_t* sender, const struct GNUNET_HashCode* group, const msg_t* msg) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_group_send_message()\n");
+#endif
+	
 	group_message_t message;
 	
 	message.sender = sender;
@@ -154,6 +170,10 @@ static void CGTK_group_send_message(const connection_t* sender, const struct GNU
 }
 
 static void CGTK_group_recv_message(const connection_t* receiver, const msg_t* msg) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_group_recv_message()\n");
+#endif
+	
 	group_message_t message;
 	
 	message.sender = NULL;

@@ -23,6 +23,10 @@ static void CGTK_add_port_to_lookup(const char* port, size_t port_len, const str
 }
 
 ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const char* port, const char* name_regex) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_host()\n");
+#endif
+	
 	const size_t length = (name_regex? strlen(name_regex) : 0);
 	
 	size_t port_len = strlen(port);
@@ -55,6 +59,10 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const 
 }
 
 ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_search()\n");
+#endif
+	
 	const size_t length = (name? strlen(name) : 0);
 	
 	msg_type_t type = MSG_GNUNET_SEARCH;
@@ -79,6 +87,10 @@ ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
 
 ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port,
 								 const char* buffer, size_t length) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_message()\n");
+#endif
+	
 	struct GNUNET_PeerIdentity identity;
 	
 	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
@@ -115,6 +127,10 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 }
 
 void CGTK_send_gnunet_group(messaging_t* messaging, const char* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_group()\n");
+#endif
+	
 	size_t port_len = strlen(port);
 	
 	struct GNUNET_HashCode hashcode;
@@ -129,6 +145,10 @@ void CGTK_send_gnunet_group(messaging_t* messaging, const char* port) {
 }
 
 void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_exit()\n");
+#endif
+	
 	struct GNUNET_PeerIdentity identity;
 	
 	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {

@@ -64,7 +64,7 @@ static void CGTK_name_search(const char* name) {
 		
 		static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE];
 		
-		strcpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX);
+		strncpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX, CGTK_NAME_SEARCH_PREFIX_SIZE);
 		strncpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_SIZE, name, CGTK_NAME_BUFFER_SIZE);
 		
 		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE - 1] = '\0';

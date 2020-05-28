@@ -8,6 +8,10 @@
 #include <time.h>
 
 const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MSG: CGTK_encode_message()\n");
+#endif
+	
 	json_t* json = json_object();
 	
 	switch (msg->kind) {
@@ -67,21 +71,34 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 	return message;
 }
 
+static const char* CGTK_string_clone_full(const char* string, size_t len) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MSG: CGTK_string_clone_full()\n");
+#endif
+	
+	char* clone = (char*) malloc(len + 1);
+	
+	for (size_t i = 0; i < len; i++) {
+		clone[i] = string[i];
+	}
+	
+	clone[len] = '\0';
+	return clone;
+}
+
 static const char* CGTK_string_clone(const char* string) {
 	if (string) {
-		const size_t len = strlen(string);
-		char* clone = (char*) malloc(len + 1);
-		
-		strcpy(clone, string);
-		
-		clone[len] = '\0';
-		return clone;
+		return CGTK_string_clone_full(string, strlen(string));
 	} else {
 		return string;
 	}
 }
 
 msg_t* CGTK_decode_message(const char* message, size_t message_len) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MSG: CGTK_decode_message()\n");
+#endif
+	
 	msg_t* msg = (msg_t*) malloc(sizeof(msg_t));
 	
 	memset(msg, 0, sizeof(msg_t));
@@ -165,7 +182,11 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 	return msg;
 }
 
-void CGTK_repair_message(msg_t* msg, const char* message, const char* sender) {
+void CGTK_repair_message(msg_t* msg, const char* message, size_t message_len, const char* sender) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MSG: CGTK_repair_message()\n");
+#endif
+	
 	if (!(msg->decoding & MSG_DEC_KIND_BIT)) {
 		msg->kind = MSG_KIND_TALK;
 	}
@@ -180,7 +201,8 @@ void CGTK_repair_message(msg_t* msg, const char* message, const char* sender) {
 		}
 		
 		if (msg->decoding == 0) {
-			msg->content = message;
+			msg->content = CGTK_string_clone_full(message, message_len);
+			msg->decoding |= MSG_DEC_CONTENT_BIT;
 		} else
 		if (!(msg->decoding & MSG_DEC_CONTENT_BIT)) {
 			msg->content = "\0";
@@ -189,6 +211,10 @@ void CGTK_repair_message(msg_t* msg, const char* message, const char* sender) {
 }
 
 void CGTK_free_message(msg_t* msg) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MSG: CGTK_free_message()\n");
+#endif
+	
 	if (msg->decoding & MSG_DEC_SENDER_BIT) {
 		free((void*) msg->sender);
 	}

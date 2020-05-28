@@ -11,11 +11,18 @@
 #include "config.h"
 #include "msg.h"
 
-typedef struct chat_state_t {
+typedef struct {
+	gchar identity [CGTK_IDENTITY_BUFFER_SIZE];
+	gchar name [CGTK_NAME_BUFFER_SIZE];
+} cgtk_member_t;
+
+typedef struct {
 	gchar name [CGTK_NAME_BUFFER_SIZE];
 	
 	gboolean use_json;
 	gboolean is_group;
+	
+	GList* members;
 } cgtk_chat_t;
 
 typedef struct {

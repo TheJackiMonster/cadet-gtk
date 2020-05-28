@@ -63,6 +63,10 @@ static void CGTK_fatal_error(const char* error_message) {
 #include "gnunet/group.c"
 
 static void CGTK_shutdown(void* cls) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_shutdown()\n");
+#endif
+	
 	if (session.name_announcement) {
 		GNUNET_REGEX_announce_cancel(session.name_announcement);
 		session.name_announcement = NULL;
@@ -115,6 +119,10 @@ static void CGTK_shutdown(void* cls) {
 static void CGTK_idle(void* cls);
 
 static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, const struct GNUNET_PeerIdentity* source) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_on_connect()\n");
+#endif
+	
 	const struct GNUNET_HashCode* group = (const struct GNUNET_HashCode*) cls;
 	
 	connection_t* connection = CGTK_connection_create(source, (group? group : &(session.port)), channel);
@@ -163,6 +171,10 @@ static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, co
 }
 
 static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* channel) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_on_disconnect()\n");
+#endif
+	
 	connection_t* connection = (connection_t*) cls;
 	
 	if (connection->group) {
@@ -186,6 +198,10 @@ static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* cha
 }
 
 static void CGTK_handle_message(connection_t* connection, const struct GNUNET_MessageHeader* message) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_handle_message()\n");
+#endif
+	
 	uint16_t length = ntohs(message->size) - sizeof(*message);
 	
 	const char* buffer = (const char *) &message[1];
@@ -195,7 +211,7 @@ static void CGTK_handle_message(connection_t* connection, const struct GNUNET_Me
 	if (connection->group) {
 		msg_t* msg = CGTK_decode_message(buffer, length);
 		
-		CGTK_repair_message(msg, buffer, connection->name);
+		CGTK_repair_message(msg, buffer, length, connection->name);
 		
 		if (msg->kind == MSG_KIND_TALK) {
 			const char* origin_sender = msg->sender;
@@ -252,6 +268,10 @@ static void CGTK_done_message(void* cls) {
 }
 
 static bool CGTK_push_message(connection_t* connection) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_push_message()\n");
+#endif
+	
 	size_t length = CGTK_recv_gtk_msg_length(messaging);
 	char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
 	
@@ -297,6 +317,10 @@ static bool CGTK_push_message(connection_t* connection) {
 }
 
 static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* identity, void* value) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_send_message()\n");
+#endif
+	
 	connection_t* connection = (connection_t*) value;
 	
 	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), (struct GNUNET_HashCode*) cls) == 0) {
@@ -341,6 +365,10 @@ static void CGTK_idle(void* cls) {
 	
 	switch (type) {
 		case MSG_GNUNET_HOST: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_HOST\n");
+#endif
+			
 			const uint8_t visibility = CGTK_recv_gtk_code(messaging);
 			
 			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
@@ -392,11 +420,19 @@ static void CGTK_idle(void* cls) {
 			CGTK_name_call(name_regex);
 			break;
 		} case MSG_GNUNET_SEARCH: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_SEARCH\n");
+#endif
+			
 			const char* name = CGTK_receive_name();
 			
 			CGTK_name_search(name);
 			break;
 		} case MSG_GNUNET_GROUP: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_GROUP\n");
+#endif
+			
 			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
 			
 			if (!port) {
@@ -416,6 +452,10 @@ static void CGTK_idle(void* cls) {
 			
 			break;
 		} case MSG_GNUNET_EXIT: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_EXIT\n");
+#endif
+			
 			const struct GNUNET_PeerIdentity* identity = CGTK_recv_gtk_identity(messaging);
 			
 			if (!identity) {
@@ -459,6 +499,10 @@ static void CGTK_idle(void* cls) {
 			
 			break;
 		} case MSG_GNUNET_SEND_MESSAGE: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_SEND_MESSAGE\n");
+#endif
+			
 			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gtk_identity(messaging);
 			
 			if (!destination) {
@@ -514,6 +558,10 @@ static void CGTK_idle(void* cls) {
 			
 			break;
 		} case MSG_ERROR: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_ERROR\n");
+#endif
+			
 			CGTK_fatal_error(NULL);
 			return;
 		} default: {
