@@ -33,7 +33,7 @@ You can see all other features and bigger changes which are planned right here:
 
  * [ ] Allow creating a normal chat with JSON.
  * [ ] Allow viewing all members in a groupchat more conveniently.
- * [ ] Allow changing your nickname via GUI.
+ * [x] Allow changing your nickname via GUI.
  * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
 >  More information here: https://pep.software/about/
  * [ ] Use pEp-sync to use the application on multiple peers concurrently.
