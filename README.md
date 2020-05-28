@@ -54,3 +54,4 @@ You can see all other features and bigger changes which are planned right here:
 ## Who is contributing
 
  - Tobias Frisch ( thejackimonster@gmail.com )
+ - Marcos Marado ( mindboosternoori@gmail.com )
