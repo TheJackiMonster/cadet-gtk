@@ -13,6 +13,7 @@
 #include "config.h"
 #include "gui/contacts.h"
 #include "gui/chat.h"
+#include "gui/util.h"
 
 void CGTK_init_ui(cgtk_gui_t* gui) {
 	memset(gui->attributes.identity, '\0', CGTK_IDENTITY_BUFFER_SIZE);
@@ -99,7 +100,7 @@ void CGTK_update_id_search_ui(cgtk_gui_t* gui, guint hash, const char* identity)
 	const char* name = NULL;
 	
 	if (gui->id_search.entry) {
-		name = gtk_entry_get_text(GTK_ENTRY(gui->id_search.entry));
+		name = CGTK_get_entry_text(gui->id_search.entry);
 		
 		GString* search_str = g_string_new(name);
 		cmp_hash = g_string_hash(search_str);

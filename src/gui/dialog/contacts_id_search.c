@@ -57,6 +57,12 @@ void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* i
 	}
 }
 
+static void CGTK_id_search_destroy(GtkWidget* dialog, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	memset(&(gui->id_search), 0, sizeof(gui->id_search));
+}
+
 static void CGTK_id_search_dialog(GtkWidget* search_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
@@ -101,8 +107,9 @@ static void CGTK_id_search_dialog(GtkWidget* search_button, gpointer user_data) 
 	gtk_container_add(GTK_CONTAINER(scrolled), viewport);
 	gtk_container_add(GTK_CONTAINER(search_box), scrolled);
 	
-	g_signal_connect(gui->id_search.entry, "changed\0", G_CALLBACK(CGTK_id_search_changed), gui);
+	g_signal_connect(gui->id_search.dialog, "destroy\0", G_CALLBACK(CGTK_id_search_destroy), gui);
 	
+	g_signal_connect(gui->id_search.entry, "changed\0", G_CALLBACK(CGTK_id_search_changed), gui);
 	g_signal_connect(gui->id_search.list, "row-activated\0", G_CALLBACK(CGTK_id_search_select), gui);
 	
 	gtk_widget_show_all(gui->id_search.dialog);

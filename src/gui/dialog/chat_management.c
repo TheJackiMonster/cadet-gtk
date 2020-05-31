@@ -39,6 +39,12 @@ static void CGTK_management_exit_chat(GtkWidget* exit_button, gpointer user_data
 	}
 }
 
+static void CGTK_management_destroy(GtkWidget* dialog, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	memset(&(gui->management), 0, sizeof(gui->management));
+}
+
 static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
@@ -148,6 +154,8 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	
 	gtk_container_add(GTK_CONTAINER(button_box), cancel_button);
 	gtk_container_add(GTK_CONTAINER(button_box), confirm_button);
+	
+	g_signal_connect(gui->management.dialog, "destroy\0", G_CALLBACK(CGTK_management_destroy), gui);
 	
 	g_signal_connect(exit_button, "clicked\0", G_CALLBACK(CGTK_management_exit_chat), gui);
 	

@@ -28,9 +28,9 @@ static void CGTK_identity_confirm(GtkWidget* confirm_button, gpointer user_data)
 	strncpy(gui->config.port, CGTK_get_entry_text(gui->identity.port_entry), CGTK_PORT_BUFFER_SIZE - 1);
 	gui->config.port[CGTK_PORT_BUFFER_SIZE - 1] = '\0';
 	
-	const char* name = gtk_entry_get_text(GTK_ENTRY(gui->identity.name_entry));
-	const char* mail = gtk_entry_get_text(GTK_ENTRY(gui->identity.mail_entry));
-	const char* phone = gtk_entry_get_text(GTK_ENTRY(gui->identity.phone_entry));
+	const char* name = CGTK_get_entry_text(gui->identity.name_entry);
+	const char* mail = CGTK_get_entry_text(gui->identity.mail_entry);
+	const char* phone = CGTK_get_entry_text(gui->identity.phone_entry);
 	
 	GString* regex = NULL;
 	
@@ -66,6 +66,12 @@ static void CGTK_identity_confirm(GtkWidget* confirm_button, gpointer user_data)
 	}
 	
 	gtk_widget_destroy(gui->identity.dialog);
+}
+
+static void CGTK_identity_destroy(GtkWidget* dialog, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	memset(&(gui->identity), 0, sizeof(gui->identity));
 }
 
 static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
@@ -227,6 +233,8 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	
 	gtk_box_set_child_packing(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 2, GTK_PACK_START);
 	gtk_box_set_child_packing(GTK_BOX(button_box), confirm_button, FALSE, FALSE, 2, GTK_PACK_START);
+	
+	g_signal_connect(gui->identity.dialog, "destroy\0", G_CALLBACK(CGTK_identity_destroy), gui);
 	
 	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_identity_cancel), gui);
 	g_signal_connect(confirm_button, "clicked\0", G_CALLBACK(CGTK_identity_confirm), gui);

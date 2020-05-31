@@ -45,6 +45,12 @@ static void CGTK_new_contact_id_changed(GtkEditable* id_editable, gpointer user_
 	gtk_widget_show_all(gui->new_contact.name_entry);
 }
 
+static void CGTK_new_contact_destroy(GtkWidget* dialog, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	memset(&(gui->new_contact), 0, sizeof(gui->new_contact));
+}
+
 static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
@@ -124,6 +130,8 @@ static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	
 	gtk_box_set_child_packing(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 2, GTK_PACK_START);
 	gtk_box_set_child_packing(GTK_BOX(button_box), confirm_button, FALSE, FALSE, 2, GTK_PACK_START);
+	
+	g_signal_connect(gui->new_contact.dialog, "destroy\0", G_CALLBACK(CGTK_new_contact_destroy), gui);
 	
 	g_signal_connect(search_button, "clicked\0", G_CALLBACK(CGTK_id_search_dialog), gui);
 	
