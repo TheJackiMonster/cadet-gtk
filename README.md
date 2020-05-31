@@ -31,15 +31,17 @@ If you want to take a look at all the releases and its changes: [Release Notes](
 
 You can see all other features and bigger changes which are planned right here:
 
- * [ ] Allow creating a normal chat with JSON.
- * [ ] Allow viewing all members in a groupchat more conveniently.
- * [x] Allow changing your nickname via GUI.
- * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
->  More information here: https://pep.software/about/
- * [ ] Use pEp-sync to use the application on multiple peers concurrently.
+ * [ ] Show names of members of a group (connected to the names used in one-to-one chats).
+ * [ ] Allow changing a normal chat to use JSON.
  * [ ] Allow sharing files privately through GNUnet and encryption.
 >  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
+ * [ ] Allow setting up a profile picture.
+ * [ ] Upgrading the security inside of groupchats.
+ * [ ] Providing more consistency between multiple channels to the same destination.
  * [ ] Implementing audio-calls with the conversation of GNUnet.
+  * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
+>  More information here: https://pep.software/about/
+ * [ ] Use pEp-sync to use the application on multiple peers concurrently.
 
 ## Docs I use
 
@@ -52,3 +54,4 @@ You can see all other features and bigger changes which are planned right here:
 ## Who is contributing
 
  - Tobias Frisch ( thejackimonster@gmail.com )
+ - Marcos Marado ( mindboosternoori@gmail.com )

@@ -1,3 +1,13 @@
+## Version 0.5.0
+* Allow viewing all members in a groupchat more conveniently in the management of the chat.
+* Allow changing your nickname via GUI in your profile view.
+* It is possible to search for other users via name, email or phone number if they opt into that feature (visibility setting).
+* You configuration of the application and profile will be saved locally as JSON file ( "~/.config/cadet-gtk/config.json" ).
+* Chats will use elliptic views for user names to allow the window size for mobile at all times.
+* Changing your listening port was moved to advanced settings.
+* The cat mode was added as practical feature to prevent others connecting to you without permission.
+* Code is a lot cleaner again and some structs and methods were restructured for easier use and more consistency.
+
 ## Version 0.4.0
 * Allow creating a groupchat inside the application with a selected port.
 * Groupchats can listen on separate ports.
