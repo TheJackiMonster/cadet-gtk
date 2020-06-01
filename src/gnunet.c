@@ -595,6 +595,10 @@ static void CGTK_idle(void* cls) {
 }
 
 static void CGTK_arm_connection(void* cls, int connected) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_arm_connection(): %d\n", connected);
+#endif
+	
 	if (connected) {
 		GNUNET_ARM_request_service_start(session.handles.arm, "cadet", GNUNET_OS_INHERIT_STD_NONE, NULL, NULL);
 		GNUNET_ARM_request_service_start(session.handles.arm, "fs", GNUNET_OS_INHERIT_STD_NONE, NULL, NULL);
@@ -604,6 +608,10 @@ static void CGTK_arm_connection(void* cls, int connected) {
 }
 
 static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_fs_progress()\n");
+#endif
+	
 	return NULL;
 }
 
