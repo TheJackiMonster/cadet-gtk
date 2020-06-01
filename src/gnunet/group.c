@@ -23,7 +23,7 @@ static group_t* CGTK_group_create(const struct GNUNET_HashCode* port) {
 	GNUNET_memcpy(&(group->port), port, sizeof(struct GNUNET_HashCode));
 	
 	group->listen = GNUNET_CADET_open_port(
-			session.cadet,
+			session.handles.cadet,
 			&(group->port),
 			&CGTK_on_connect,
 			(void*) &(group->port),

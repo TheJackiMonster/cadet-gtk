@@ -5,11 +5,8 @@
 #ifndef CADET_GTK_MESSAGING_H
 #define CADET_GTK_MESSAGING_H
 
-#include <gtk/gtk.h>
-#include <gnunet/gnunet_config.h>
-#include <gnunet/gnunet_cadet_service.h>
-#include <gnunet/gnunet_regex_service.h>
-#include <gnunet/gnunet_protocols.h>
+#include "gtk.h"
+#include "gnunet.h"
 
 /** @defgroup messaging_group Messaging
  *  Communication between the processes handling GNUnet and a GUI.

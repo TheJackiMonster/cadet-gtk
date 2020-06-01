@@ -11,6 +11,13 @@
  */
 
 #include <gnunet/platform.h>
+#include <gnunet/gnunet_config.h>
+#include <gnunet/gnunet_arm_service.h>
+#include <gnunet/gnunet_cadet_service.h>
+#include <gnunet/gnunet_friends_lib.h>
+#include <gnunet/gnunet_fs_service.h>
+#include <gnunet/gnunet_regex_service.h>
+#include <gnunet/gnunet_protocols.h>
 #include <gnunet/gnunet_util_lib.h>
 
 /**

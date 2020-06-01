@@ -1,5 +1,7 @@
 
+list(APPEND GNUNET_LIBS gnunetarm)
 list(APPEND GNUNET_LIBS gnunetcadet)
+list(APPEND GNUNET_LIBS gnunetfs)
 list(APPEND GNUNET_LIBS gnunetregex)
 list(APPEND GNUNET_LIBS gnunetutil)
 

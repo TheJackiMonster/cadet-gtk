@@ -12,7 +12,12 @@ static messaging_t* messaging;
 
 static struct {
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
-	struct GNUNET_CADET_Handle* cadet;
+	
+	struct {
+		struct GNUNET_ARM_Handle* arm;
+		struct GNUNET_CADET_Handle* cadet;
+		struct GNUNET_FS_Handle* fs;
+	} handles;
 	
 	struct GNUNET_REGEX_Announcement* name_announcement;
 	struct GNUNET_REGEX_Search* name_search;
@@ -110,8 +115,20 @@ static void CGTK_shutdown(void* cls) {
 		session.listen = NULL;
 	}
 	
-	GNUNET_CADET_disconnect(session.cadet);
-	session.cadet = NULL;
+	if (session.handles.fs) {
+		GNUNET_FS_stop(session.handles.fs);
+		session.handles.fs = NULL;
+	}
+	
+	if (session.handles.cadet) {
+		GNUNET_CADET_disconnect(session.handles.cadet);
+		session.handles.cadet = NULL;
+	}
+	
+	if (session.handles.arm) {
+		GNUNET_ARM_disconnect(session.handles.arm);
+		session.handles.arm = NULL;
+	}
 	
 	CGTK_close_messaging(messaging);
 }
@@ -403,7 +420,7 @@ static void CGTK_idle(void* cls) {
 				};
 				
 				session.listen = GNUNET_CADET_open_port(
-						session.cadet,
+						session.handles.cadet,
 						&(session.port),
 						&CGTK_on_connect,
 						NULL,
@@ -540,7 +557,7 @@ static void CGTK_idle(void* cls) {
 				connection_t* connection = CGTK_connection_create(destination, port, NULL);
 				
 				connection->channel = GNUNET_CADET_channel_create(
-						session.cadet,
+						session.handles.cadet,
 						connection,
 						GNUNET_PEER_resolve2(connection->identity),
 						&(connection->port),
@@ -577,11 +594,39 @@ static void CGTK_idle(void* cls) {
 	);
 }
 
+static void CGTK_arm_connection(void* cls, int connected) {
+	if (connected) {
+		GNUNET_ARM_request_service_start(session.handles.arm, "cadet", GNUNET_OS_INHERIT_STD_NONE, NULL, NULL);
+		GNUNET_ARM_request_service_start(session.handles.arm, "fs", GNUNET_OS_INHERIT_STD_NONE, NULL, NULL);
+	} else {
+		GNUNET_ARM_request_service_start(session.handles.arm, "arm", GNUNET_OS_INHERIT_STD_NONE, NULL, NULL);
+	}
+}
+
+static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info) {
+	return NULL;
+}
+
 void CGTK_run_gnunet(void* cls, char*const* args, const char* cfgfile, const struct GNUNET_CONFIGURATION_Handle* cfg) {
 	messaging = (messaging_t*) cls;
 	
 	session.cfg = cfg;
-	session.cadet = GNUNET_CADET_connect(cfg);
+	
+	session.handles.arm = GNUNET_ARM_connect(cfg, &CGTK_arm_connection, NULL);
+	
+	if (session.handles.arm) {
+		CGTK_arm_connection(NULL, FALSE);
+	}
+	
+	session.handles.cadet = GNUNET_CADET_connect(cfg);
+	session.handles.fs = GNUNET_FS_start(
+			cfg,
+			CGTK_APPLICATION_ID,
+			&CGTK_fs_progress,
+			NULL,
+			GNUNET_FS_FLAGS_NONE,
+			GNUNET_FS_OPTIONS_END
+	);
 	
 	session.name_announcement = NULL;
 	session.name_search = NULL;
@@ -601,7 +646,7 @@ void CGTK_run_gnunet(void* cls, char*const* args, const char* cfgfile, const str
 			CGTK_GNUNET_SESSION_IDLE_DELAY_MS
 	);
 	
-	if (!session.cadet) {
+	if (!session.handles.cadet) {
 		CGTK_fatal_error("Service unavailable!\0");
 		return;
 	}
@@ -628,7 +673,7 @@ void CGTK_run_gnunet(void* cls, char*const* args, const char* cfgfile, const str
 	CGTK_send_gui_identity(messaging, &peer);
 	
 	session.listen = GNUNET_CADET_open_port(
-			session.cadet,
+			session.handles.cadet,
 			&(session.port),
 			&CGTK_on_connect,
 			NULL,
