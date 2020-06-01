@@ -48,8 +48,8 @@ add_executable(cadet-gtk
 		
 #		src/messaging/gnunet.c                  #: internally-included
 #		src/messaging/gnunet.h                  #: internally-included
-#		src/messaging/gtk.c                     #: internally-included
-#		src/messaging/gtk.h                     #: internally-included
+#		src/messaging/gui.c                     #: internally-included
+#		src/messaging/gui.h                     #: internally-included
 		src/messaging.h
 		src/messaging.c
 		

@@ -45,7 +45,7 @@ static void CGTK_name_found(void *cls, const struct GNUNET_PeerIdentity* identit
 		const struct GNUNET_PeerIdentity* put_path, unsigned int put_path_length) {
 	const char* name = (const char*) cls;
 	
-	CGTK_send_gtk_found(messaging, name, identity);
+	CGTK_send_gui_found(messaging, name, identity);
 }
 
 static void CGTK_name_search(const char* name) {

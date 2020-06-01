@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 				argc, argv,
 				CGTK_BINARY_NAME,
 				gettext_noop(CGTK_DESCRIPTION),
-				options, &CGTK_run, &messaging
+				options, &CGTK_run_gnunet, &messaging
 		)? EXIT_SUCCESS : EXIT_FAILURE);
 		
 		CGTK_close_messaging(&messaging);
@@ -41,9 +41,9 @@ int main(int argc, char** argv) {
 				G_APPLICATION_NON_UNIQUE
 		);
 		
-		g_signal_connect(application, "activate\0", G_CALLBACK(CGTK_activate), &messaging);
+		g_signal_connect(application, "activate\0", G_CALLBACK(CGTK_activate_gtk), &messaging);
 		
-		CGTK_prepare_gtk(&messaging);
+		CGTK_prepare_gui(&messaging);
 		
 		int status = g_application_run(G_APPLICATION(application), argc, argv);
 		

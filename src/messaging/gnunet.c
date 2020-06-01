@@ -4,7 +4,7 @@
 
 void CGTK_prepare_gnunet(messaging_t* messaging) {
 	close_if_open(&(messaging->pipe_gnunet[1]));
-	close_if_open(&(messaging->pipe_gtk[0]));
+	close_if_open(&(messaging->pipe_gui[0]));
 }
 
 static void CGTK_add_port_to_lookup(const char* port, size_t port_len, const struct GNUNET_HashCode* hashcode) {
@@ -172,7 +172,7 @@ void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, cons
 msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging) {
 	msg_type_t type = MSG_NONE;
 	
-	if (read(messaging->pipe_gtk[0], &type, sizeof(type)) < sizeof(type)) {
+	if (read(messaging->pipe_gui[0], &type, sizeof(type)) < sizeof(type)) {
 		return MSG_ERROR;
 	}
 	
@@ -182,7 +182,7 @@ msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging) {
 const char* CGTK_recv_gnunet_identity(messaging_t* messaging) {
 	struct GNUNET_PeerIdentity identity;
 	
-	if (read(messaging->pipe_gtk[0], &identity, sizeof(identity)) < sizeof(identity)) {
+	if (read(messaging->pipe_gui[0], &identity, sizeof(identity)) < sizeof(identity)) {
 		return NULL;
 	}
 	
@@ -192,7 +192,7 @@ const char* CGTK_recv_gnunet_identity(messaging_t* messaging) {
 const char* CGTK_recv_gnunet_port(messaging_t* messaging) {
 	struct GNUNET_HashCode hashcode;
 	
-	if (read(messaging->pipe_gtk[0], &hashcode, sizeof(hashcode)) < sizeof(hashcode)) {
+	if (read(messaging->pipe_gui[0], &hashcode, sizeof(hashcode)) < sizeof(hashcode)) {
 		return NULL;
 	}
 	
@@ -206,7 +206,7 @@ const char* CGTK_recv_gnunet_port(messaging_t* messaging) {
 guint CGTK_recv_gnunet_hash(messaging_t* messaging) {
 	guint hash;
 	
-	if (read(messaging->pipe_gtk[0], &hash, sizeof(guint)) < sizeof(guint)) {
+	if (read(messaging->pipe_gui[0], &hash, sizeof(guint)) < sizeof(guint)) {
 		return 0;
 	}
 	
@@ -216,7 +216,7 @@ guint CGTK_recv_gnunet_hash(messaging_t* messaging) {
 size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging) {
 	size_t length = 0;
 	
-	if (read(messaging->pipe_gtk[0], &length, sizeof(length)) < sizeof(length)) {
+	if (read(messaging->pipe_gui[0], &length, sizeof(length)) < sizeof(length)) {
 		return 0;
 	}
 	
@@ -224,5 +224,5 @@ size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging) {
 }
 
 ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length) {
-	return read(messaging->pipe_gtk[0], buffer, length);
+	return read(messaging->pipe_gui[0], buffer, length);
 }

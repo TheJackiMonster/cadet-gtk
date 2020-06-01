@@ -164,7 +164,7 @@ static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, co
 		
 		CGTK_group_recv_message(connection, &info_msg);
 	} else {
-		CGTK_send_gtk_connect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
+		CGTK_send_gui_connect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
 	}
 	
 	return connection;
@@ -190,7 +190,7 @@ static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* cha
 			CGTK_group_send_message(connection, connection->group, &leave_msg);
 		}
 	} else {
-		CGTK_send_gtk_disconnect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
+		CGTK_send_gui_disconnect(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port));
 		CGTK_remove_connection(connection);
 	}
 	
@@ -225,7 +225,7 @@ static void CGTK_handle_message(connection_t* connection, const struct GNUNET_Me
 		
 		CGTK_free_message(msg);
 	} else {
-		ssize_t result = CGTK_send_gtk_message(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port), buffer, length);
+		ssize_t result = CGTK_send_gui_message(messaging, GNUNET_PEER_resolve2(connection->identity), &(connection->port), buffer, length);
 		
 		if (result < 0) {
 			CGTK_fatal_error("No connection!\0");
@@ -272,7 +272,7 @@ static bool CGTK_push_message(connection_t* connection) {
 	printf("GNUNET: CGTK_push_message()\n");
 #endif
 	
-	size_t length = CGTK_recv_gtk_msg_length(messaging);
+	size_t length = CGTK_recv_gui_msg_length(messaging);
 	char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
 	
 	struct GNUNET_MessageHeader *msg;
@@ -291,7 +291,7 @@ static bool CGTK_push_message(connection_t* connection) {
 		}
 		
 		while (offset < remaining) {
-			ssize_t done = CGTK_recv_gtk_message(messaging, buffer + offset, remaining - offset);
+			ssize_t done = CGTK_recv_gui_message(messaging, buffer + offset, remaining - offset);
 			
 			if (done <= 0) {
 				CGTK_fatal_error("Connection lost!\0");
@@ -334,7 +334,7 @@ static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* identi
 static const char* CGTK_receive_name() {
 	static char buffer[CGTK_NAME_BUFFER_SIZE];
 	
-	size_t length = CGTK_recv_gtk_msg_length(messaging);
+	size_t length = CGTK_recv_gui_msg_length(messaging);
 	
 	if (length >= CGTK_NAME_BUFFER_SIZE) {
 		length = CGTK_NAME_BUFFER_SIZE - 1;
@@ -343,7 +343,7 @@ static const char* CGTK_receive_name() {
 	ssize_t offset = 0;
 	
 	while (offset < length) {
-		ssize_t done = CGTK_recv_gtk_message(messaging, buffer + offset, length - offset);
+		ssize_t done = CGTK_recv_gui_message(messaging, buffer + offset, length - offset);
 		
 		if (done <= 0) {
 			CGTK_fatal_error("Connection lost!\0");
@@ -361,7 +361,7 @@ static const char* CGTK_receive_name() {
 static void CGTK_idle(void* cls) {
 	session.idle = NULL;
 	
-	msg_type_t type = CGTK_recv_gtk_msg_type(messaging);
+	msg_type_t type = CGTK_recv_gui_msg_type(messaging);
 	
 	switch (type) {
 		case MSG_GNUNET_HOST: {
@@ -369,9 +369,9 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_HOST\n");
 #endif
 			
-			const uint8_t visibility = CGTK_recv_gtk_code(messaging);
+			const uint8_t visibility = CGTK_recv_gui_code(messaging);
 			
-			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
+			const struct GNUNET_HashCode *port = CGTK_recv_gui_hashcode(messaging);
 			
 			if (!port) {
 				CGTK_fatal_error("Can't identify hosts port!\0");
@@ -433,7 +433,7 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_GROUP\n");
 #endif
 			
-			const struct GNUNET_HashCode* port = CGTK_recv_gtk_hashcode(messaging);
+			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
 			
 			if (!port) {
 				CGTK_fatal_error("Can't identify groups port!\0");
@@ -447,7 +447,7 @@ static void CGTK_idle(void* cls) {
 					memset(&peer, 0, sizeof(peer));
 				}
 				
-				CGTK_send_gtk_connect(messaging, &peer, port);
+				CGTK_send_gui_connect(messaging, &peer, port);
 			}
 			
 			break;
@@ -456,14 +456,14 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_EXIT\n");
 #endif
 			
-			const struct GNUNET_PeerIdentity* identity = CGTK_recv_gtk_identity(messaging);
+			const struct GNUNET_PeerIdentity* identity = CGTK_recv_gui_identity(messaging);
 			
 			if (!identity) {
 				CGTK_fatal_error("Can't identify connections identity!\0");
 				return;
 			}
 			
-			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
+			const struct GNUNET_HashCode *port = CGTK_recv_gui_hashcode(messaging);
 			
 			if (!port) {
 				CGTK_fatal_error("Can't identify connections port!\0");
@@ -503,14 +503,14 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_SEND_MESSAGE\n");
 #endif
 			
-			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gtk_identity(messaging);
+			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gui_identity(messaging);
 			
 			if (!destination) {
 				CGTK_fatal_error("Can't identify connections destination!\0");
 				return;
 			}
 			
-			const struct GNUNET_HashCode *port = CGTK_recv_gtk_hashcode(messaging);
+			const struct GNUNET_HashCode *port = CGTK_recv_gui_hashcode(messaging);
 			
 			if (!port) {
 				CGTK_fatal_error("Can't identify connections port!\0");
@@ -577,7 +577,7 @@ static void CGTK_idle(void* cls) {
 	);
 }
 
-void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNUNET_CONFIGURATION_Handle* cfg) {
+void CGTK_run_gnunet(void* cls, char*const* args, const char* cfgfile, const struct GNUNET_CONFIGURATION_Handle* cfg) {
 	messaging = (messaging_t*) cls;
 	
 	session.cfg = cfg;
@@ -625,7 +625,7 @@ void CGTK_run(void* cls, char*const* args, const char* cfgfile, const struct GNU
 		memset(&peer, 0, sizeof(peer));
 	}
 	
-	CGTK_send_gtk_identity(messaging, &peer);
+	CGTK_send_gui_identity(messaging, &peer);
 	
 	session.listen = GNUNET_CADET_open_port(
 			session.cadet,

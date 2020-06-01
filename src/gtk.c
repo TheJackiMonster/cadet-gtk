@@ -198,7 +198,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 	msg_type_t type = CGTK_recv_gnunet_msg_type(messaging);
 	
 	switch (type) {
-		case MSG_GTK_IDENTITY: {
+		case MSG_GUI_IDENTITY: {
 			const char *identity = CGTK_recv_gnunet_identity(messaging);
 			
 			if (identity == NULL) {
@@ -221,7 +221,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			CGTK_update_host(session.gui.attributes.regex);
 			break;
-		} case MSG_GTK_FOUND: {
+		} case MSG_GUI_FOUND: {
 			const guint hash = CGTK_recv_gnunet_hash(messaging);
 			
 			const char* identity = CGTK_recv_gnunet_identity(messaging);
@@ -233,7 +233,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			CGTK_update_id_search_ui(&(session.gui), hash, identity);
 			break;
-		} case MSG_GTK_CONNECT: {
+		} case MSG_GUI_CONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
@@ -252,7 +252,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_ACTIVE);
 			break;
-		} case MSG_GTK_DISCONNECT: {
+		} case MSG_GUI_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
@@ -269,7 +269,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_INACTIVE);
 			break;
-		} case MSG_GTK_RECV_MESSAGE: {
+		} case MSG_GUI_RECV_MESSAGE: {
 			const char *source = CGTK_recv_gnunet_identity(messaging);
 			
 			if (source == NULL) {
@@ -358,11 +358,11 @@ static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
 	CGTK_close_messaging(messaging);
 }
 
-void CGTK_chat_key_free(gpointer key) {
+static void CGTK_chat_key_free(gpointer key) {
 	g_string_free((GString*) key, TRUE);
 }
 
-void CGTK_chat_value_free(gpointer value) {
+static void CGTK_chat_value_free(gpointer value) {
 	cgtk_chat_t* chat = (cgtk_chat_t*) value;
 	
 	if (chat->members) {
@@ -372,7 +372,7 @@ void CGTK_chat_value_free(gpointer value) {
 	free(chat);
 }
 
-void CGTK_activate(GtkApplication* application, gpointer user_data) {
+void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	messaging = (messaging_t*) user_data;
 	
 	memset(&(session.gui), 0, sizeof(session.gui));

@@ -11,20 +11,37 @@
 #include <gnunet/gnunet_regex_service.h>
 #include <gnunet/gnunet_protocols.h>
 
+/** @defgroup messaging_group Messaging
+ *  Communication between the processes handling GNUnet and a GUI.
+ *  @{
+ */
+
+/**
+ * A struct which takes care of communication between processes of GNUnet and a GUI.
+ *
+ * @author TheJackiMonster
+ * @since 13.04.20.
+ */
 typedef struct messaging_t {
-	int pipe_gtk [2];
+	int pipe_gui [2];
 	int pipe_gnunet [2];
 } messaging_t;
 
-typedef enum {
+/**
+ * An enum to identify the type of a message received via a messaging_t struct.
+ *
+ * @author TheJackiMonster
+ * @since 13.04.20
+ */
+typedef enum msg_type_t {
 	MSG_NONE = 0,
 	
-	MSG_GTK_IDENTITY = 1,
-	MSG_GTK_FOUND = 2,
-	MSG_GTK_CONNECT = 3,
-	MSG_GTK_DISCONNECT = 4,
-	MSG_GTK_SEND_COMPLETE = 5,
-	MSG_GTK_RECV_MESSAGE = 6,
+	MSG_GUI_IDENTITY = 1,
+	MSG_GUI_FOUND = 2,
+	MSG_GUI_CONNECT = 3,
+	MSG_GUI_DISCONNECT = 4,
+	MSG_GUI_SEND_COMPLETE = 5,
+	MSG_GUI_RECV_MESSAGE = 6,
 	
 	MSG_GNUNET_HOST = 10,
 	MSG_GNUNET_SEARCH = 20,
@@ -36,13 +53,32 @@ typedef enum {
 	MSG_ERROR = -1
 } msg_type_t;
 
+/**
+ * Initializes a messaging_t struct with two working pipes and
+ * setups an acceleration structure for hash lookups.
+ *
+ * @warning exits on fail of creating pipes with EXIT_FAILURE
+ *
+ * @param messaging A pointer to a valid messaging_t struct (non-null)
+ */
 void CGTK_init_messaging(messaging_t* messaging);
 
-#include "messaging/gtk.h"
+#include "messaging/gui.h"
 #include "messaging/gnunet.h"
 
+/**
+ * Securely closes all file descriptors to the pipes of the given
+ * messaging_t struct.
+ *
+ * @param messaging A pointer to a valid messaging_t struct (non-null)
+ */
 void CGTK_close_messaging(messaging_t* messaging);
 
+/**
+ * Clears all left over space allocated for acceleration structures.
+ */
 void CGTK_shutdown_messaging(void);
+
+/** @} */
 
 #endif //CADET_GTK_MESSAGING_H

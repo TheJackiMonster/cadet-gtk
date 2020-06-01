@@ -5,6 +5,15 @@
 #ifndef CADET_GTK_MESSAGING_GNUNET_H
 #define CADET_GTK_MESSAGING_GNUNET_H
 
+/** @addtogroup messaging_group
+ *  @{
+ */
+
+/**
+ * Prepares a messaging_t struct to receive and send messages from and to a GNUnet process.
+ *
+ * @param messaging A pointer to a valid messaging_t struct (non-null)
+ */
 void CGTK_prepare_gnunet(messaging_t* messaging);
 
 ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const char* port, const char* name_regex);
@@ -28,5 +37,7 @@ guint CGTK_recv_gnunet_hash(messaging_t* messaging);
 size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging);
 
 ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length);
+
+/** } */
 
 #endif //CADET_GTK_MESSAGING_GNUNET_H
