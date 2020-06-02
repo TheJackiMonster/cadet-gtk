@@ -20,6 +20,57 @@ static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "contacts\0");
 }
 
+static void CGTK_paste_message(GtkWidget* msg_view, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	GtkClipboard* clipboard = gtk_widget_get_clipboard(msg_view, GDK_SELECTION_CLIPBOARD);
+	GtkTextBuffer* buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(msg_view));
+	
+	if (gtk_clipboard_wait_is_image_available(clipboard)) {
+		GdkPixbuf* image = gtk_clipboard_wait_for_image(clipboard);
+		
+		// TODO: handle pasted image!
+		
+		g_object_unref(image);
+	} else
+	if (gtk_clipboard_wait_is_uris_available(clipboard)) {
+		gchar** uris = gtk_clipboard_wait_for_uris(clipboard);
+		
+		if (uris) {
+			gchar** iter = uris;
+			
+			while (*iter) {
+				const gint uri_len = strlen(*iter);
+				
+				// TODO: handle pasted uri to file!
+				
+				gtk_text_buffer_insert_at_cursor(buffer, *iter, uri_len);
+				
+				iter++;
+			}
+			
+			g_strfreev(uris);
+		}
+	} else
+	if (gtk_clipboard_wait_is_text_available(clipboard)) {
+		gchar* text = gtk_clipboard_wait_for_text(clipboard);
+		
+		if (text) {
+			const gint text_len = strlen(text);
+			
+			gtk_text_buffer_insert_at_cursor(buffer, text, text_len);
+			
+			g_free(text);
+		}
+	}
+	
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), FALSE);
+}
+
+static void CGTK_after_paste_message(GtkWidget* msg_view, gpointer user_data) {
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), TRUE);
+}
+
 static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
@@ -98,6 +149,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	GtkWidget* msg_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 	
 	gui->chat.msg_text_view = gtk_text_view_new();
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(gui->chat.msg_text_view), GTK_WRAP_WORD_CHAR);
 	gtk_text_view_set_input_purpose(GTK_TEXT_VIEW(gui->chat.msg_text_view), GTK_INPUT_PURPOSE_FREE_FORM);
 	gtk_text_view_set_input_hints(GTK_TEXT_VIEW(gui->chat.msg_text_view), GTK_INPUT_HINT_EMOJI);
 	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(gui->chat.msg_text_view), 4);
@@ -136,6 +188,9 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	GtkSizeGroup* sizeGroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
+	
+	g_signal_connect(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_paste_message), gui);
+	g_signal_connect_after(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_after_paste_message), gui);
 	
 	g_signal_connect(gui->chat.msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
 	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_management_dialog), gui);
