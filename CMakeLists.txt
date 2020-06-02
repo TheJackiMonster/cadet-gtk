@@ -7,6 +7,7 @@ include(config/GTK.cmake)
 include(config/LibHandy.cmake)
 include(config/GNUnet.cmake)
 include(config/Jansson.cmake)
+include(config/Notify.cmake)
 
 include_directories(${CGTK_INCLUDE_DIRECTORIES})
 
@@ -39,6 +40,8 @@ add_executable(cadet-gtk
 		src/gui/chat.c
 		src/gui/contacts.h
 		src/gui/contacts.c
+		src/gui/notification.h
+		src/gui/notification.c
 		src/gui/util.h
 		src/gui/util.c
 		src/gui.h

@@ -158,6 +158,7 @@ GtkWidget* CGTK_get_chat_list(cgtk_gui_t* gui, const char* contact_id, const cha
 		GtkWidget* chat_label = gtk_label_new(contact_port);
 		
 		chat_list = gtk_list_box_new();
+		gtk_widget_set_name(chat_list, name->str);
 		gtk_list_box_set_selection_mode(GTK_LIST_BOX(chat_list), GTK_SELECTION_NONE);
 		
 		GtkWidget* viewport = gtk_viewport_new(NULL, NULL);
@@ -205,21 +206,12 @@ GtkWidget* CGTK_get_chat_label(cgtk_gui_t* gui, const char* contact_id, const ch
 	return GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(chat_box))->data);
 }
 
-void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
-	GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
-	
-	const char* contact_id = name->str;
-	const char* contact_port = "\0";
-	
-	size_t index = CGTK_split_name(name, &contact_id, &contact_port);
+void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact_port, gboolean silent) {
+	GString* name = CGTK_merge_name(contact_id, contact_port);
 	
 	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), contact_id);
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, contact_id, contact_port);
-	
-	if (name->str[index] == '\0') {
-		name->str[index] = '_';
-	}
 	
 	gtk_widget_show_all(chat_list);
 	gtk_widget_show_all(gui->chat.stack);
@@ -231,11 +223,29 @@ void CGTK_load_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	gtk_widget_set_sensitive(gui->chat.msg_button, TRUE);
 	
 	g_string_free(name, TRUE);
+	
+	if (!silent) {
+		if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(gui->main.leaflet)), "chat\0") != 0) {
+			hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "chat\0");
+		}
+
+#ifdef HANDY_USE_ZERO_API
+		gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(gui->main.leaflet)) == HDY_FOLD_UNFOLDED);
+#else
+		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->content_leaflet));
+#endif
+		
+		if (unfolded) {
+			gtk_widget_set_visible(gui->chat.back_button, FALSE);
+		}
+	}
 }
 
-void CGTK_unload_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
+void CGTK_unload_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact_port, gboolean silent) {
+	GString* name = CGTK_merge_name(contact_id, contact_port);
+	
 	GtkWidget* chat_box = gtk_stack_get_child_by_name(
-			GTK_STACK(gui->chat.stack), gtk_widget_get_name(GTK_WIDGET(row))
+			GTK_STACK(gui->chat.stack), name->str
 	);
 	
 	gtk_container_remove(GTK_CONTAINER(gui->chat.stack), chat_box);
@@ -247,13 +257,33 @@ void CGTK_unload_chat(cgtk_gui_t* gui, GtkListBoxRow* row) {
 	
 	gtk_widget_set_sensitive(gui->chat.msg_text_view, FALSE);
 	gtk_widget_set_sensitive(gui->chat.msg_button, FALSE);
+	
+	g_string_free(name, TRUE);
+	
+	if (!silent) {
+		if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(gui->main.leaflet)), "contacts\0") != 0) {
+			hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "contacts\0");
+		}
+
+#ifdef HANDY_USE_ZERO_API
+		gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(gui->main.leaflet)) == HDY_FOLD_UNFOLDED);
+#else
+		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->content_leaflet));
+#endif
+		
+		if (unfolded) {
+			gtk_widget_set_visible(gui->chat.back_button, FALSE);
+		}
+	}
 }
 
-void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
-	GtkWidget* msg_frame = gtk_frame_new(msg->sender);
-	gtk_widget_set_halign(msg_frame, (msg->local? GTK_ALIGN_END : GTK_ALIGN_START));
+static void CGTK_add_message(GtkWidget* chat_list, const char* title, const char* content, uint8_t alignment) {
+	const int halign = (alignment == 0? GTK_ALIGN_START : (alignment == 1? GTK_ALIGN_CENTER : GTK_ALIGN_END));
+	
+	GtkWidget* msg_frame = gtk_frame_new(title);
+	gtk_widget_set_halign(msg_frame, halign);
 	gtk_widget_set_valign(msg_frame, GTK_ALIGN_CENTER);
-	gtk_frame_set_label_align(GTK_FRAME(msg_frame), (msg->local? 1.0f : 0.0f), 1.0f);
+	gtk_frame_set_label_align(GTK_FRAME(msg_frame), alignment * 0.5f, 1.0f);
 	gtk_frame_set_shadow_type(GTK_FRAME(msg_frame), GTK_SHADOW_IN);
 	gtk_widget_set_size_request(msg_frame, 100, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(msg_frame), 4);
@@ -261,7 +291,7 @@ void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
 	GtkWidget* label = GTK_WIDGET(gtk_container_get_children(GTK_CONTAINER(msg_frame))->data);
 	gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
 	
-	GtkWidget* text = gtk_label_new(msg->content);
+	GtkWidget* text = gtk_label_new(content);
 	gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);
 	gtk_widget_set_halign(text, GTK_ALIGN_START);
@@ -275,4 +305,83 @@ void CGTK_add_message(GtkWidget* chat_list, const msg_t* msg) {
 	gtk_container_add(GTK_CONTAINER(chat_list), msg_frame);
 	
 	gtk_widget_show_all(chat_list);
+}
+
+void CGTK_add_talk_message(GtkWidget* chat_list, const msg_t* talk_msg) {
+	if (talk_msg->kind == MSG_KIND_TALK) {
+		CGTK_add_message(chat_list, talk_msg->sender, talk_msg->content, talk_msg->local? 2 : 0);
+	}
+}
+
+void CGTK_update_all_members(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* info_msg) {
+	if (chat->members) {
+		g_list_free_full(chat->members, g_free);
+		chat->members = NULL;
+	}
+	
+	if (info_msg->kind == MSG_KIND_INFO) {
+		const char** part = info_msg->participants;
+		
+		while (*part) {
+			cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
+			
+			memset(member, 0, sizeof(cgtk_member_t));
+			
+			strncpy(member->name, *part, CGTK_NAME_BUFFER_SIZE);
+			member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+			
+			chat->members = g_list_append(chat->members, member);
+			part++;
+		}
+	}
+}
+
+void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* msg) {
+	if (msg->kind == MSG_KIND_JOIN) {
+		cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
+		
+		memset(member, 0, sizeof(cgtk_member_t));
+		
+		strncpy(member->name, msg->who, CGTK_NAME_BUFFER_SIZE);
+		member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+		
+		chat->members = g_list_append(chat->members, member);
+
+		CGTK_add_message(chat_list, "JOIN\0", member->name, 1);
+	} else
+	if (msg->kind == MSG_KIND_LEAVE) {
+		GList* filtered = NULL;
+		GList* iter = chat->members;
+		
+		gboolean removed = FALSE;
+		
+		while (iter) {
+			cgtk_member_t* member = (cgtk_member_t*) iter->data;
+			
+			if (strcmp(member->name, msg->who) == 0) {
+				g_free(member);
+				removed = TRUE;
+			} else {
+				filtered = g_list_append(filtered, member);
+			}
+			
+			iter = iter->next;
+		}
+		
+		if (chat->members) {
+			g_list_free(chat->members);
+		}
+		
+		chat->members = filtered;
+		
+		if (removed) {
+			CGTK_add_message(chat_list, "LEAVE\0", msg->who, 1);
+		}
+	}
+}
+
+void CGTK_add_file_message(GtkWidget* chat_list, const msg_t* file_msg) {
+	if (file_msg->kind == MSG_KIND_FILE) {
+		CGTK_add_message(chat_list, file_msg->publisher, file_msg->uri, file_msg->local? 2 : 0);
+	}
 }

@@ -14,6 +14,7 @@
 
 #define CGTK_BINARY_NAME "cadet-gtk\0"
 #define CGTK_APPLICATION_ID "com.gitlab.thejackimonster.CADET-GTK\0"
+#define CGTK_APPLICATION_NAME "Cadet-GTK\0"
 #define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet.\0"
 #define CGTK_CONFIG_PATH "/.config/cadet-gtk/config.json\0"
 

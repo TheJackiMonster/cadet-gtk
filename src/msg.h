@@ -14,9 +14,10 @@
 #define MSG_DEC_CONTENT_BIT 0x08u
 #define MSG_DEC_WHO_BIT 0x10u
 #define MSG_DEC_PARTICIPANTS_BIT 0x20u
-#define MSG_DEC_
+#define MSG_DEC_PUBLISHER_BIT 0x40u
+#define MSG_DEC_URI_BIT 0x80u
 
-#define MSG_DEC_COMPLETE_BITS 0x3Fu
+#define MSG_DEC_COMPLETE_BITS 0xFFu
 
 typedef enum {
 	MSG_KIND_TALK = 1,
@@ -38,6 +39,9 @@ typedef struct msg_t {
 	const char* who;
 	
 	const char** participants;
+	
+	const char* publisher;
+	const char* uri;
 	
 	u_int8_t local;
 	uint32_t decoding;

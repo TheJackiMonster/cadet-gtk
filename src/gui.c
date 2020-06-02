@@ -13,6 +13,7 @@
 #include "config.h"
 #include "gui/contacts.h"
 #include "gui/chat.h"
+#include "gui/notification.h"
 #include "gui/util.h"
 
 void CGTK_init_ui(cgtk_gui_t* gui) {
@@ -138,75 +139,29 @@ void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* 
 
 void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port, const msg_t* msg) {
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, identity, port);
-	GtkWidget* port_label = CGTK_get_chat_label(gui, identity, port);
 	
 	cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
 	
 	switch (msg->kind) {
 		case MSG_KIND_TALK: {
-			CGTK_add_message(chat_list, msg);
+			CGTK_add_talk_message(chat_list, msg);
 			break;
 		} case MSG_KIND_JOIN: {
-			cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
-			
-			memset(member, 0, sizeof(cgtk_member_t));
-			
-			strncpy(member->name, msg->who, CGTK_NAME_BUFFER_SIZE);
-			member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
-			
-			printf("join: %s\n", member->name);
-			
-			chat->members = g_list_append(chat->members, member);
+			CGTK_update_member(chat_list, chat, msg);
 			break;
 		} case MSG_KIND_LEAVE: {
-			GList* filtered = NULL;
-			GList* iter = chat->members;
-			
-			while (iter) {
-				cgtk_member_t* member = (cgtk_member_t*) iter->data;
-				
-				if (strcmp(member->name, msg->who) == 0) {
-					printf("leave: %s\n", member->name);
-					
-					g_free(member);
-				} else {
-					filtered = g_list_append(filtered, member);
-				}
-				
-				iter = iter->next;
-			}
-			
-			if (chat->members) {
-				g_list_free(chat->members);
-			}
-			
-			chat->members = filtered;
+			CGTK_update_member(chat_list, chat, msg);
 			break;
 		} case MSG_KIND_INFO: {
-			if (chat->members) {
-				g_list_free_full(chat->members, g_free);
-				chat->members = NULL;
-			}
-			
-			const char** part = msg->participants;
-			
-			while (*part) {
-				cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
-				
-				memset(member, 0, sizeof(cgtk_member_t));
-				
-				strncpy(member->name, *part, CGTK_NAME_BUFFER_SIZE);
-				member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
-				
-				printf("info: %s\n", member->name);
-				
-				chat->members = g_list_append(chat->members, member);
-				part++;
-			}
-			
+			CGTK_update_all_members(chat_list, chat, msg);
+			break;
+		} case MSG_KIND_FILE: {
+			CGTK_add_file_message(chat_list, msg);
 			break;
 		} default: {
 			break;
 		}
 	}
+	
+	CGTK_notification_from_chat(gui, identity, port, msg);
 }

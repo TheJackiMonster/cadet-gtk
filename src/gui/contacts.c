@@ -20,21 +20,20 @@
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
-	CGTK_load_chat(gui, row);
+	GString* name = g_string_new(gtk_widget_get_name(GTK_WIDGET(row)));
 	
-	if (strcmp(hdy_leaflet_get_visible_child_name(HDY_LEAFLET(gui->main.leaflet)), "chat\0") != 0) {
-		hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "chat\0");
-	}
-
-#ifdef HANDY_USE_ZERO_API
-	gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(gui->main.leaflet)) == HDY_FOLD_UNFOLDED);
-#else
-	gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->content_leaflet));
-#endif
+	const char* contact_id = name->str;
+	const char* contact_port = "\0";
 	
-	if (unfolded) {
-		gtk_widget_set_visible(gui->chat.back_button, FALSE);
+	size_t index = CGTK_split_name(name, &contact_id, &contact_port);
+	
+	CGTK_load_chat(gui, contact_id, contact_port, FALSE);
+	
+	if (name->str[index] == '\0') {
+		name->str[index] = '_';
 	}
+	
+	g_string_free(name, TRUE);
 }
 
 void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
@@ -178,7 +177,7 @@ void CGTK_remove_contact(cgtk_gui_t* gui, const char* identity, const char* port
 		GtkWidget* row = GTK_WIDGET(list->data);
 		
 		if (strcmp(gtk_widget_get_name(row), name->str) == 0) {
-			CGTK_unload_chat(gui, GTK_LIST_BOX_ROW(row));
+			CGTK_unload_chat(gui, identity, port, FALSE);
 			
 			gtk_container_remove(GTK_CONTAINER(gui->contacts.list), row);
 			break;
@@ -187,22 +186,22 @@ void CGTK_remove_contact(cgtk_gui_t* gui, const char* identity, const char* port
 		list = list->next;
 	}
 	
-	g_string_free(name, TRUE);
-	
 	const char* swap_chat = gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack));
 	
 	if (swap_chat) {
-		list = gtk_container_get_children(GTK_CONTAINER(gui->contacts.list));
+		name = g_string_assign(name, swap_chat);
 		
-		while (list) {
-			GtkWidget* row = GTK_WIDGET(list->data);
-			
-			if (strcmp(gtk_widget_get_name(row), swap_chat) == 0) {
-				gtk_widget_activate(row);
-				break;
-			}
-			
-			list = list->next;
+		const char* contact_id = name->str;
+		const char* contact_port = "\0";
+		
+		size_t index = CGTK_split_name(name, &contact_id, &contact_port);
+		
+		CGTK_load_chat(gui, contact_id, contact_port, TRUE);
+		
+		if (name->str[index] == '\0') {
+			name->str[index] = '_';
 		}
 	}
+	
+	g_string_free(name, TRUE);
 }

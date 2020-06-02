@@ -27,6 +27,9 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 		} case MSG_KIND_INFO: {
 			json_object_set(json, "kind\0", json_string("info\0"));
 			break;
+		} case MSG_KIND_FILE: {
+			json_object_set(json, "kind\0", json_string("file\0"));
+			break;
 		} default: {
 			break;
 		}
@@ -56,6 +59,14 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 		}
 		
 		json_object_set(json, "participants\0", participants);
+	}
+	
+	if (msg->publisher) {
+		json_object_set(json, "publisher\0", json_string(msg->publisher));
+	}
+	
+	if (msg->uri) {
+		json_object_set(json, "uri\0", json_string(msg->uri));
 	}
 	
 	const char* message = json_dumps(json, JSON_COMPACT);
@@ -116,6 +127,9 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 		
 		json_t* participants = json_object_get(json, "participants\0");
 		
+		json_t* publisher = json_object_get(json, "publisher\0");
+		json_t* uri = json_object_get(json, "uri\0");
+		
 		if (kind) {
 			const char* kind_str = json_string_value(kind);
 			
@@ -132,6 +146,9 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 			} else
 			if (strcmp(kind_str, "info\0") == 0) {
 				msg->kind = MSG_KIND_INFO;
+			} else
+			if (strcmp(kind_str, "file\0") == 0) {
+				msg->kind = MSG_KIND_FILE;
 			} else {
 				msg->decoding ^= MSG_DEC_KIND_BIT;
 			}
@@ -176,8 +193,22 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 			msg->decoding |= MSG_DEC_PARTICIPANTS_BIT;
 		}
 		
+		if (publisher) {
+			msg->publisher = CGTK_string_clone(json_string_value(publisher));
+			
+			msg->decoding |= MSG_DEC_PUBLISHER_BIT;
+		}
+		
+		if (uri) {
+			msg->uri = CGTK_string_clone(json_string_value(uri));
+			
+			msg->decoding |= MSG_DEC_URI_BIT;
+		}
+		
 		json_delete(json);
 	}
+	
+	msg->decoding &= MSG_DEC_COMPLETE_BITS;
 	
 	return msg;
 }
@@ -236,6 +267,14 @@ void CGTK_free_message(msg_t* msg) {
 		}
 		
 		free((void*) msg->participants);
+	}
+	
+	if (msg->decoding & MSG_DEC_PUBLISHER_BIT) {
+		free((void*) msg->publisher);
+	}
+	
+	if (msg->decoding & MSG_DEC_URI_BIT) {
+		free((void*) msg->uri);
 	}
 	
 	free(msg);

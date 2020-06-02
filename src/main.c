@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
 				G_APPLICATION_NON_UNIQUE
 		);
 		
+		notify_init (CGTK_APPLICATION_NAME);
+		
 		g_signal_connect(application, "activate\0", G_CALLBACK(CGTK_activate_gtk), &messaging);
 		
 		CGTK_prepare_gui(&messaging);
@@ -52,6 +54,8 @@ int main(int argc, char** argv) {
 			
 			waitpid(pid, NULL, 0);
 		}
+		
+		notify_uninit();
 		
 		g_object_unref(application);
 		

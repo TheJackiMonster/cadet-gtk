@@ -11,6 +11,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <libnotify/notify.h>
 
 /**
  * Starts the application on activation in GTK and creates a GUI

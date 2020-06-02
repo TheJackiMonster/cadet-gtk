@@ -5,6 +5,10 @@
 #ifndef CADET_GTK_GUI_H
 #define CADET_GTK_GUI_H
 
+/** @addtogroup gtk_group
+ *  @{
+ */
+
 #include <gtk/gtk.h>
 #include <stdint.h>
 
@@ -119,5 +123,7 @@ void CGTK_update_identity_ui(cgtk_gui_t* gui, const char* identity);
 void CGTK_update_contacts_ui(cgtk_gui_t* gui, const char* identity, const char* port, contact_state_t state);
 
 void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port, const msg_t* msg);
+
+/** } */
 
 #endif //CADET_GTK_GUI_H
