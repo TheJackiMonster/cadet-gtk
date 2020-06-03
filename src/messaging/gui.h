@@ -2,8 +2,8 @@
 // Created by thejackimonster on 20.05.20.
 //
 
-#ifndef CADET_GTK_MESSAGING_GTK_H
-#define CADET_GTK_MESSAGING_GTK_H
+#ifndef CADET_GTK_MESSAGING_GUI_H
+#define CADET_GTK_MESSAGING_GUI_H
 
 /** @addtogroup messaging_group
  *  @{
@@ -43,4 +43,4 @@ ssize_t CGTK_recv_gui_message(messaging_t* messaging, char* buffer, size_t lengt
 
 /** } */
 
-#endif //CADET_GTK_MESSAGING_GTK_H
+#endif //CADET_GTK_MESSAGING_GUI_H

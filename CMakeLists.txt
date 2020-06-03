@@ -58,6 +58,19 @@ add_executable(cadet-gtk
 		
 		src/msg.h
 		src/msg.c
+		
+		src/storage/archieve.h
+		src/storage/archieve.c
+		src/storage/chat.h
+		src/storage/chat.c
+		src/storage/contacts.h
+		src/storage/contacts.c
+		src/storage/files.h
+		src/storage/files.c
+		src/storage/keys.h
+		src/storage/keys.c
+		src/storage.h
+		src/storage.c
 )
 
 target_link_libraries(cadet-gtk ${CGTK_LIBRARIES})

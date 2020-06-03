@@ -2,8 +2,8 @@
 // Created by thejackimonster on 02.06.20.
 //
 
-#ifndef CADET_GTK_NOTIFICATION_H
-#define CADET_GTK_NOTIFICATION_H
+#ifndef CADET_GTK_GUI_NOTIFICATION_H
+#define CADET_GTK_GUI_NOTIFICATION_H
 
 /** @addtogroup gtk_group
  *  @{
@@ -18,4 +18,4 @@ void CGTK_notification_from_chat(cgtk_gui_t* gui, const char* identity, const ch
 
 /** } */
 
-#endif //CADET_GTK_NOTIFICATION_H
+#endif //CADET_GTK_GUI_NOTIFICATION_H

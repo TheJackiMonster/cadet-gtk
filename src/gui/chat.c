@@ -13,6 +13,7 @@
 #include "util.h"
 
 #include "dialog/chat_management.c"
+#include "../storage/files.h"
 
 static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
@@ -30,6 +31,14 @@ static void CGTK_paste_message(GtkWidget* msg_view, gpointer user_data) {
 		GdkPixbuf* image = gtk_clipboard_wait_for_image(clipboard);
 		
 		// TODO: handle pasted image!
+		
+		GString* filename = g_string_new(CGTK_generate_random_filename());
+		
+		g_string_append(filename, ".jpg\0");
+		
+		gdk_pixbuf_save(image, filename->str, "jpeg\0", NULL, "quality\0", "100\0", NULL);
+		
+		g_string_free(filename, TRUE);
 		
 		g_object_unref(image);
 	} else
@@ -393,44 +402,52 @@ void CGTK_update_all_members(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_
 
 void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* msg) {
 	if (msg->kind == MSG_KIND_JOIN) {
-		cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
-		
-		memset(member, 0, sizeof(cgtk_member_t));
-		
-		strncpy(member->name, msg->who, CGTK_NAME_BUFFER_SIZE);
-		member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
-		
-		chat->members = g_list_append(chat->members, member);
-
-		CGTK_add_message(chat_list, "JOIN\0", member->name, 1);
+		if (msg->local) {
+			CGTK_add_message(chat_list, "ENTER\0", msg->who, 1);
+		} else {
+			cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
+			
+			memset(member, 0, sizeof(cgtk_member_t));
+			
+			strncpy(member->name, msg->who, CGTK_NAME_BUFFER_SIZE);
+			member->name[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
+			
+			chat->members = g_list_append(chat->members, member);
+			
+			CGTK_add_message(chat_list, "JOIN\0", msg->who, 1);
+		}
 	} else
 	if (msg->kind == MSG_KIND_LEAVE) {
-		GList* filtered = NULL;
-		GList* iter = chat->members;
-		
-		gboolean removed = FALSE;
-		
-		while (iter) {
-			cgtk_member_t* member = (cgtk_member_t*) iter->data;
+		if (msg->local) {
+			CGTK_add_message(chat_list, "QUIT\0", msg->who, 1);
+		} else {
+			GList* filtered = NULL;
+			GList* iter = chat->members;
 			
-			if (strcmp(member->name, msg->who) == 0) {
-				g_free(member);
-				removed = TRUE;
-			} else {
-				filtered = g_list_append(filtered, member);
+			gboolean removed = FALSE;
+			
+			while (iter) {
+				cgtk_member_t* member = (cgtk_member_t*) iter->data;
+				
+				if (strcmp(member->name, msg->who) == 0) {
+					g_free(member);
+					removed = TRUE;
+				} else {
+					filtered = g_list_append(filtered, member);
+				}
+				
+				iter = iter->next;
 			}
 			
-			iter = iter->next;
-		}
-		
-		if (chat->members) {
-			g_list_free(chat->members);
-		}
-		
-		chat->members = filtered;
-		
-		if (removed) {
-			CGTK_add_message(chat_list, "LEAVE\0", msg->who, 1);
+			if (chat->members) {
+				g_list_free(chat->members);
+			}
+			
+			chat->members = filtered;
+			
+			if (removed) {
+				CGTK_add_message(chat_list, "LEAVE\0", msg->who, 1);
+			}
 		}
 	}
 }

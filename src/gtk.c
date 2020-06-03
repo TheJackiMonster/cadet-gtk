@@ -124,6 +124,9 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	} else
 	if ((msg->kind == MSG_KIND_JOIN) || (msg->kind == MSG_KIND_LEAVE)) {
 		msg->who = CGTK_get_nick();
+	} else
+	if (msg->kind == MSG_KIND_FILE) {
+		msg->publisher = CGTK_get_nick();
 	}
 	
 	size_t buffer_len = 0;
@@ -131,10 +134,15 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	
 	if (chat->use_json) {
 		buffer = CGTK_encode_message(msg, &buffer_len);
-	} else
-	if (msg->content) {
-		buffer_len = strlen(msg->content);
-		buffer = msg->content;
+	} else {
+		if ((msg->kind == MSG_KIND_TALK) && (msg->content)) {
+			buffer_len = strlen(msg->content);
+			buffer = msg->content;
+		} else
+		if ((msg->kind == MSG_KIND_FILE) && (msg->uri)) {
+			buffer_len = strlen(msg->uri);
+			buffer = msg->uri;
+		}
 	}
 	
 	uint8_t result = FALSE;
@@ -142,9 +150,7 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	if ((buffer_len > 0) && (CGTK_send_gnunet_message(messaging, destination, port, buffer, buffer_len) >= buffer_len)) {
 		msg->local = TRUE;
 		
-		if (msg->kind == MSG_KIND_TALK) {
-			CGTK_update_chat_ui(&(session.gui), destination, port, msg);
-		}
+		CGTK_update_chat_ui(&(session.gui), destination, port, msg);
 		
 		result = TRUE;
 	}
