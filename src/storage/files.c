@@ -4,10 +4,8 @@
 
 #include "files.h"
 
+#include <string.h>
 #include <sys/random.h>
-#include <linux/limits.h>
-
-#define CGTK_RANDOM_FILE_BUFFER_SIZE ((NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE) / 2)
 
 const char* CGTK_generate_random_filename() {
 	char random_buffer [CGTK_RANDOM_FILE_BUFFER_SIZE];
@@ -23,7 +21,7 @@ const char* CGTK_generate_random_filename() {
 		offset += buffer_read;
 	}
 	
-	static char filename [CGTK_RANDOM_FILE_BUFFER_SIZE * 2 + 1];
+	static char filename [CGTK_FILENAME_SIZE + 1];
 	
 	for (size_t i = 0; i < offset; i++) {
 		const char value = random_buffer[i / 2];
@@ -38,6 +36,25 @@ const char* CGTK_generate_random_filename() {
 	}
 	
 	filename[offset] = '\0';
+	
+	return filename;
+}
+
+char* CGTK_burn_suffix_to_filename(char* filename, const char* suffix) {
+	const size_t orig_len = strlen(filename);
+	const size_t suffix_len = strlen(suffix);
+	
+	size_t start = orig_len;
+	
+	if (start > CGTK_FILENAME_SIZE - suffix_len) {
+		start = CGTK_FILENAME_SIZE - suffix_len;
+	}
+	
+	for (size_t i = 0; i < suffix_len; i++) {
+		filename[start + i] ^= suffix[i];
+	}
+	
+	filename[start + suffix_len] = '\0';
 	
 	return filename;
 }
