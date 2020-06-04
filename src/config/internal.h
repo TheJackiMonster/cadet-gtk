@@ -5,6 +5,8 @@
 #ifndef CADET_GTK_CONFIG_INTERNAL_H
 #define CADET_GTK_CONFIG_INTERNAL_H
 
+#include <gnunet/gnunet_constants.h>
+
 /*
  * Only necessary for debug builds if something needs to get found by logging every call.
  */
@@ -17,6 +19,7 @@
 #define CGTK_APPLICATION_NAME "Cadet-GTK\0"
 #define CGTK_DESCRIPTION "A GTK based GUI for the CADET subsystem of GNUnet.\0"
 #define CGTK_CONFIG_PATH "/.config/cadet-gtk/config.json\0"
+#define CGTK_STORAGE_PATH "/.local/share/cadet-gtk\0"
 
 /*
  * Delay of every call of CGTK_idle(...) in both processes:
@@ -64,7 +67,7 @@
 #define CGTK_PORT_BUFFER_SIZE 512
 #define CGTK_NAME_BUFFER_SIZE 128
 #define CGTK_REGEX_BUFFER_SIZE 1024
-#define CGTK_MESSAGE_BUFFER_SIZE 60000
+#define CGTK_MESSAGE_BUFFER_SIZE GNUNET_CONSTANTS_MAX_CADET_MESSAGE_SIZE
 
 #define CGTK_VISIBILITY_PUBLIC 0
 #define CGTK_VISIBILITY_PUBLIC_ID "public\0"

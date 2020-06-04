@@ -290,7 +290,7 @@ static bool CGTK_push_message(connection_t* connection) {
 #endif
 	
 	size_t length = CGTK_recv_gui_msg_length(messaging);
-	char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
+	char buffer [CGTK_MESSAGE_BUFFER_SIZE];
 	
 	struct GNUNET_MessageHeader *msg;
 	struct GNUNET_MQ_Envelope* env = NULL;

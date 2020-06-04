@@ -4,8 +4,45 @@
 
 #include "files.h"
 
+#include <unistd.h>
+#include <pwd.h>
 #include <string.h>
 #include <sys/random.h>
+
+const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
+	const struct passwd* pw = getpwuid(getuid());
+	const char* home = pw->pw_dir;
+	
+	const size_t home_len = strlen(home);
+	const size_t subdir_len = strlen(subdir);
+	const size_t filename_len = strlen(filename);
+	
+	static const size_t storage_path_len = strlen(CGTK_STORAGE_PATH);
+	static char path [PATH_MAX];
+	
+	size_t offset = 0, remaining = PATH_MAX;
+	size_t i;
+	
+	for (i = 0; i < home_len; i++) {
+		path[offset++] = home[i];
+	}
+	
+	remaining -= home_len;
+	
+	strncpy(path + offset, CGTK_STORAGE_PATH, remaining);
+	remaining = (remaining - storage_path_len > 0? remaining - storage_path_len : 0);
+	offset += storage_path_len;
+	
+	strncpy(path + offset, subdir, remaining);
+	remaining = (remaining - subdir_len > 0? remaining - subdir_len : 0);
+	offset += subdir_len;
+	
+	strncpy(path + offset, filename, remaining);
+	
+	path[PATH_MAX - 1] = '\0';
+	
+	return path;
+}
 
 const char* CGTK_generate_random_filename() {
 	char random_buffer [CGTK_RANDOM_FILE_BUFFER_SIZE];

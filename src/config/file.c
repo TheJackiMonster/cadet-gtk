@@ -23,7 +23,7 @@ static void CGTK_config_default(config_t* config) {
 }
 
 static const char* CGTK_config_path() {
-	struct passwd* pw = getpwuid(getuid());
+	const struct passwd* pw = getpwuid(getuid());
 	const char* home = pw->pw_dir;
 	size_t home_len = strlen(home);
 	

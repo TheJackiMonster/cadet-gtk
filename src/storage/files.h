@@ -9,6 +9,8 @@
 
 #include <linux/limits.h>
 
+const char* CGTK_storage_file_path(const char* subdir, const char* filename);
+
 #define CGTK_FILENAME_SIZE (NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE)
 #define CGTK_RANDOM_FILE_BUFFER_SIZE (CGTK_FILENAME_SIZE / 2)
 

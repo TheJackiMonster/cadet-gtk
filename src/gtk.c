@@ -291,7 +291,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			}
 			
 			size_t length = CGTK_recv_gnunet_msg_length(messaging);
-			char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
+			char buffer [CGTK_MESSAGE_BUFFER_SIZE + 1];
 			
 			size_t complete = 0;
 			
