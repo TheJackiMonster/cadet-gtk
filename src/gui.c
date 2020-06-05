@@ -161,10 +161,10 @@ void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port
 		} case MSG_KIND_KEY: {
 			switch (msg->key_type) {
 				case MSG_KEY_1TU: {
-					# TODO: Enqueue key to decrypt next file
+					//TODO: Enqueue key to decrypt next file
 					break;
 				} case MSG_KEY_GPG: {
-					# TODO: Register GPG key to contact or match contact with key and chat
+					//TODO: Register GPG key to contact or match contact with key and chat
 					break;
 				} default: {
 					break;
