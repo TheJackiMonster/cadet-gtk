@@ -30,6 +30,9 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 		} case MSG_KIND_FILE: {
 			json_object_set(json, "kind\0", json_string("file\0"));
 			break;
+		} case MSG_KIND_KEY: {
+			json_object_set(json, "kind\0", json_string("key\0"));
+			break;
 		} default: {
 			break;
 		}
@@ -67,6 +70,22 @@ const char* CGTK_encode_message(const msg_t* msg, size_t* message_len) {
 	
 	if (msg->uri) {
 		json_object_set(json, "uri\0", json_string(msg->uri));
+	}
+	
+	switch (msg->key_type) {
+		case MSG_KEY_1TU: {
+			json_object_set(json, "key_type\0", json_string("one-time-use\0"));
+			break;
+		} case MSG_KEY_GPG: {
+			json_object_set(json, "key_type\0", json_string("gnu-privacy-guard\0"));
+			break;
+		} default: {
+			break;
+		}
+	}
+	
+	if (msg->key) {
+		json_object_set(json, "key\0", json_string(msg->key));
 	}
 	
 	const char* message = json_dumps(json, JSON_COMPACT);
@@ -129,6 +148,9 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 		
 		json_t* publisher = json_object_get(json, "publisher\0");
 		json_t* uri = json_object_get(json, "uri\0");
+		
+		json_t* key_type = json_object_get(json, "key_type\0");
+		json_t* key = json_object_get(json, "key\0");
 		
 		if (kind) {
 			const char* kind_str = json_string_value(kind);
@@ -205,6 +227,27 @@ msg_t* CGTK_decode_message(const char* message, size_t message_len) {
 			msg->decoding |= MSG_DEC_URI_BIT;
 		}
 		
+		if (key_type) {
+			const char* key_type_str = json_string_value(key_type);
+			
+			msg->decoding |= MSG_DEC_KEY_TYPE_BIT;
+			
+			if (strcmp(key_type_str, "one-time-use\0") == 0) {
+				msg->kind = MSG_KIND_TALK;
+			} else
+			if (strcmp(key_type_str, "gnu-privacy-guard\0") == 0) {
+				msg->kind = MSG_KIND_JOIN;
+			} else {
+				msg->decoding ^= MSG_DEC_KEY_TYPE_BIT;
+			}
+		}
+		
+		if (key) {
+			msg->key = CGTK_string_clone(json_string_value(key));
+			
+			msg->decoding |= MSG_DEC_KEY_BIT;
+		}
+		
 		json_delete(json);
 	}
 	
@@ -275,6 +318,10 @@ void CGTK_free_message(msg_t* msg) {
 	
 	if (msg->decoding & MSG_DEC_URI_BIT) {
 		free((void*) msg->uri);
+	}
+	
+	if (msg->decoding & MSG_DEC_KEY_BIT) {
+		free((void*) msg->key);
 	}
 	
 	free(msg);
