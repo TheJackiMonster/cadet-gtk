@@ -19,6 +19,12 @@ via unix specific pipes.
 
 You can install directly from the source via the package [cadet-gtk-git](https://aur.archlinux.org/packages/cadet-gtk-git/) in the AUR.
 
+### Ubuntu
+
+You can find a script to install this project from source in the `setup` directory for following versions:
+
+- [Ubuntu 20.04](setup/ubuntu_20.04.sh)
+
 ### Other
 
 You will need to clone the [repository](https://gitlab.com/TheJackiMonster/cadet-gtk.git) and compile it from source with cmake.
