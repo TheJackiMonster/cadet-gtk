@@ -8,6 +8,7 @@
 #include <pwd.h>
 #include <string.h>
 #include <sys/random.h>
+#include <sys/stat.h>
 
 const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
 	const struct passwd* pw = getpwuid(getuid());
@@ -94,4 +95,16 @@ char* CGTK_burn_suffix_to_filename(char* filename, const char* suffix) {
 	filename[start + suffix_len] = '\0';
 	
 	return filename;
+}
+
+int CGTK_check_existence(const char* filename) {
+	return (access(filename, F_OK) == 0);
+}
+
+int CGTK_check_directory(const char* filename) {
+	struct stat stats;
+	
+	if (stat(filename, &stats) != 0) return 0;
+	
+	return S_ISDIR(stats.st_mode);
 }

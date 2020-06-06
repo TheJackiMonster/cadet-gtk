@@ -40,6 +40,8 @@ add_executable(cadet-gtk
 		src/gui/chat.c
 		src/gui/contacts.h
 		src/gui/contacts.c
+		src/gui/files.h
+		src/gui/files.c
 		src/gui/notification.h
 		src/gui/notification.c
 		src/gui/util.h

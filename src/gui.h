@@ -29,6 +29,10 @@ typedef struct {
 	GList* members;
 } cgtk_chat_t;
 
+typedef struct cgtk_files_t {
+	GHashTable* images;
+} cgtk_files_t;
+
 typedef struct {
 	cgtk_chat_t* (*select_chat)(const char* destination, const char* port);
 	void (*set_name)(const char* destination, const char* port, const char* name);
@@ -43,6 +47,7 @@ typedef struct {
 typedef struct {
 	cgtk_callbacks_t callbacks;
 	config_t config;
+	cgtk_files_t files;
 	
 	struct {
 		char identity [CGTK_IDENTITY_BUFFER_SIZE];
@@ -106,6 +111,21 @@ typedef struct {
 		GtkWidget* port_label;
 		GtkWidget* name_entry;
 	} management;
+	
+	struct {
+		GtkWidget* dialog;
+		
+		GtkWidget* stack;
+		GtkWidget* stack_switcher;
+		GtkWidget* remove_button;
+		GtkWidget* add_button;
+		
+		struct {
+			GtkWidget* drawing_area;
+			GdkPixbufAnimationIter* iter;
+			guint redraw;
+		} animation;
+	} file;
 } cgtk_gui_t;
 
 typedef enum {

@@ -18,4 +18,8 @@ const char* CGTK_generate_random_filename();
 
 char* CGTK_burn_suffix_to_filename(char* filename, const char* suffix);
 
+int CGTK_check_existence(const char* filename);
+
+int CGTK_check_directory(const char* filename);
+
 #endif //CADET_GTK_STORAGE_FILES_H

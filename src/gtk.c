@@ -18,6 +18,7 @@ static messaging_t* messaging;
 #endif
 
 #include "msg.h"
+#include "gui/files.h"
 #include "gui/util.h"
 
 #include <stdlib.h>
@@ -348,6 +349,8 @@ static gboolean CGTK_idle(gpointer user_data) {
 }
 
 static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
+	CGTK_free_files(&(session.gui.files));
+	
 	CGTK_config_save(&(session.config));
 	
 	if (session.idle) {
@@ -395,6 +398,8 @@ void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	CGTK_config_load(&(session.config));
 	
 	memcpy(&(session.gui.config), &(session.config), sizeof(config_t));
+	
+	CGTK_init_files(&(session.gui.files));
 	
 	session.gui.main.window = gtk_application_window_new(application);
 	

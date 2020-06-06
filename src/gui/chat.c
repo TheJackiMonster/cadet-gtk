@@ -12,8 +12,8 @@
 
 #include "util.h"
 
+#include "dialog/chat_file.c"
 #include "dialog/chat_management.c"
-#include "../storage/files.h"
 
 static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
@@ -30,33 +30,13 @@ static void CGTK_paste_message(GtkWidget* msg_view, gpointer user_data) {
 	if (gtk_clipboard_wait_is_image_available(clipboard)) {
 		GdkPixbuf* image = gtk_clipboard_wait_for_image(clipboard);
 		
-		// TODO: handle pasted image!
-		
-		GString* filename = g_string_new(CGTK_generate_random_filename());
-		
-		g_string_append(filename, ".jpg\0");
-		
-		gdk_pixbuf_save(image, filename->str, "jpeg\0", NULL, "quality\0", "100\0", NULL);
-		
-		g_string_free(filename, TRUE);
-		
-		g_object_unref(image);
+		CGTK_file_dialog_image(gui, image);
 	} else
 	if (gtk_clipboard_wait_is_uris_available(clipboard)) {
 		gchar** uris = gtk_clipboard_wait_for_uris(clipboard);
 		
 		if (uris) {
-			gchar** iter = uris;
-			
-			while (*iter) {
-				const gint uri_len = strlen(*iter);
-				
-				// TODO: handle pasted uri to file!
-				
-				gtk_text_buffer_insert_at_cursor(buffer, *iter, uri_len);
-				
-				iter++;
-			}
+			CGTK_file_dialog_uris(gui, (const gchar**) uris);
 			
 			g_strfreev(uris);
 		}
@@ -143,6 +123,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gui->chat.options_button = gtk_menu_button_new();
 	gtk_menu_button_set_popover(GTK_MENU_BUTTON(gui->chat.options_button), options);
 	gtk_button_set_image(GTK_BUTTON(gui->chat.options_button), options_icon);
+	gtk_widget_set_sensitive(gui->chat.options_button, FALSE);
 	
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), gui->chat.back_button);
 	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), gui->chat.options_button);
@@ -151,6 +132,8 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_widget_set_vexpand(content, TRUE);
 	
 	gui->chat.stack = gtk_stack_new();
+	gtk_stack_set_transition_type(GTK_STACK(gui->chat.stack), GTK_STACK_TRANSITION_TYPE_OVER_DOWN_UP);
+	gtk_stack_set_transition_duration(GTK_STACK(gui->chat.stack), CGTK_ANIMATION_DURATION);
 	
 	gtk_widget_set_hexpand(gui->chat.stack, TRUE);
 	gtk_widget_set_vexpand(gui->chat.stack, TRUE);
@@ -283,6 +266,7 @@ void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact
 	
 	gtk_stack_set_visible_child_name(GTK_STACK(gui->chat.stack), name->str);
 	
+	gtk_widget_set_sensitive(gui->chat.options_button, TRUE);
 	gtk_widget_set_sensitive(gui->chat.msg_text_view, TRUE);
 	gtk_widget_set_sensitive(gui->chat.msg_button, TRUE);
 	
