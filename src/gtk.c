@@ -118,6 +118,8 @@ static const char* CGTK_get_nick() {
 static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
 	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
 	
+	printf("send_message: %d\n", msg->kind);
+	
 	msg->timestamp = time(NULL);
 	
 	if (msg->kind == MSG_KIND_TALK) {
@@ -128,6 +130,10 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	} else
 	if (msg->kind == MSG_KIND_FILE) {
 		msg->publisher = CGTK_get_nick();
+	}
+	
+	if ((msg->kind != MSG_KIND_UNKNOWN) && (msg->kind != MSG_KIND_TALK)) {
+		chat->use_json = TRUE;
 	}
 	
 	size_t buffer_len = 0;

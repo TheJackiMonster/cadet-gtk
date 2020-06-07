@@ -14,7 +14,44 @@ static void CGTK_file_cancel(GtkWidget* cancel_button, gpointer user_data) {
 static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 	cgtk_gui_t *gui = (cgtk_gui_t *) user_data;
 	
-	//TODO: send files
+	GString* name = g_string_new(gtk_stack_get_visible_child_name(
+			GTK_STACK(gui->chat.stack)
+	));
+	
+	const char* destination = name->str;
+	const char* port = "\0";
+	
+	uint index = CGTK_split_name(name, &destination, &port);
+	
+	GList* children = gtk_container_get_children(GTK_CONTAINER(gui->file.stack));
+	
+	while (children) {
+		const char* filename = gtk_widget_get_name(GTK_WIDGET(children->data));
+		
+		printf("send file: '%s' to '%s' '%s'\n", filename, destination, port);
+		
+		msg_t msg = {};
+		msg.kind = MSG_KIND_KEY;
+		msg.key_type = MSG_KEY_1TU;
+		msg.key = "\0";
+		
+		if (gui->callbacks.send_message(destination, port, &msg)) {
+			memset(&msg, 0, sizeof(msg));
+			
+			msg.kind = MSG_KIND_FILE;
+			msg.uri = filename;
+			
+			gui->callbacks.send_message(destination, port, &msg);
+		}
+		
+		children = children->next;
+	}
+	
+	if (name->str[index] == '\0') {
+		name->str[index] = '_';
+	}
+	
+	g_string_free(name, TRUE);
 	
 	gtk_widget_destroy(gui->file.dialog);
 }
@@ -160,6 +197,7 @@ static void CGTK_file_dialog(cgtk_gui_t* gui) {
 
 static void CGTK_file_entry_add(cgtk_gui_t* gui, const char* filename, const char* icon_name, GtkWidget* file_viewer, gboolean show_filename) {
 	GtkWidget* box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+	gtk_widget_set_name(box, filename);
 	
 	GtkWidget* label = gtk_label_new(show_filename? filename : "\0");
 	gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_START);
