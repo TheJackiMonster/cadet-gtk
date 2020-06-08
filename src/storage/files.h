@@ -9,6 +9,8 @@
 
 #include <linux/limits.h>
 
+void CGTK_init_storage_directories();
+
 const char* CGTK_storage_file_path(const char* subdir, const char* filename);
 
 #define CGTK_FILENAME_SIZE (NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE)
@@ -16,10 +18,18 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename);
 
 const char* CGTK_generate_random_filename();
 
-char* CGTK_burn_suffix_to_filename(char* filename, const char* suffix);
+char* CGTK_force_suffix_to_filename(char* filename, const char* suffix);
 
-int CGTK_check_existence(const char* filename);
+int CGTK_check_existence(const char* path);
 
-int CGTK_check_directory(const char* filename);
+int CGTK_check_directory(const char* path);
+
+const char* CGTK_get_filename(const char* path);
+
+const char* CGTK_get_extension(const char* path);
+
+const char* CGTK_upload_via_storage(const char* local_path, const char* extension);
+
+const char* CGTK_access_via_storage(const char* storage_path);
 
 #endif //CADET_GTK_STORAGE_FILES_H

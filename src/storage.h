@@ -7,7 +7,7 @@
 
 #include "config.h"
 
-#include "storage/archieve.h"
+#include "storage/archive.h"
 #include "storage/chat.h"
 #include "storage/contacts.h"
 #include "storage/files.h"

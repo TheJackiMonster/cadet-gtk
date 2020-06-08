@@ -37,11 +37,12 @@ typedef struct {
 	cgtk_chat_t* (*select_chat)(const char* destination, const char* port);
 	void (*set_name)(const char* destination, const char* port, const char* name);
 	const char* (*get_name)(const char* destination, const char* port);
-	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
 	void (*update_host)(const char* announce_regex);
 	void (*search_by_name)(const char* name);
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
+	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
+	void (*upload_file)(const char* destination, const char* port, const char* path);
 } cgtk_callbacks_t;
 
 typedef struct {

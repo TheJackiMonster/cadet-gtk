@@ -2,7 +2,7 @@
 // Created by thejackimonster on 06.06.20.
 //
 
-#include "../../storage/files.h"
+#include "../../storage.h"
 #include "../files.h"
 
 static void CGTK_file_cancel(GtkWidget* cancel_button, gpointer user_data) {
@@ -27,21 +27,40 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 	
 	while (children) {
 		const char* filename = gtk_widget_get_name(GTK_WIDGET(children->data));
+		const char* upload = NULL;
 		
-		printf("send file: '%s' to '%s' '%s'\n", filename, destination, port);
-		
-		msg_t msg = {};
-		msg.kind = MSG_KIND_KEY;
-		msg.key_type = MSG_KEY_1TU;
-		msg.key = "\0";
-		
-		if (gui->callbacks.send_message(destination, port, &msg)) {
-			memset(&msg, 0, sizeof(msg));
+		if (CGTK_check_existence(filename)) {
+			const char* extension = CGTK_get_extension(filename);
 			
-			msg.kind = MSG_KIND_FILE;
-			msg.uri = filename;
+			upload = CGTK_upload_via_storage(filename, extension);
+		} else {
+			GdkPixbuf* image = CGTK_load_image_from_file(gui, filename);
 			
-			gui->callbacks.send_message(destination, port, &msg);
+			if (image) {
+				upload = CGTK_upload_via_storage(NULL, ".jpg\0");
+				
+				if (!gdk_pixbuf_save(image, upload, "jpeg\0", NULL, "quality\0", "100\0", NULL)) {
+					upload = NULL;
+				}
+			}
+		}
+		
+		if (upload) {
+			cgtk_1tu_key_t key;
+			CGTK_generate_new_key(&key);
+			
+			if ((CGTK_encrypt_in_storage(upload, &key) == 0) && (CGTK_store_key_for(upload, &key) == 0)) {
+				msg_t msg = {};
+				msg.kind = MSG_KIND_KEY;
+				msg.key_type = MSG_KEY_1TU;
+				msg.key = CGTK_key_to_string(&key);
+				
+				if (gui->callbacks.send_message(destination, port, &msg)) {
+					gui->callbacks.upload_file(destination, port, upload);
+				}
+			}
+			
+			CGTK_wipe_key(&key);
 		}
 		
 		children = children->next;

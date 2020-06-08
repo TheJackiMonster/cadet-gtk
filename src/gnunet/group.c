@@ -2,6 +2,17 @@
 // Created by thejackimonster on 19.05.20.
 //
 
+typedef struct {
+	struct GNUNET_CADET_Port* listen;
+	struct GNUNET_HashCode port;
+} group_t;
+
+typedef struct {
+	const connection_t* sender;
+	const char* content;
+	size_t content_length;
+} group_message_t;
+
 static int check_channel_message(void* cls, const struct GNUNET_MessageHeader* message);
 static void handle_channel_message(void* cls, const struct GNUNET_MessageHeader* message);
 

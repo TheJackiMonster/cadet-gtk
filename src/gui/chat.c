@@ -341,7 +341,7 @@ static void CGTK_add_message(GtkWidget* chat_list, const char* title, const char
 	
 	GtkWidget* text = gtk_label_new(content);
 	gtk_label_set_line_wrap(GTK_LABEL(text), TRUE);
-	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD);
+	gtk_label_set_line_wrap_mode(GTK_LABEL(text), PANGO_WRAP_WORD_CHAR);
 	gtk_widget_set_halign(text, GTK_ALIGN_START);
 	gtk_widget_set_valign(text, GTK_ALIGN_START);
 	gtk_widget_set_margin_bottom(text, 4);

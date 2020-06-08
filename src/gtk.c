@@ -10,6 +10,7 @@
 static messaging_t* messaging;
 
 #include "gui.h"
+#include "storage.h"
 
 #ifdef HANDY_USE_ZERO_API
 #include <libhandy-0.0/handy.h>
@@ -115,10 +116,46 @@ static const char* CGTK_get_nick() {
 	return CGTK_get_name(session.gui.attributes.identity, session.config.port);
 }
 
-static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
+static void CGTK_update_host(const char* announce_regex) {
+	if (!announce_regex) {
+		announce_regex = "\0";
+	}
+	
+	strncpy(session.gui.attributes.regex, announce_regex, CGTK_REGEX_BUFFER_SIZE);
+	session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
+	
+	CGTK_config_update(&(session.gui.config), &(session.config));
+	CGTK_send_gnunet_host(messaging, session.config.visibility, session.config.port, announce_regex);
+	
+	CGTK_set_nick(session.config.nick);
+}
+
+static void CGTK_search_by_name(const char* name) {
+	if ((name) && (strlen(name) > 0)) {
+		CGTK_send_gnunet_search(messaging, name);
+	}
+}
+
+static void CGTK_open_group(const char* port) {
+	cgtk_chat_t* chat = CGTK_select_chat(session.gui.attributes.identity, port);
+	
+	chat->use_json = TRUE;
+	chat->is_group = TRUE;
+	
+	CGTK_send_gnunet_group(messaging, port);
+}
+
+static void CGTK_exit_chat(const char* destination, const char* port) {
 	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
 	
-	printf("send_message: %d\n", msg->kind);
+	chat->use_json = FALSE;
+	chat->is_group = FALSE;
+	
+	CGTK_send_gnunet_exit(messaging, destination, port);
+}
+
+static uint8_t CGTK_send_message(const char* destination, const char* port, msg_t* msg) {
+	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
 	
 	msg->timestamp = time(NULL);
 	
@@ -169,42 +206,8 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	return result;
 }
 
-static void CGTK_update_host(const char* announce_regex) {
-	if (!announce_regex) {
-		announce_regex = "\0";
-	}
-	
-	strncpy(session.gui.attributes.regex, announce_regex, CGTK_REGEX_BUFFER_SIZE);
-	session.gui.attributes.regex[CGTK_REGEX_BUFFER_SIZE - 1] = '\0';
-	
-	CGTK_config_update(&(session.gui.config), &(session.config));
-	CGTK_send_gnunet_host(messaging, session.config.visibility, session.config.port, announce_regex);
-	
-	CGTK_set_nick(session.config.nick);
-}
-
-static void CGTK_search_by_name(const char* name) {
-	if ((name) && (strlen(name) > 0)) {
-		CGTK_send_gnunet_search(messaging, name);
-	}
-}
-
-static void CGTK_open_group(const char* port) {
-	cgtk_chat_t* chat = CGTK_select_chat(session.gui.attributes.identity, port);
-	
-	chat->use_json = TRUE;
-	chat->is_group = TRUE;
-	
-	CGTK_send_gnunet_group(messaging, port);
-}
-
-static void CGTK_exit_chat(const char* destination, const char* port) {
-	cgtk_chat_t* chat = CGTK_select_chat(destination, port);
-	
-	chat->use_json = FALSE;
-	chat->is_group = FALSE;
-	
-	CGTK_send_gnunet_exit(messaging, destination, port);
+static void CGTK_upload_file(const char* destination, const char* port, const char* path) {
+	CGTK_send_gnunet_upload(messaging, destination, port, path);
 }
 
 static gboolean CGTK_idle(gpointer user_data) {
@@ -214,7 +217,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 		case MSG_GUI_IDENTITY: {
 			const char *identity = CGTK_recv_gnunet_identity(messaging);
 			
-			if (identity == NULL) {
+			if (!identity) {
 				CGTK_shutdown("Can't retrieve identity of peer!\0");
 				return FALSE;
 			}
@@ -239,7 +242,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			const char* identity = CGTK_recv_gnunet_identity(messaging);
 			
-			if (identity == NULL) {
+			if (!identity) {
 				CGTK_shutdown("Can't identify search result!\0");
 				return FALSE;
 			}
@@ -249,14 +252,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 		} case MSG_GUI_CONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
-			if (source == NULL) {
+			if (!source) {
 				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
-			if (port == NULL) {
+			if (!port) {
 				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
@@ -268,14 +271,14 @@ static gboolean CGTK_idle(gpointer user_data) {
 		} case MSG_GUI_DISCONNECT: {
 			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
-			if (source == NULL) {
+			if (!source) {
 				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
-			if (port == NULL) {
+			if (!port) {
 				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
@@ -283,22 +286,22 @@ static gboolean CGTK_idle(gpointer user_data) {
 			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_INACTIVE);
 			break;
 		} case MSG_GUI_RECV_MESSAGE: {
-			const char *source = CGTK_recv_gnunet_identity(messaging);
+			const char* source = CGTK_recv_gnunet_identity(messaging);
 			
-			if (source == NULL) {
+			if (!source) {
 				CGTK_shutdown("Can't identify connections source!\0");
 				return FALSE;
 			}
 			
 			const char* port = CGTK_recv_gnunet_port(messaging);
 			
-			if (port == NULL) {
+			if (!port) {
 				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
 			
 			size_t length = CGTK_recv_gnunet_msg_length(messaging);
-			char buffer [CGTK_MESSAGE_BUFFER_SIZE + 1];
+			char buffer[CGTK_MESSAGE_BUFFER_SIZE + 1];
 			
 			size_t complete = 0;
 			
@@ -324,11 +327,11 @@ static gboolean CGTK_idle(gpointer user_data) {
 				buffer[offset] = '\0';
 				
 				if (strlen(buffer) > 0) {
-					msg_t* msg = CGTK_decode_message(buffer, offset);
+					msg_t *msg = CGTK_decode_message(buffer, offset);
 					
-					cgtk_chat_t* chat = CGTK_select_chat(source, port);
+					cgtk_chat_t *chat = CGTK_select_chat(source, port);
 					
-					chat->use_json = msg->decoding? TRUE : FALSE;
+					chat->use_json = msg->decoding ? TRUE : FALSE;
 					
 					CGTK_repair_message(msg, buffer, offset, chat->name);
 					
@@ -341,6 +344,89 @@ static gboolean CGTK_idle(gpointer user_data) {
 				
 				complete += offset;
 			}
+			
+			break;
+		} case MSG_GUI_FILE_PROGRESS: {
+			const char* destination = CGTK_recv_gnunet_identity(messaging);
+			
+			if (!destination) {
+				CGTK_shutdown("Can't identify connections source!\0");
+				return FALSE;
+			}
+			
+			const char* port = CGTK_recv_gnunet_port(messaging);
+			
+			if (!port) {
+				CGTK_shutdown("Can't identify connections port!\0");
+				return FALSE;
+			}
+			
+			float progress = CGTK_recv_gnunet_progress(messaging);
+			
+			const char* path = CGTK_recv_gnunet_path(messaging);
+			
+			if (path) {
+				// TODO: progress of UPLOAD
+			} else {
+				const char* uri = CGTK_recv_gnunet_path(messaging);
+				
+				if (!uri) {
+					CGTK_shutdown("Can't identify progress target!\0");
+					return FALSE;
+				}
+				
+				// TODO: progress of DOWNLOAD
+			}
+			
+			break;
+		} case MSG_GUI_FILE_COMPLETE: {
+			const char* destination = CGTK_recv_gnunet_identity(messaging);
+			
+			if (!destination) {
+				CGTK_shutdown("Can't identify connections source!\0");
+				return FALSE;
+			}
+			
+			const char* port = CGTK_recv_gnunet_port(messaging);
+			
+			if (!port) {
+				CGTK_shutdown("Can't identify connections port!\0");
+				return FALSE;
+			}
+			
+			const char* path = CGTK_recv_gnunet_path(messaging);
+			
+			if (!path) {
+				CGTK_shutdown("Can't identify files path!\0");
+				return FALSE;
+			}
+			
+			GString* spath = g_string_new(path);
+			
+			const char* uri = CGTK_recv_gnunet_path(messaging);
+			
+			if (!uri) {
+				g_string_free(spath, TRUE);
+				
+				CGTK_shutdown("Can't identify files uri!\0");
+				return FALSE;
+			}
+			
+			// TODO: specify if upload or download?
+			
+			// TODO: link path and uri
+			
+			path = CGTK_access_via_storage(spath->str);
+			
+			g_string_free(spath, TRUE);
+			
+			// TODO: Correct behavior for upload.. ( and download too )
+			
+			msg_t msg = {};
+			msg.kind = MSG_KIND_FILE;
+			msg.uri = uri;
+			
+			CGTK_send_message(destination, port, &msg);
 			
 			break;
 		} case MSG_ERROR: {
@@ -395,11 +481,12 @@ void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	session.gui.callbacks.select_chat = &CGTK_select_chat;
 	session.gui.callbacks.set_name = &CGTK_set_name;
 	session.gui.callbacks.get_name = &CGTK_get_name;
-	session.gui.callbacks.send_message = &CGTK_send_message;
 	session.gui.callbacks.update_host = &CGTK_update_host;
 	session.gui.callbacks.search_by_name = &CGTK_search_by_name;
 	session.gui.callbacks.open_group = &CGTK_open_group;
 	session.gui.callbacks.exit_chat = &CGTK_exit_chat;
+	session.gui.callbacks.send_message = &CGTK_send_message;
+	session.gui.callbacks.upload_file = &CGTK_upload_file;
 	
 	CGTK_config_load(&(session.config));
 	

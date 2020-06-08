@@ -61,8 +61,8 @@ add_executable(cadet-gtk
 		src/msg.h
 		src/msg.c
 		
-		src/storage/archieve.h
-		src/storage/archieve.c
+		src/storage/archive.h
+		src/storage/archive.c
 		src/storage/chat.h
 		src/storage/chat.c
 		src/storage/contacts.h

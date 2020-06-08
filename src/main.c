@@ -7,11 +7,13 @@
 
 #include "config.h"
 #include "messaging.h"
+#include "storage.h"
 
 int main(int argc, char** argv) {
 	messaging_t messaging;
 	
 	CGTK_init_messaging(&messaging);
+	CGTK_init_storage_directories();
 	
 	pid_t pid = fork();
 	

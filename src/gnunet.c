@@ -10,6 +10,8 @@
 
 static messaging_t* messaging;
 
+typedef struct publication_t publication_t;
+
 static struct {
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
 	
@@ -30,30 +32,12 @@ static struct {
 	struct GNUNET_CONTAINER_MultiHashMap* group_ports;
 	struct GNUNET_CONTAINER_MultiHashMap* groups;
 	
+	publication_t* publications_head;
+	publication_t* publications_tail;
+	
 	struct GNUNET_SCHEDULER_Task* idle;
 	struct GNUNET_TIME_Relative delay;
 } session;
-
-typedef struct {
-	GNUNET_PEER_Id identity;
-	
-	struct GNUNET_HashCode port;
-	struct GNUNET_CADET_Channel* channel;
-	
-	struct GNUNET_HashCode* group;
-	char name [GNUNET_CRYPTO_PKEY_ASCII_LENGTH + 1];
-} connection_t;
-
-typedef struct {
-	struct GNUNET_CADET_Port* listen;
-	struct GNUNET_HashCode port;
-} group_t;
-
-typedef struct {
-	const connection_t* sender;
-	const char* content;
-	size_t content_length;
-} group_message_t;
 
 static void CGTK_fatal_error(const char* error_message) {
 	GNUNET_SCHEDULER_shutdown();
@@ -66,6 +50,7 @@ static void CGTK_fatal_error(const char* error_message) {
 #include "gnunet/name.c"
 #include "gnunet/connection.c"
 #include "gnunet/group.c"
+#include "gnunet/publication.c"
 
 static void CGTK_shutdown(void* cls) {
 #ifdef CGTK_ALL_DEBUG
@@ -109,6 +94,16 @@ static void CGTK_shutdown(void* cls) {
 		GNUNET_CONTAINER_multihashmap_destroy(session.group_ports);
 		session.group_ports = NULL;
 	}
+	
+	do {
+		publication_t* publication = session.publications_head;
+		
+		if (publication) {
+			GNUNET_CONTAINER_DLL_remove(session.publications_head, session.publications_tail, publication);
+			
+			CGTK_publication_destroy(publication);
+		}
+	} while (session.publications_head);
 	
 	if (session.listen) {
 		GNUNET_CADET_close_port(session.listen);
@@ -333,22 +328,124 @@ static bool CGTK_push_message(connection_t* connection) {
 	return true;
 }
 
-static int CGTK_send_message(void *cls, const struct GNUNET_PeerIdentity* identity, void* value) {
+static bool CGTK_push_upload(connection_t* connection) {
 #ifdef CGTK_ALL_DEBUG
-	printf("GNUNET: CGTK_send_message()\n");
+	printf("GNUNET: CGTK_push_upload()\n");
+#endif
+	
+	const char* path = CGTK_recv_gui_path(messaging);
+	
+	if (!path) {
+		CGTK_fatal_error("Can't identify files path!\0");
+		return false;
+	}
+	
+	printf("this should upload: '%s'\n", path);
+	
+	publication_t* publication = CGTK_publication_create(connection, path);
+	
+	struct GNUNET_FS_BlockOptions bo = {};
+	
+	bo.expiration_time = GNUNET_TIME_absolute_add(GNUNET_TIME_absolute_get(), GNUNET_TIME_UNIT_HOURS); // 1 hour expiration as default?
+	bo.anonymity_level = 1; // default anonymity?
+	bo.content_priority = 100; // default priority?
+	bo.replication_level = 1; // we want to send the file to one peer probably?
+	
+	struct GNUNET_FS_FileInformation* fi = GNUNET_FS_file_information_create_from_file(
+			session.handles.fs,
+			publication,
+			path,
+			NULL,
+			publication->meta,
+			GNUNET_YES,
+			&bo
+	);
+	
+	publication->context = GNUNET_FS_publish_start(
+			session.handles.fs, fi,
+			NULL, NULL, NULL,
+			GNUNET_FS_PUBLISH_OPTION_SIMULATE_ONLY
+	);
+	
+	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
+	return true;
+}
+
+typedef struct {
+	struct GNUNET_HashCode hashcode;
+	bool (*call)(connection_t* connection);
+} call_by_connection_t;
+
+static int CGTK_call_by_connection_search(void* cls, const struct GNUNET_PeerIdentity* identity, void* value) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_call_by_connection_search()\n");
 #endif
 	
 	connection_t* connection = (connection_t*) value;
+	call_by_connection_t* call_info = (call_by_connection_t*) cls;
 	
-	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), (struct GNUNET_HashCode*) cls) == 0) {
-		CGTK_push_message(connection);
+	if (GNUNET_CRYPTO_hash_cmp(&(connection->port), &(call_info->hashcode)) == 0) {
+		call_info->call(connection);
 		return GNUNET_NO;
 	} else {
 		return GNUNET_YES;
 	}
 }
 
+static bool CGTK_call_by_connection(const struct GNUNET_PeerIdentity* identity, const struct GNUNET_HashCode* port, bool (*call)(connection_t* connection)) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_call_by_connection()\n");
+#endif
+	
+	call_by_connection_t call_info;
+	
+	GNUNET_memcpy(&(call_info.hashcode), port, sizeof(struct GNUNET_HashCode));
+	call_info.call = call;
+	
+	int search_connection = (session.connections ? GNUNET_CONTAINER_multipeermap_get_multiple(
+			session.connections,
+			identity,
+			CGTK_call_by_connection_search,
+			&call_info
+	) : 0);
+	
+	if (search_connection != GNUNET_SYSERR) {
+		struct GNUNET_MQ_MessageHandler handlers[] = {
+				GNUNET_MQ_hd_var_size(
+						channel_message,
+						GNUNET_MESSAGE_TYPE_CADET_CLI,
+						struct GNUNET_MessageHeader,
+						NULL
+				), GNUNET_MQ_handler_end()
+		};
+		
+		connection_t *connection = CGTK_connection_create(identity, port, NULL);
+		
+		connection->channel = GNUNET_CADET_channel_create(
+				session.handles.cadet,
+				connection,
+				GNUNET_PEER_resolve2(connection->identity),
+				&(connection->port),
+				NULL,
+				&CGTK_on_disconnect,
+				handlers
+		);
+		
+		if ((!call(connection)) || (CGTK_add_new_connection(connection) == GNUNET_SYSERR)) {
+			CGTK_connection_destroy(connection, true);
+			connection = NULL;
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 static const char* CGTK_receive_name() {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_receive_name()\n");
+#endif
+	
 	static char buffer[CGTK_NAME_BUFFER_SIZE];
 	
 	size_t length = CGTK_recv_gui_msg_length(messaging);
@@ -520,58 +617,70 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_SEND_MESSAGE\n");
 #endif
 			
-			const struct GNUNET_PeerIdentity *destination = CGTK_recv_gui_identity(messaging);
+			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gui_identity(messaging);
 			
 			if (!destination) {
 				CGTK_fatal_error("Can't identify connections destination!\0");
 				return;
 			}
 			
-			const struct GNUNET_HashCode *port = CGTK_recv_gui_hashcode(messaging);
+			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
 			
 			if (!port) {
 				CGTK_fatal_error("Can't identify connections port!\0");
 				return;
 			}
 			
-			struct GNUNET_HashCode hashcode;
-			GNUNET_memcpy(&hashcode, port, sizeof(struct GNUNET_HashCode));
+			CGTK_call_by_connection(destination, port, CGTK_push_message);
+			break;
+		} case MSG_GNUNET_UPLOAD_FILE: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_UPLOAD_FILE\n");
+#endif
 			
-			int search_destination = (session.connections? GNUNET_CONTAINER_multipeermap_get_multiple(
-					session.connections,
-					destination,
-					CGTK_send_message,
-					&hashcode
-			) : 0);
+			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gui_identity(messaging);
 			
-			if (search_destination != GNUNET_SYSERR) {
-				struct GNUNET_MQ_MessageHandler handlers[] = {
-						GNUNET_MQ_hd_var_size(
-								channel_message,
-								GNUNET_MESSAGE_TYPE_CADET_CLI,
-								struct GNUNET_MessageHeader,
-								NULL
-						), GNUNET_MQ_handler_end()
-				};
-				
-				connection_t* connection = CGTK_connection_create(destination, port, NULL);
-				
-				connection->channel = GNUNET_CADET_channel_create(
-						session.handles.cadet,
-						connection,
-						GNUNET_PEER_resolve2(connection->identity),
-						&(connection->port),
-						NULL,
-						&CGTK_on_disconnect,
-						handlers
-				);
-				
-				if ((!CGTK_push_message(connection)) || (CGTK_add_new_connection(connection) == GNUNET_SYSERR)) {
-					CGTK_connection_destroy(connection, true);
-					connection = NULL;
-					break;
-				}
+			if (!destination) {
+				CGTK_fatal_error("Can't identify connections destination!\0");
+				return;
 			}
+			
+			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
+			
+			if (!port) {
+				CGTK_fatal_error("Can't identify connections port!\0");
+				return;
+			}
+			
+			CGTK_call_by_connection(destination, port, CGTK_push_upload);
+			break;
+		} case MSG_GNUNET_DOWNLOAD_FILE: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_DOWNLOAD_FILE\n");
+#endif
+			
+			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gui_identity(messaging);
+			
+			if (!destination) {
+				CGTK_fatal_error("Can't identify connections destination!\0");
+				return;
+			}
+			
+			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
+			
+			if (!port) {
+				CGTK_fatal_error("Can't identify connections port!\0");
+				return;
+			}
+			
+			const char* uri = CGTK_recv_gui_path(messaging);
+			
+			if (!uri) {
+				CGTK_fatal_error("Can't identify files uri!\0");
+				return;
+			}
+			
+			// TODO: download file from uri
 			
 			break;
 		} case MSG_ERROR: {
@@ -612,6 +721,33 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 	printf("GNUNET: CGTK_fs_progress()\n");
 #endif
 	
+	switch (info->status) {
+		case GNUNET_FS_STATUS_PUBLISH_START: {
+			publication_t* publication = (publication_t*) info->value.publish.cctx;
+			publication->progress = 0.0f;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_publication_progress, publication);
+			
+			return publication;
+		} case GNUNET_FS_STATUS_PUBLISH_PROGRESS: {
+			publication_t* publication = (publication_t*) info->value.publish.cctx;
+			publication->progress = 1.0f * info->value.publish.completed / info->value.publish.size;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_publication_progress, publication);
+			
+			return publication;
+		} case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
+			publication_t* publication = (publication_t*) info->value.publish.cctx;
+			
+			publication->uri = GNUNET_FS_uri_dup(info->value.publish.specifics.completed.chk_uri);
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_publication_finish, publication);
+			break;
+		} default: {
+			break;
+		}
+	}
+	
 	return NULL;
 }
 
@@ -646,6 +782,9 @@ void CGTK_run_gnunet(void* cls, char*const* args, const char* cfgfile, const str
 	session.connections = NULL;
 	session.group_ports = NULL;
 	session.groups = NULL;
+	
+	session.publications_head = NULL;
+	session.publications_tail = NULL;
 	
 	session.idle = NULL;
 	

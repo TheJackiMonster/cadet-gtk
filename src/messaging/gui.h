@@ -29,6 +29,12 @@ void CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerId
 ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 							  const struct GNUNET_HashCode* port, const char* buffer, size_t length);
 
+ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, const struct GNUNET_PeerIdentity* destination,
+							 const struct GNUNET_HashCode* port, float progress, const char* path, const struct GNUNET_FS_Uri* uri);
+
+ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, const struct GNUNET_PeerIdentity* destination,
+									const struct GNUNET_HashCode* port, const char* path, const struct GNUNET_FS_Uri* uri);
+
 msg_type_t CGTK_recv_gui_msg_type(messaging_t* messaging);
 
 uint8_t CGTK_recv_gui_code(messaging_t* messaging);
@@ -40,6 +46,10 @@ const struct GNUNET_PeerIdentity* CGTK_recv_gui_identity(messaging_t* messaging)
 size_t CGTK_recv_gui_msg_length(messaging_t* messaging);
 
 ssize_t CGTK_recv_gui_message(messaging_t* messaging, char* buffer, size_t length);
+
+const char* CGTK_recv_gui_path(messaging_t* messaging);
+
+const struct GNUNET_FS_Uri* CGTK_recv_gui_uri(messaging_t* messaging);
 
 /** } */
 

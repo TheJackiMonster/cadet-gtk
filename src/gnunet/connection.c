@@ -2,6 +2,16 @@
 // Created by thejackimonster on 19.05.20.
 //
 
+typedef struct {
+	GNUNET_PEER_Id identity;
+	
+	struct GNUNET_HashCode port;
+	struct GNUNET_CADET_Channel* channel;
+	
+	struct GNUNET_HashCode* group;
+	char name [GNUNET_CRYPTO_PKEY_ASCII_LENGTH + 1];
+} connection_t;
+
 static connection_t* CGTK_connection_create(const struct GNUNET_PeerIdentity* identity, const struct GNUNET_HashCode* port,
 											struct GNUNET_CADET_Channel* channel) {
 	connection_t* connection = GNUNET_malloc(sizeof(connection_t));
