@@ -49,7 +49,7 @@ static void CGTK_publication_destroy(publication_t* publication) {
 	}
 	
 	if (publication->uri) {
-		GNUNET_free(publication->uri);
+		GNUNET_FS_uri_destroy(publication->uri);
 		publication->uri = NULL;
 	}
 	

@@ -209,7 +209,7 @@ const char* CGTK_recv_gui_path(messaging_t* messaging) {
 	return path;
 }
 
-const struct GNUNET_FS_Uri* CGTK_recv_gui_uri(messaging_t* messaging) {
+struct GNUNET_FS_Uri* CGTK_recv_gui_uri(messaging_t* messaging) {
 	const char* path = CGTK_recv_gui_path(messaging);
 	
 	if (path) {

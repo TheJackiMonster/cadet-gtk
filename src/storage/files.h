@@ -18,6 +18,8 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename);
 
 const char* CGTK_generate_random_filename();
 
+const char* CGTK_hash_filename(const struct GNUNET_HashCode* hashcode);
+
 char* CGTK_force_suffix_to_filename(char* filename, const char* suffix);
 
 int CGTK_check_existence(const char* path);

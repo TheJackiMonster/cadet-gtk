@@ -11,6 +11,7 @@
 static messaging_t* messaging;
 
 typedef struct publication_t publication_t;
+typedef struct request_t request_t;
 
 static struct {
 	const struct GNUNET_CONFIGURATION_Handle* cfg;
@@ -35,6 +36,9 @@ static struct {
 	publication_t* publications_head;
 	publication_t* publications_tail;
 	
+	request_t* requests_head;
+	request_t* requests_tail;
+	
 	struct GNUNET_SCHEDULER_Task* idle;
 	struct GNUNET_TIME_Relative delay;
 } session;
@@ -51,6 +55,7 @@ static void CGTK_fatal_error(const char* error_message) {
 #include "gnunet/connection.c"
 #include "gnunet/group.c"
 #include "gnunet/publication.c"
+#include "gnunet/request.c"
 
 static void CGTK_shutdown(void* cls) {
 #ifdef CGTK_ALL_DEBUG
@@ -104,6 +109,16 @@ static void CGTK_shutdown(void* cls) {
 			CGTK_publication_destroy(publication);
 		}
 	} while (session.publications_head);
+	
+	do {
+		request_t* request = session.requests_head;
+		
+		if (request) {
+			GNUNET_CONTAINER_DLL_remove(session.requests_head, session.requests_tail, request);
+			
+			CGTK_request_destroy(request);
+		}
+	} while (session.requests_head);
 	
 	if (session.listen) {
 		GNUNET_CADET_close_port(session.listen);
@@ -368,6 +383,46 @@ static bool CGTK_push_upload(connection_t* connection) {
 	);
 	
 	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
+	return true;
+}
+
+static bool CGTK_push_download(connection_t* connection) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_push_download()\n");
+#endif
+	
+	struct GNUNET_FS_Uri* uri = CGTK_recv_gui_uri(messaging);
+	
+	if (!uri) {
+		CGTK_fatal_error("Can't identify files uri!\0");
+		return false;
+	}
+	
+	if (!GNUNET_FS_uri_test_chk(uri)) {
+		GNUNET_FS_uri_destroy(uri);
+		return false;
+	}
+	
+	request_t* request = NULL;
+	
+	const uint64_t offset = 0LU;
+	const uint64_t amount = GNUNET_FS_uri_chk_get_file_size(request->uri) - offset;
+	
+	request->context = GNUNET_FS_download_start(
+			session.handles.fs,
+			request->uri,
+			NULL,
+			request->path,
+			NULL,
+			offset, // continue from suspended download?
+			amount, // rest of the complete size?
+			1, // default anonymity?
+			GNUNET_FS_DOWNLOAD_OPTION_NONE,
+			request->connection,
+			NULL
+	);
+	
+	GNUNET_CONTAINER_DLL_insert(session.requests_head, session.requests_tail, request);
 	return true;
 }
 
@@ -673,15 +728,7 @@ static void CGTK_idle(void* cls) {
 				return;
 			}
 			
-			const char* uri = CGTK_recv_gui_path(messaging);
-			
-			if (!uri) {
-				CGTK_fatal_error("Can't identify files uri!\0");
-				return;
-			}
-			
-			// TODO: download file from uri
-			
+			CGTK_call_by_connection(destination, port, CGTK_push_download);
 			break;
 		} case MSG_ERROR: {
 #ifdef CGTK_ALL_DEBUG
@@ -737,11 +784,28 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			
 			return publication;
 		} case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
-			publication_t* publication = (publication_t*) info->value.publish.cctx;
+			publication_t *publication = (publication_t *) info->value.publish.cctx;
 			
 			publication->uri = GNUNET_FS_uri_dup(info->value.publish.specifics.completed.chk_uri);
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_publication_finish, publication);
+			break;
+		} case GNUNET_FS_STATUS_DOWNLOAD_START: {
+			request_t* request = (request_t*) info->value.download.cctx;
+			request->progress = 0.0f;
+			
+			return request;
+		} case GNUNET_FS_STATUS_DOWNLOAD_PROGRESS: {
+			request_t* request = (request_t*) info->value.download.cctx;
+			request->progress = 1.0f * info->value.download.completed / info->value.download.size;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_request_progress, request);
+			
+			return request;
+		} case GNUNET_FS_STATUS_DOWNLOAD_COMPLETED: {
+			request_t* request = (request_t*) info->value.download.cctx;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_request_finish, request);
 			break;
 		} default: {
 			break;

@@ -49,7 +49,7 @@ ssize_t CGTK_recv_gui_message(messaging_t* messaging, char* buffer, size_t lengt
 
 const char* CGTK_recv_gui_path(messaging_t* messaging);
 
-const struct GNUNET_FS_Uri* CGTK_recv_gui_uri(messaging_t* messaging);
+struct GNUNET_FS_Uri* CGTK_recv_gui_uri(messaging_t* messaging);
 
 /** } */
 

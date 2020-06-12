@@ -79,10 +79,38 @@ const char* CGTK_generate_random_filename() {
 		offset += buffer_read;
 	}
 	
+	offset *= 2;
+	
+	if (offset > CGTK_FILENAME_SIZE) {
+		offset = CGTK_FILENAME_SIZE;
+	}
+	
 	static char filename [CGTK_FILENAME_SIZE + 1];
 	
 	for (size_t i = 0; i < offset; i++) {
 		const char value = random_buffer[i / 2];
+		
+		u_int8_t digit = ((value >> ((i & 1) << 2)) & 0xF);
+		
+		if (digit < 10) {
+			filename[i] = ('0' + digit);
+		} else {
+			filename[i] = ('A' + digit - 10);
+		}
+	}
+	
+	filename[offset] = '\0';
+	
+	return filename;
+}
+
+const char* CGTK_hash_filename(const struct GNUNET_HashCode* hashcode) {
+	size_t offset = sizeof(hashcode) * 2;
+	
+	static char filename [CGTK_FILENAME_SIZE + 1];
+	
+	for (size_t i = 0; i < offset; i++) {
+		const char value = ((char*) hashcode->bits)[i / 2];
 		
 		u_int8_t digit = ((value >> ((i & 1) << 2)) & 0xF);
 		
