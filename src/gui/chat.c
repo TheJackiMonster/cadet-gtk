@@ -462,7 +462,7 @@ void CGTK_add_file_message(GtkWidget* chat_list, const msg_t* file_msg) {
 		gtk_widget_set_margin_end(filename, 8);
 		
 		GtkWidget* progress = gtk_progress_bar_new();
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), 0.0);
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->local? 1.0 : 0.0);
 		gtk_widget_set_halign(progress, GTK_ALIGN_CENTER);
 		gtk_widget_set_valign(progress, GTK_ALIGN_START);
 		gtk_widget_set_margin_bottom(progress, 4);
@@ -470,7 +470,9 @@ void CGTK_add_file_message(GtkWidget* chat_list, const msg_t* file_msg) {
 		gtk_widget_set_margin_top(progress, 2);
 		gtk_widget_set_margin_end(progress, 8);
 		
-		GtkWidget* file_button = gtk_button_new_from_icon_name("folder-download-symbolic\0", GTK_ICON_SIZE_LARGE_TOOLBAR);
+		const char* button_icon = file_msg->local? "document-open-symbolic\0" : "folder-download-symbolic\0";
+		
+		GtkWidget* file_button = gtk_button_new_from_icon_name(button_icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
 		gtk_button_set_relief(GTK_BUTTON(file_button), GTK_RELIEF_NONE);
 		gtk_widget_set_halign(file_button, GTK_ALIGN_CENTER);
 		gtk_widget_set_valign(file_button, GTK_ALIGN_END);

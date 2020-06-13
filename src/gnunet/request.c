@@ -22,14 +22,7 @@ static request_t* CGTK_request_create(connection_t* connection, struct GNUNET_FS
 	
 	request->uri = uri;
 	
-	const char* path;
-	
-	struct GNUNET_HashCode hashcode;
-	if (GNUNET_FS_uri_to_key(request->uri, &hashcode) == GNUNET_OK) {
-		path = CGTK_hash_filename(&hashcode);
-	} else {
-		path = CGTK_generate_random_filename();
-	}
+	const char* path = CGTK_generate_random_filename();
 	
 	path = CGTK_storage_file_path(CGTK_STORAGE_DOWNLOAD_DIR, path);
 	GNUNET_strlcpy(request->path, path, PATH_MAX);
