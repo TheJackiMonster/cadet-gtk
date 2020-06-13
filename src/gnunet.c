@@ -162,7 +162,7 @@ static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, co
 			
 			join_msg.kind = MSG_KIND_JOIN;
 			join_msg.timestamp = time(NULL);
-			join_msg.who = connection->name;
+			join_msg.join_leave.who = connection->name;
 			
 			CGTK_group_send_message(connection, group, &join_msg);
 		}
@@ -184,10 +184,10 @@ static void* CGTK_on_connect(void* cls, struct GNUNET_CADET_Channel* channel, co
 		
 		info_msg.kind = MSG_KIND_INFO;
 		info_msg.timestamp = time(NULL);
-		info_msg.participants = GNUNET_malloc((group_size + 1) * sizeof(char*));
-		info_msg.participants[group_size] = NULL;
+		info_msg.info.participants = GNUNET_malloc((group_size + 1) * sizeof(char*));
+		info_msg.info.participants[group_size] = NULL;
 		
-		GNUNET_CONTAINER_multihashmap_get_multiple(session.groups, group, CGTK_group_participants, &(info_msg.participants));
+		GNUNET_CONTAINER_multihashmap_get_multiple(session.groups, group, CGTK_group_participants, &(info_msg.info.participants));
 		
 		CGTK_group_recv_message(connection, &info_msg);
 	} else {
@@ -212,7 +212,7 @@ static void CGTK_on_disconnect(void* cls, const struct GNUNET_CADET_Channel* cha
 			
 			leave_msg.kind = MSG_KIND_LEAVE;
 			leave_msg.timestamp = time(NULL);
-			leave_msg.who = connection->name;
+			leave_msg.join_leave.who = connection->name;
 			
 			CGTK_group_send_message(connection, connection->group, &leave_msg);
 		}
@@ -241,13 +241,13 @@ static void CGTK_handle_message(connection_t* connection, const struct GNUNET_Me
 		CGTK_repair_message(msg, buffer, length, connection->name);
 		
 		if (msg->kind == MSG_KIND_TALK) {
-			const char* origin_sender = msg->sender;
+			const char* origin_sender = msg->talk.sender;
 			
-			msg->sender = connection->name;
+			msg->talk.sender = connection->name;
 			
 			CGTK_group_send_message(connection, connection->group, msg);
 			
-			msg->sender = origin_sender;
+			msg->talk.sender = origin_sender;
 		}
 		
 		CGTK_free_message(msg);
@@ -418,7 +418,7 @@ static bool CGTK_push_download(connection_t* connection) {
 			amount, // rest of the complete size?
 			1, // default anonymity?
 			GNUNET_FS_DOWNLOAD_OPTION_NONE,
-			request->connection,
+			request,
 			NULL
 	);
 	
@@ -785,8 +785,8 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			return publication;
 		} case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
 			publication_t *publication = (publication_t *) info->value.publish.cctx;
-			
 			publication->uri = GNUNET_FS_uri_dup(info->value.publish.specifics.completed.chk_uri);
+			publication->progress = 1.0f;
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_publication_finish, publication);
 			break;
@@ -804,6 +804,7 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			return request;
 		} case GNUNET_FS_STATUS_DOWNLOAD_COMPLETED: {
 			request_t* request = (request_t*) info->value.download.cctx;
+			request->progress = 1.0f;
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_request_finish, request);
 			break;

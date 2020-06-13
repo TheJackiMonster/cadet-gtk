@@ -160,13 +160,13 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	msg->timestamp = time(NULL);
 	
 	if (msg->kind == MSG_KIND_TALK) {
-		msg->sender = CGTK_get_nick();
+		msg->talk.sender = CGTK_get_nick();
 	} else
 	if ((msg->kind == MSG_KIND_JOIN) || (msg->kind == MSG_KIND_LEAVE)) {
-		msg->who = CGTK_get_nick();
+		msg->join_leave.who = CGTK_get_nick();
 	} else
 	if (msg->kind == MSG_KIND_FILE) {
-		msg->publisher = CGTK_get_nick();
+		msg->file.publisher = CGTK_get_nick();
 	}
 	
 	if ((msg->kind != MSG_KIND_UNKNOWN) && (msg->kind != MSG_KIND_TALK)) {
@@ -179,13 +179,13 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	if (chat->use_json) {
 		buffer = CGTK_encode_message(msg, &buffer_len);
 	} else {
-		if ((msg->kind == MSG_KIND_TALK) && (msg->content)) {
-			buffer_len = strlen(msg->content);
-			buffer = msg->content;
+		if ((msg->kind == MSG_KIND_TALK) && (msg->talk.content)) {
+			buffer_len = strlen(msg->talk.content);
+			buffer = msg->talk.content;
 		} else
-		if ((msg->kind == MSG_KIND_FILE) && (msg->uri)) {
-			buffer_len = strlen(msg->uri);
-			buffer = msg->uri;
+		if ((msg->kind == MSG_KIND_FILE) && (msg->file.uri)) {
+			buffer_len = strlen(msg->file.uri);
+			buffer = msg->file.uri;
 		}
 	}
 	
@@ -416,18 +416,25 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			// TODO: link path and uri
 			
-			path = CGTK_access_via_storage(spath->str);
-			
-			g_string_free(spath, TRUE);
+			path = spath->str;
 			
 			// TODO: Correct behavior for upload.. ( and download too )
 			
+			cgtk_file_description_t* desc = CGTK_get_description(&(session.gui), path);
+			
 			msg_t msg = {};
 			msg.kind = MSG_KIND_FILE;
-			msg.uri = uri;
+			msg.file.uri = uri;
+			msg.file.hash = desc->hash? desc->hash : "\0";
+			msg.file.name = desc->name? desc->name : "\0";
+			
+			msg.file.path = path;
+			
+			printf("<- desc: '%s' %s %s\n", path, desc->name, desc->hash);
 			
 			CGTK_send_message(destination, port, &msg);
 			
+			g_string_free(spath, TRUE);
 			break;
 		} case MSG_ERROR: {
 			CGTK_shutdown("No connection!\0");

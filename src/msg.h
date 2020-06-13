@@ -16,10 +16,12 @@
 #define MSG_DEC_PARTICIPANTS_BIT 0x020u
 #define MSG_DEC_PUBLISHER_BIT 0x040u
 #define MSG_DEC_URI_BIT 0x080u
-#define MSG_DEC_KEY_TYPE_BIT 0x100u
-#define MSG_DEC_KEY_BIT 0x200u
+#define MSG_DEC_HASH_BIT 0x100u
+#define MSG_DEC_NAME_BIT 0x200u
+#define MSG_DEC_TYPE_BIT 0x400u
+#define MSG_DEC_DATA_BIT 0x800u
 
-#define MSG_DEC_COMPLETE_BITS 0x3FFu
+#define MSG_DEC_COMPLETE_BITS 0xFFFu
 
 typedef enum msg_kind_t {
 	MSG_KIND_TALK = 1,
@@ -43,18 +45,34 @@ typedef struct msg_t {
 	msg_kind_t kind;
 	time_t timestamp;
 	
-	const char* sender;
-	const char* content;
-	
-	const char* who;
-	
-	const char** participants;
-	
-	const char* publisher;
-	const char* uri;
-	
-	msg_key_t key_type;
-	const char* key;
+	union {
+		struct {
+			const char* sender;
+			const char* content;
+		} talk;
+		
+		struct {
+			const char* who;
+		} join_leave;
+		
+		struct {
+			const char** participants;
+		} info;
+		
+		struct {
+			const char* publisher;
+			const char* uri;
+			const char* hash;
+			const char* name;
+			
+			const char* path;
+		} file;
+		
+		struct {
+			msg_key_t type;
+			const char* data;
+		} key;
+	};
 	
 	u_int8_t local;
 	uint32_t decoding;

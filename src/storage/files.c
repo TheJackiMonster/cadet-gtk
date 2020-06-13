@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/random.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
@@ -176,6 +177,37 @@ const char* CGTK_get_extension(const char* path) {
 	} else {
 		return "\0";
 	}
+}
+
+const char* CGTK_get_filehash(const char* path) {
+	int fd = open(path, O_RDONLY, 0);
+	
+	if (!fd) {
+		return NULL;
+	}
+	
+	struct stat stats;
+	if (fstat(fd, &stats) != 0) {
+		close(fd);
+		return NULL;
+	}
+	
+	const size_t size = stats.st_size;
+	
+	void* block = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+	
+	if (block == MAP_FAILED) {
+		close(fd);
+		return NULL;
+	}
+	
+	struct GNUNET_HashCode hashcode;
+	GNUNET_CRYPTO_hash(block, size, &hashcode);
+	
+	munmap(block, size);
+	close(fd);
+	
+	return GNUNET_h2s_full(&hashcode);
 }
 
 const char* CGTK_upload_via_storage(const char* local_path, const char* extension) {

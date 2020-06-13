@@ -11,7 +11,6 @@ struct publication_t {
 	char path [PATH_MAX];
 	struct GNUNET_FS_Uri* uri;
 	
-	cgtk_1tu_key_t key;
 	float progress;
 	
 	connection_t* connection;
@@ -26,7 +25,6 @@ static publication_t* CGTK_publication_create(connection_t* connection, const ch
 	
 	GNUNET_strlcpy(publication->path, path, PATH_MAX);
 	
-	CGTK_generate_new_key(&(publication->key));
 	publication->progress = 0.0f;
 	
 	publication->connection = connection;
@@ -36,8 +34,6 @@ static publication_t* CGTK_publication_create(connection_t* connection, const ch
 }
 
 static void CGTK_publication_destroy(publication_t* publication) {
-	CGTK_wipe_key(&(publication->key));
-	
 	if (publication->context) {
 		GNUNET_FS_publish_stop(publication->context);
 		publication->context = NULL;

@@ -38,7 +38,7 @@ void CGTK_notification_from_chat(cgtk_gui_t* gui, const char* identity, const ch
 		
 		switch (msg->kind) {
 			case MSG_KIND_TALK: {
-				notification = notify_notification_new(msg->sender, msg->content, "user-available\0");
+				notification = notify_notification_new(msg->talk.sender, msg->talk.content, "user-available\0");
 				notify_notification_set_category(notification, "im\0");
 				break;
 			} case MSG_KIND_JOIN: {
@@ -48,7 +48,7 @@ void CGTK_notification_from_chat(cgtk_gui_t* gui, const char* identity, const ch
 			} case MSG_KIND_INFO: {
 				break;
 			} case MSG_KIND_FILE: {
-				notification = notify_notification_new(msg->publisher, msg->uri, "mail-attachment\0");
+				notification = notify_notification_new(msg->file.publisher, msg->file.uri, "mail-attachment\0");
 				notify_notification_set_category(notification, "transfer\0");
 				break;
 			} default: {

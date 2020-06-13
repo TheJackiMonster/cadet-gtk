@@ -159,7 +159,7 @@ void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port
 			CGTK_add_file_message(chat_list, msg);
 			break;
 		} case MSG_KIND_KEY: {
-			switch (msg->key_type) {
+			switch (msg->key.type) {
 				case MSG_KEY_1TU: {
 					//TODO: Enqueue key to decrypt next file
 					break;

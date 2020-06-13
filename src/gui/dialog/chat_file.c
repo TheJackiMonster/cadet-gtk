@@ -33,11 +33,13 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 			const char* extension = CGTK_get_extension(filename);
 			
 			upload = CGTK_upload_via_storage(filename, extension);
+			filename = CGTK_get_filename(filename);
 		} else {
 			GdkPixbuf* image = CGTK_load_image_from_file(gui, filename);
 			
 			if (image) {
 				upload = CGTK_upload_via_storage(NULL, ".jpg\0");
+				filename = "\0";
 				
 				if (!gdk_pixbuf_save(image, upload, "jpeg\0", NULL, "quality\0", "100\0", NULL)) {
 					upload = NULL;
@@ -46,21 +48,36 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 		}
 		
 		if (upload) {
+			cgtk_file_description_t* desc = CGTK_get_description(gui, upload);
+			
+			const char* hashcode = CGTK_get_filehash(upload);
+			
+			if (!hashcode) {
+				hashcode = "\0";
+			}
+			
+			desc->name = g_strdup(filename);
+			desc->hash = g_strdup(hashcode);
+			
+			printf("-> desc: '%s' %s %s\n", upload, desc->name, desc->hash);
+			
 			cgtk_1tu_key_t key;
 			CGTK_generate_new_key(&key);
 			
 			if ((CGTK_encrypt_in_storage(upload, &key) == 0) && (CGTK_store_key_for(upload, &key) == 0)) {
 				msg_t msg = {};
 				msg.kind = MSG_KIND_KEY;
-				msg.key_type = MSG_KEY_1TU;
-				msg.key = CGTK_key_to_string(&key);
+				msg.key.type = MSG_KEY_1TU;
+				msg.key.data = CGTK_key_to_string(&key);
+				
+				CGTK_wipe_key(&key);
 				
 				if (gui->callbacks.send_message(destination, port, &msg)) {
 					gui->callbacks.upload_file(destination, port, upload);
 				}
+			} else {
+				CGTK_wipe_key(&key);
 			}
-			
-			CGTK_wipe_key(&key);
 		}
 		
 		children = children->next;

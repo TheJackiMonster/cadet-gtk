@@ -30,6 +30,8 @@ const char* CGTK_get_filename(const char* path);
 
 const char* CGTK_get_extension(const char* path);
 
+const char* CGTK_get_filehash(const char* path);
+
 const char* CGTK_upload_via_storage(const char* local_path, const char* extension);
 
 const char* CGTK_access_via_storage(const char* storage_path);

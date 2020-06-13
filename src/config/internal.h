@@ -82,6 +82,7 @@
 #define CGTK_STORAGE_DOWNLOAD_DIR "/download/\0"
 #define CGTK_STORAGE_ARCHIVE_DIR "/archive/\0"
 #define CGTK_STORAGE_CONTACTS_DIR "/contacts/\0"
+#define CGTK_STORAGE_CHATS_DIR "/chats/\0"
 #define CGTK_STORAGE_KEYS_DIR "/keys/\0"
 
 #endif //CADET_GTK_CONFIG_INTERNAL_H

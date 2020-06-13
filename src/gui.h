@@ -29,8 +29,14 @@ typedef struct {
 	GList* members;
 } cgtk_chat_t;
 
+typedef struct {
+	const char* name;
+	const char* hash;
+} cgtk_file_description_t;
+
 typedef struct cgtk_files_t {
 	GHashTable* images;
+	GHashTable* descriptions;
 } cgtk_files_t;
 
 typedef struct {

@@ -4,20 +4,43 @@
 
 #include "files.h"
 
-static void CGTK_files_images_key_free(gpointer key) {
+static void CGTK_files_string_key_free(gpointer key) {
 	g_string_free((GString*) key, TRUE);
 }
 
-static void CGTK_files_images_value_free(gpointer value) {
+static void CGTK_files_image_value_free(gpointer value) {
 	g_object_unref(value);
+}
+
+static void CGTK_files_description_value_free(gpointer value) {
+	cgtk_file_description_t* desc = (cgtk_file_description_t*) value;
+	
+	if (desc->name) {
+		g_free((gpointer) desc->name);
+		desc->name = NULL;
+	}
+	
+	if (desc->hash) {
+		g_free((gpointer) desc->hash);
+		desc->hash = NULL;
+	}
+	
+	g_free(value);
 }
 
 void CGTK_init_files(cgtk_files_t* files) {
 	files->images = g_hash_table_new_full(
 			(GHashFunc) g_string_hash,
 			(GEqualFunc) g_string_equal,
-			CGTK_files_images_key_free,
-			CGTK_files_images_value_free
+			CGTK_files_string_key_free,
+			CGTK_files_image_value_free
+	);
+	
+	files->descriptions = g_hash_table_new_full(
+			(GHashFunc) g_string_hash,
+			(GEqualFunc) g_string_equal,
+			CGTK_files_string_key_free,
+			CGTK_files_description_value_free
 	);
 }
 
@@ -85,9 +108,32 @@ gboolean CGTK_store_animation_to_file(cgtk_gui_t* gui, const char* filename, Gdk
 	return CGTK_store_data_to_file(gui, filename, (gpointer) animation);
 }
 
+cgtk_file_description_t* CGTK_get_description(cgtk_gui_t* gui, const char* filename) {
+	GString* key = g_string_new(filename);
+	gpointer result = g_hash_table_lookup(gui->files.descriptions, key);
+	
+	if (!result) {
+		result = g_malloc(sizeof(cgtk_file_description_t));
+		memset(result, 0, sizeof(cgtk_file_description_t));
+		
+		gboolean done = g_hash_table_insert(gui->files.descriptions, key, result);
+		
+		if (!done) {
+			g_string_free(key, TRUE);
+			g_free(result);
+			result = NULL;
+		}
+	} else {
+		g_string_free(key, TRUE);
+	}
+	
+	return (cgtk_file_description_t*) result;
+}
+
 void CGTK_unload_data_from_file(cgtk_gui_t* gui, const char* filename) {
 	GString* key = g_string_new(filename);
 	g_hash_table_remove(gui->files.images, key);
+	g_hash_table_remove(gui->files.descriptions, key);
 	g_string_free(key, TRUE);
 }
 
@@ -101,5 +147,11 @@ void CGTK_free_files(cgtk_files_t* files) {
 		g_hash_table_destroy(files->images);
 		
 		files->images = NULL;
+	}
+	
+	if (files->descriptions) {
+		g_hash_table_destroy(files->descriptions);
+		
+		files->descriptions = NULL;
 	}
 }
