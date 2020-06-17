@@ -23,6 +23,8 @@ int CGTK_encrypt_in_storage(const char* path, const cgtk_1tu_key_t* key);
 
 int CGTK_decrypt_in_storage(const char* path, const cgtk_1tu_key_t* key);
 
+int CGTK_hash_compare_in_storage(const char* path, const cgtk_1tu_key_t* key, const char* hash);
+
 int CGTK_store_key_for(const char* path, const cgtk_1tu_key_t* key);
 
 int CGTK_load_key_for(const char* path, cgtk_1tu_key_t* key);

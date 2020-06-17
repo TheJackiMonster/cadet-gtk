@@ -27,11 +27,13 @@ typedef struct {
 	gboolean is_group;
 	
 	GList* members;
+	GList* keys_1tu;
 } cgtk_chat_t;
 
 typedef struct {
 	const char* name;
 	const char* hash;
+	float progress;
 } cgtk_file_description_t;
 
 typedef struct cgtk_files_t {

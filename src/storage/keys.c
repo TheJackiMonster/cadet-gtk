@@ -84,6 +84,54 @@ int CGTK_decrypt_in_storage(const char* path, const cgtk_1tu_key_t* key) {
 	return (result == size? 0 : -4);
 }
 
+int CGTK_hash_compare_in_storage(const char* path, const cgtk_1tu_key_t* key, const char* hash) {
+	struct stat stats;
+	
+	if ((stat(path, &stats) != 0) || (!S_ISREG(stats.st_mode))) {
+		return -1;
+	}
+	
+	const size_t size = stats.st_size;
+	
+	int fd = open(path, O_RDWR);
+	
+	if (!fd) {
+		return -2;
+	}
+	
+	void* block = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+	
+	if (block == MAP_FAILED) {
+		close(fd);
+		return -3;
+	}
+	
+	struct GNUNET_CRYPTO_SymmetricInitializationVector iv;
+	memset(&iv, 0, sizeof(iv));
+	
+	ssize_t result = GNUNET_CRYPTO_symmetric_decrypt(block, size, &(key->key), &iv, block);
+	
+	int cmp_result = -5;
+	
+	if (result == size) {
+		struct GNUNET_HashCode hashcode;
+		GNUNET_CRYPTO_hash(block, size, &hashcode);
+		
+		const char* hash_string = GNUNET_h2s_full(&hashcode);
+		
+		cmp_result = strcmp(hash, hash_string);
+	}
+	
+	memset(&iv, 0, sizeof(iv));
+	
+	result = GNUNET_CRYPTO_symmetric_encrypt(block, result, &(key->key), &iv, block);
+	
+	munmap(block, size);
+	close(fd);
+	
+	return (result == size? cmp_result : -4);
+}
+
 int CGTK_store_key_for(const char* path, const cgtk_1tu_key_t* key) {
 	const char* filename = CGTK_get_filename(path);
 	const char* key_path = CGTK_storage_file_path(CGTK_STORAGE_KEYS_DIR, filename);

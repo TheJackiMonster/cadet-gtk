@@ -26,24 +26,22 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 	GList* children = gtk_container_get_children(GTK_CONTAINER(gui->file.stack));
 	
 	while (children) {
-		const char* filename = gtk_widget_get_name(GTK_WIDGET(children->data));
+		const char* path = gtk_widget_get_name(GTK_WIDGET(children->data));
+		const char* filename = "\0";
 		const char* upload = NULL;
 		
-		if (CGTK_check_existence(filename)) {
-			const char* extension = CGTK_get_extension(filename);
-			
-			upload = CGTK_upload_via_storage(filename, extension);
-			filename = CGTK_get_filename(filename);
+		if (CGTK_check_existence(path)) {
+			filename = CGTK_get_filename(path);
+			upload = CGTK_upload_file_from(path);
 		} else {
-			GdkPixbuf* image = CGTK_load_image_from_file(gui, filename);
+			GdkPixbuf* image = CGTK_load_image_from_file(gui, path);
 			
-			if (image) {
-				upload = CGTK_upload_via_storage(NULL, ".jpg\0");
-				filename = "\0";
-				
-				if (!gdk_pixbuf_save(image, upload, "jpeg\0", NULL, "quality\0", "100\0", NULL)) {
-					upload = NULL;
-				}
+			upload = CGTK_generate_upload_path(".jpg\0");
+			
+			if ((image) && (gdk_pixbuf_save(image, upload, "jpeg\0", NULL, "quality\0", "100\0", NULL))) {
+				filename = "image.jpg\0";
+			} else {
+				upload = NULL;
 			}
 		}
 		
@@ -58,6 +56,7 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 			
 			desc->name = g_strdup(filename);
 			desc->hash = g_strdup(hashcode);
+			desc->progress = 0.0f;
 			
 			printf("-> desc: '%s' %s %s\n", upload, desc->name, desc->hash);
 			

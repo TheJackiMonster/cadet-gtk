@@ -9,6 +9,8 @@
 
 #include <linux/limits.h>
 
+#define CGTK_PATH_SIZE PATH_MAX
+
 void CGTK_init_storage_directories();
 
 const char* CGTK_storage_file_path(const char* subdir, const char* filename);
@@ -17,8 +19,6 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename);
 #define CGTK_RANDOM_FILE_BUFFER_SIZE (CGTK_FILENAME_SIZE / 2)
 
 const char* CGTK_generate_random_filename();
-
-char* CGTK_force_suffix_to_filename(char* filename, const char* suffix);
 
 int CGTK_check_existence(const char* path);
 
@@ -30,8 +30,6 @@ const char* CGTK_get_extension(const char* path);
 
 const char* CGTK_get_filehash(const char* path);
 
-const char* CGTK_upload_via_storage(const char* local_path, const char* extension);
-
-const char* CGTK_access_via_storage(const char* storage_path);
+int CGTK_copy_file(const char* src_path, const char* dst_path);
 
 #endif //CADET_GTK_STORAGE_FILES_H

@@ -40,9 +40,9 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
 	const size_t filename_len = strlen(filename);
 	
 	static const size_t storage_path_len = strlen(CGTK_STORAGE_PATH);
-	static char path [PATH_MAX];
+	static char path [CGTK_PATH_SIZE];
 	
-	size_t offset = 0, remaining = PATH_MAX;
+	size_t offset = 0, remaining = CGTK_PATH_SIZE;
 	size_t i;
 	
 	for (i = 0; i < home_len; i++) {
@@ -61,7 +61,7 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
 	
 	strncpy(path + offset, filename, remaining);
 	
-	path[PATH_MAX - 1] = '\0';
+	path[CGTK_PATH_SIZE - 1] = '\0';
 	
 	return path;
 }
@@ -101,25 +101,6 @@ const char* CGTK_generate_random_filename() {
 	}
 	
 	filename[offset] = '\0';
-	
-	return filename;
-}
-
-char* CGTK_force_suffix_to_filename(char* filename, const char* suffix) {
-	const size_t orig_len = strlen(filename);
-	const size_t suffix_len = strlen(suffix);
-	
-	size_t start = orig_len;
-	
-	if (start > CGTK_FILENAME_SIZE - suffix_len) {
-		start = CGTK_FILENAME_SIZE - suffix_len;
-	}
-	
-	for (size_t i = 0; i < suffix_len; i++) {
-		filename[start + i] = suffix[i];
-	}
-	
-	filename[start + suffix_len] = '\0';
 	
 	return filename;
 }
@@ -188,91 +169,34 @@ const char* CGTK_get_filehash(const char* path) {
 	return GNUNET_h2s_full(&hashcode);
 }
 
-const char* CGTK_upload_via_storage(const char* local_path, const char* extension) {
-	const char* filename = CGTK_generate_random_filename();
-	static char upload_path [PATH_MAX];
-	
-	if (extension) {
-		strncpy(upload_path, filename, CGTK_FILENAME_SIZE);
-		
-		filename = CGTK_force_suffix_to_filename(upload_path, extension);
+int CGTK_copy_file(const char* src_path, const char* dst_path) {
+	if ((!src_path) || (!dst_path)) {
+		return -1;
 	}
 	
-	const char* path = CGTK_storage_file_path(CGTK_STORAGE_UPLOAD_DIR, filename);
-	strncpy(upload_path, path, PATH_MAX);
+	int src = open(src_path, O_RDONLY, 0);
 	
-	if (local_path) {
-		int fd_local = open(local_path, O_RDONLY, 0);
-		
-		if (!fd_local) {
-			return NULL;
-		}
-		
-		struct stat stats;
-		if (fstat(fd_local, &stats) != 0) {
-			close(fd_local);
-			return NULL;
-		}
-		
-		int fd_upload = open(upload_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-		
-		if (!fd_upload) {
-			close(fd_local);
-			return NULL;
-		}
-		
-		sendfile(fd_upload, fd_local, NULL, stats.st_size);
-		
-		close(fd_local);
-		close(fd_upload);
+	if (!src) {
+		return -2;
 	}
 	
-	return upload_path;
-}
-
-const char* CGTK_access_via_storage(const char* storage_path) {
-	const char* path = CGTK_storage_file_path("/\0", CGTK_get_filename(storage_path));
-	
-	static char access_path [PATH_MAX];
-	strncpy(access_path, path, PATH_MAX);
-	
-	if (!CGTK_check_existence(access_path)) {
-		int fd_storage = open(storage_path, O_RDONLY, 0);
-		
-		if (!fd_storage) {
-			return NULL;
-		}
-		
-		struct stat stats;
-		if (fstat(fd_storage, &stats) != 0) {
-			close(fd_storage);
-			return NULL;
-		}
-		
-		int fd = open(access_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-		
-		if (!fd) {
-			close(fd_storage);
-			return NULL;
-		}
-		
-		sendfile(fd, fd_storage, NULL, stats.st_size);
-		
-		close(fd_storage);
-		close(fd);
-		
-		cgtk_1tu_key_t key;
-		if (CGTK_load_key_for(access_path, &key) != 0) {
-			return NULL;
-		}
-		
-		if (CGTK_decrypt_in_storage(access_path, &key) != 0) {
-			CGTK_wipe_key(&key);
-			return NULL;
-		} else {
-			CGTK_wipe_key(&key);
-		}
+	struct stat stats;
+	if (fstat(src, &stats) != 0) {
+		close(src);
+		return -3;
 	}
 	
-	return access_path;
+	int dst = open(dst_path, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+	
+	if (!dst) {
+		close(src);
+		return -4;
+	}
+	
+	const ssize_t copied = sendfile(dst, src, NULL, stats.st_size);
+	
+	close(src);
+	close(dst);
+	
+	return (copied - stats.st_size);
 }

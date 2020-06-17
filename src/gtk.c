@@ -20,6 +20,7 @@ static messaging_t* messaging;
 
 #include "msg.h"
 #include "gui/files.h"
+#include "gui/keys.h"
 #include "gui/util.h"
 
 #include <stdlib.h>
@@ -475,6 +476,10 @@ static void CGTK_chat_value_free(gpointer value) {
 	
 	if (chat->members) {
 		g_list_free_full(chat->members, g_free);
+	}
+	
+	if (chat->keys_1tu) {
+		CGTK_keys_clear(chat);
 	}
 	
 	free(chat);
