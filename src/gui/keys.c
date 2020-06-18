@@ -24,13 +24,13 @@ void CGTK_keys_add(cgtk_chat_t* chat, const char* data) {
 	}
 }
 
-int CGTK_keys_pick(cgtk_chat_t* chat, const char* path, const cgtk_file_description_t* desc) {
+int CGTK_keys_pick(cgtk_chat_t* chat, const char* path, const cgtk_file_t* file) {
 	GList* keys = chat->keys_1tu;
 	
 	while (keys) {
 		cgtk_1tu_key_t* key = keys->data;
 		
-		if ((CGTK_hash_compare_in_storage(path, key, desc->hash) == 0) && (CGTK_store_key_for(path, key) == 0)) {
+		if ((CGTK_hash_compare_in_storage(path, key, file->hash) == 0) && (CGTK_store_key_for(path, key) == 0)) {
 			CGTK_keys_free(key);
 			
 			chat->keys_1tu = g_list_remove_link(chat->keys_1tu, keys);

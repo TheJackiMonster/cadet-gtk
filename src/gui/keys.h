@@ -9,7 +9,7 @@
 
 void CGTK_keys_add(cgtk_chat_t* chat, const char* data);
 
-int CGTK_keys_pick(cgtk_chat_t* chat, const char* path, const cgtk_file_description_t* desc);
+int CGTK_keys_pick(cgtk_chat_t* chat, const char* path, const cgtk_file_t* file);
 
 void CGTK_keys_clear(cgtk_chat_t* chat);
 

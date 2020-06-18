@@ -46,7 +46,7 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 		}
 		
 		if (upload) {
-			cgtk_file_description_t* desc = CGTK_get_description(gui, upload);
+			cgtk_file_t* file = CGTK_get_file(gui, upload);
 			
 			const char* hashcode = CGTK_get_filehash(upload);
 			
@@ -54,11 +54,11 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 				hashcode = "\0";
 			}
 			
-			desc->name = g_strdup(filename);
-			desc->hash = g_strdup(hashcode);
-			desc->progress = 0.0f;
+			file->name = g_strdup(filename);
+			file->hash = g_strdup(hashcode);
+			file->progress = 0.0f;
 			
-			printf("-> desc: '%s' %s %s\n", upload, desc->name, desc->hash);
+			printf("-> desc: '%s' %s %s\n", upload, file->name, file->hash);
 			
 			cgtk_1tu_key_t key;
 			CGTK_generate_new_key(&key);

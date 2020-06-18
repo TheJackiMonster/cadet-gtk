@@ -392,17 +392,17 @@ static gboolean CGTK_idle(gpointer user_data) {
 			}
 			
 			if (upload) {
-				cgtk_file_description_t* desc = CGTK_get_description(&(session.gui), path);
+				cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
 				
 				msg_t msg = {};
 				msg.kind = MSG_KIND_FILE;
 				msg.file.uri = uri;
-				msg.file.hash = desc->hash? desc->hash : "\0";
-				msg.file.name = desc->name? desc->name : "\0";
+				msg.file.hash = file->hash? file->hash : "\0";
+				msg.file.name = file->name? file->name : "\0";
 				
 				msg.file.path = path;
 				
-				printf("<- desc: '%s' %s %s\n", path, desc->name, desc->hash);
+				printf("<- desc: '%s' %s %s\n", path, file->name, file->hash);
 				
 				//CGTK_send_message(destination, port, &msg);
 			} else {
@@ -423,7 +423,7 @@ static gboolean CGTK_idle(gpointer user_data) {
 }
 
 static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
-	CGTK_free_files(&(session.gui.files));
+	CGTK_free_files(&(session.gui));
 	
 	CGTK_config_save(&(session.config));
 	
@@ -479,7 +479,7 @@ void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	
 	memcpy(&(session.gui.config), &(session.config), sizeof(config_t));
 	
-	CGTK_init_files(&(session.gui.files));
+	CGTK_init_files(&(session.gui));
 	
 	session.gui.main.window = gtk_application_window_new(application);
 	

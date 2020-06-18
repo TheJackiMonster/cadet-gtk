@@ -30,16 +30,15 @@ typedef struct {
 	GList* keys_1tu;
 } cgtk_chat_t;
 
-typedef struct {
+typedef struct cgtk_file_t {
 	const char* name;
 	const char* hash;
 	float progress;
-} cgtk_file_description_t;
-
-typedef struct cgtk_files_t {
-	GHashTable* images;
-	GHashTable* descriptions;
-} cgtk_files_t;
+	
+	gpointer visual_data;
+	
+	GList* chat_ids;
+} cgtk_file_t;
 
 typedef struct {
 	cgtk_chat_t* (*select_chat)(const char* destination, const char* port);
@@ -57,7 +56,7 @@ typedef struct {
 typedef struct {
 	cgtk_callbacks_t callbacks;
 	config_t config;
-	cgtk_files_t files;
+	GHashTable* files;
 	
 	struct {
 		char identity [CGTK_IDENTITY_BUFFER_SIZE];
