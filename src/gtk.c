@@ -58,6 +58,10 @@ static void CGTK_shutdown(const char* error_message) {
 	perror(error_message);
 }
 
+static void CGTK_string_free(gpointer key) {
+	g_string_free((GString*) key, TRUE);
+}
+
 static cgtk_chat_t* CGTK_get_chat(GString* id, gboolean* new_entry) {
 	cgtk_chat_t* chat = (cgtk_chat_t*) g_hash_table_lookup(
 			session.chats, id
@@ -70,6 +74,8 @@ static cgtk_chat_t* CGTK_get_chat(GString* id, gboolean* new_entry) {
 		chat = (cgtk_chat_t*) malloc(sizeof(cgtk_chat_t));
 		
 		memset(chat, 0, sizeof(cgtk_chat_t));
+		
+		chat->files = g_hash_table_new_full((GHashFunc) g_string_hash, (GEqualFunc) g_string_equal, CGTK_string_free, NULL);
 		
 		if (g_hash_table_insert(session.chats, id, chat)) {
 			if (new_entry) *new_entry = TRUE;
@@ -214,10 +220,40 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 }
 
 static void CGTK_upload_file(const char* path) {
+	const char* id = gtk_stack_get_visible_child_name(GTK_STACK(session.gui.chat.stack));
+	
+	GString* name = g_string_new(id);
+	
+	const char* identity = name->str;
+	const char* port = "\0";
+	
+	uint index = CGTK_split_name(name, &identity, &port);
+	
+	CGTK_add_file_link_to_chat(&(session.gui), path, identity, port);
+	
+	name->str[index] = '_';
+	
+	g_string_free(name, TRUE);
+	
 	CGTK_send_gnunet_upload(messaging, path);
 }
 
 static void CGTK_download_file(const char* uri, const char* path) {
+	const char* id = gtk_stack_get_visible_child_name(GTK_STACK(session.gui.chat.stack));
+	
+	GString* name = g_string_new(id);
+	
+	const char* identity = name->str;
+	const char* port = "\0";
+	
+	uint index = CGTK_split_name(name, &identity, &port);
+	
+	CGTK_add_file_link_to_chat(&(session.gui), path, identity, port);
+	
+	name->str[index] = '_';
+	
+	g_string_free(name, TRUE);
+	
 	CGTK_send_gnunet_download(messaging, uri, path);
 }
 
@@ -346,6 +382,23 @@ static gboolean CGTK_idle(gpointer user_data) {
 					
 					CGTK_repair_message(msg, buffer, offset, chat->name);
 					
+					if (msg->kind == MSG_KIND_FILE) {
+						if (!msg->file.path) {
+							const char* extension = msg->file.name? CGTK_get_extension(msg->file.name) : "\0";
+							
+							msg->file.path = CGTK_generate_download_path(extension);
+						}
+						
+						msg->file.progress = 0.0f;
+						
+						cgtk_file_t* file = CGTK_get_file(&(session.gui), msg->file.path);
+						
+						file->name = g_strdup(msg->file.name);
+						file->hash = g_strdup(msg->file.hash);
+						
+						CGTK_add_file_link_to_chat(&(session.gui), msg->file.path, source, port);
+					}
+					
 					CGTK_update_chat_ui(&(session.gui), source, port, msg);
 					
 					CGTK_free_message(msg);
@@ -356,7 +409,6 @@ static gboolean CGTK_idle(gpointer user_data) {
 			
 			break;
 		} case MSG_GUI_FILE_PROGRESS: {
-			bool upload = CGTK_recv_gnunet_bool(messaging);
 			float progress = CGTK_recv_gnunet_progress(messaging);
 			
 			const char* path = CGTK_recv_gnunet_path(messaging);
@@ -366,8 +418,19 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			// TODO: visual update for files progress
+			cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
 			
+			msg_t msg = {};
+			msg.kind = MSG_KIND_FILE;
+			msg.file.hash = file->hash? file->hash : "\0";
+			msg.file.name = file->name? file->name : "\0";
+			
+			msg.file.path = path;
+			msg.file.progress = progress;
+			
+			msg.usage = MSG_USAGE_UPDATE;
+			
+			CGTK_send_message_about_file(&(session.gui), path, &msg);
 			break;
 		} case MSG_GUI_FILE_COMPLETE: {
 			bool upload = CGTK_recv_gnunet_bool(messaging);
@@ -391,23 +454,20 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			if (upload) {
-				cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
-				
-				msg_t msg = {};
-				msg.kind = MSG_KIND_FILE;
-				msg.file.uri = uri;
-				msg.file.hash = file->hash? file->hash : "\0";
-				msg.file.name = file->name? file->name : "\0";
-				
-				msg.file.path = path;
-				
-				printf("<- desc: '%s' %s %s\n", path, file->name, file->hash);
-				
-				//CGTK_send_message(destination, port, &msg);
-			} else {
-				//
-			}
+			cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
+			
+			msg_t msg = {};
+			msg.kind = MSG_KIND_FILE;
+			msg.file.uri = uri;
+			msg.file.hash = file->hash? file->hash : "\0";
+			msg.file.name = file->name? file->name : "\0";
+			
+			msg.file.path = path;
+			msg.file.progress = 1.0f;
+			
+			msg.usage = upload? MSG_USAGE_GLOBAL : MSG_USAGE_UPDATE;
+			
+			CGTK_send_message_about_file(&(session.gui), path, &msg);
 			
 			g_string_free(spath, TRUE);
 			break;
@@ -441,10 +501,6 @@ static void CGTK_end_thread(GtkWidget* window, gpointer user_data) {
 	CGTK_close_messaging(messaging);
 }
 
-static void CGTK_chat_key_free(gpointer key) {
-	g_string_free((GString*) key, TRUE);
-}
-
 static void CGTK_chat_value_free(gpointer value) {
 	cgtk_chat_t* chat = (cgtk_chat_t*) value;
 	
@@ -454,6 +510,10 @@ static void CGTK_chat_value_free(gpointer value) {
 	
 	if (chat->keys_1tu) {
 		CGTK_keys_clear(chat);
+	}
+	
+	if (chat->files) {
+		g_hash_table_destroy(chat->files);
 	}
 	
 	free(chat);
@@ -500,7 +560,7 @@ void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	session.chats = g_hash_table_new_full(
 			(GHashFunc) g_string_hash,
 			(GEqualFunc) g_string_equal,
-			CGTK_chat_key_free,
+			CGTK_string_free,
 			CGTK_chat_value_free
 	);
 }

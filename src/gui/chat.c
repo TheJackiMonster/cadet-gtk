@@ -449,57 +449,156 @@ void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* ms
 	}
 }
 
+static void CGTK_open_file(GtkWidget* open_button, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	GtkWidget* file_box = gtk_widget_get_parent(open_button);
+	
+	const char* path = gtk_widget_get_name(file_box);
+	
+	GList* children = gtk_container_get_children(GTK_CONTAINER(file_box));
+	
+	GtkWidget* filename_label = GTK_WIDGET(children->data);
+	
+	const char* filename = gtk_label_get_text(GTK_LABEL(filename_label));
+	
+	const char* home_download_path = CGTK_home_file_path("/Downloads/\0", filename);
+	
+	if (CGTK_copy_file(path, home_download_path) == 0) {
+		cgtk_1tu_key_t key;
+		
+		if (CGTK_load_key_for(path, &key) == 0) {
+			CGTK_decrypt_in_storage(home_download_path, &key);
+		}
+		
+		CGTK_wipe_key(&key);
+		
+		GString* uri = g_string_new("file://");
+		
+		g_string_append(uri, home_download_path);
+		
+		g_app_info_launch_default_for_uri(uri->str, NULL, NULL);
+		
+		g_string_free(uri, TRUE);
+	}
+}
+
 static void CGTK_download_file_from(GtkWidget* download_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	// gui->callbacks.download_file();
+	GtkWidget* file_box = gtk_widget_get_parent(download_button);
+	
+	const char* uri = gtk_widget_get_name(download_button);
+	const char* path = gtk_widget_get_name(file_box);
+	
+	GtkWidget* image = gtk_button_get_image(GTK_BUTTON(download_button));
+	
+	gtk_image_set_from_icon_name(GTK_IMAGE(image), "media-playback-pause-symbolic\0", GTK_ICON_SIZE_LARGE_TOOLBAR);
+	
+	g_signal_handlers_disconnect_by_func(download_button, G_CALLBACK(CGTK_download_file_from), gui);
+	
+	gui->callbacks.download_file(uri, path);
+	
+	gtk_widget_show_all(file_box);
 }
 
-void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, const msg_t* file_msg) {
+void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* file_msg) {
 	if (file_msg->kind == MSG_KIND_FILE) {
-		/*GtkWidget* file_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-		gtk_widget_set_margin_bottom(file_box, 4);
-		gtk_widget_set_margin_start(file_box, 4);
-		gtk_widget_set_margin_top(file_box, 4);
-		gtk_widget_set_margin_end(file_box, 4);
+		GString* path_string = g_string_new(file_msg->file.path);
 		
-		GtkWidget* name_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-		gtk_widget_set_hexpand(name_box, TRUE);
+		gpointer match = g_hash_table_lookup(chat->files, path_string);
 		
-		GtkWidget* filename = gtk_label_new(file_msg->file.name);
-		gtk_label_set_line_wrap(GTK_LABEL(filename), TRUE);
-		gtk_label_set_line_wrap_mode(GTK_LABEL(filename), PANGO_WRAP_WORD_CHAR);
-		gtk_widget_set_halign(filename, GTK_ALIGN_CENTER);
-		gtk_widget_set_valign(filename, GTK_ALIGN_END);
-		gtk_widget_set_margin_bottom(filename, 2);
-		gtk_widget_set_margin_start(filename, 8);
-		gtk_widget_set_margin_top(filename, 4);
-		gtk_widget_set_margin_end(filename, 8);
-		
-		GtkWidget* progress = gtk_progress_bar_new();
-		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->local? 1.0 : 0.0);
-		gtk_widget_set_halign(progress, GTK_ALIGN_CENTER);
-		gtk_widget_set_valign(progress, GTK_ALIGN_START);
-		gtk_widget_set_margin_bottom(progress, 4);
-		gtk_widget_set_margin_start(progress, 8);
-		gtk_widget_set_margin_top(progress, 2);
-		gtk_widget_set_margin_end(progress, 8);
-		
-		const char* button_icon = file_msg->local? "document-open-symbolic\0" : "folder-download-symbolic\0";
-		
-		GtkWidget* file_button = gtk_button_new_from_icon_name(button_icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
-		gtk_button_set_relief(GTK_BUTTON(file_button), GTK_RELIEF_NONE);
-		gtk_widget_set_halign(file_button, GTK_ALIGN_CENTER);
-		gtk_widget_set_valign(file_button, GTK_ALIGN_END);
-		gtk_widget_set_name(file_button, file_msg->file.uri);
-		
-		gtk_container_add(GTK_CONTAINER(name_box), filename);
-		gtk_container_add(GTK_CONTAINER(name_box), progress);
-		gtk_container_add(GTK_CONTAINER(file_box), name_box);
-		gtk_container_add(GTK_CONTAINER(file_box), file_button);
-		
-		g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_download_file_from), gui);
-		
-		CGTK_add_message(chat_list, file_msg->file.publisher, file_box, file_msg->local? 2 : 0);*/
+		if (match) {
+			GtkWidget* file_box = GTK_WIDGET(match);
+			GList* children = gtk_container_get_children(GTK_CONTAINER(file_box));
+			
+			GtkWidget* name_box = GTK_WIDGET(children->data);
+			GtkWidget* file_button = GTK_WIDGET(children->next->data);
+			
+			children = gtk_container_get_children(GTK_CONTAINER(name_box));
+			
+			GtkWidget* filename = GTK_WIDGET(children->data);
+			GtkWidget* progress = GTK_WIDGET(children->next->data);
+			
+			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->file.progress);
+			
+			GtkWidget* image = gtk_button_get_image(GTK_BUTTON(file_button));
+			
+			gtk_image_set_from_icon_name(GTK_IMAGE(image), "document-open-symbolic\0", GTK_ICON_SIZE_LARGE_TOOLBAR);
+			
+			//g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
+			
+			gtk_widget_show_all(file_box);
+			
+			g_string_free(path_string, TRUE);
+		} else {
+			GtkWidget* file_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+			gtk_widget_set_name(file_box, file_msg->file.path);
+			gtk_widget_set_margin_bottom(file_box, 4);
+			gtk_widget_set_margin_start(file_box, 4);
+			gtk_widget_set_margin_top(file_box, 4);
+			gtk_widget_set_margin_end(file_box, 4);
+			
+			GtkWidget* name_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+			gtk_widget_set_hexpand(name_box, TRUE);
+			
+			GtkWidget* filename = gtk_label_new(file_msg->file.name);
+			gtk_label_set_line_wrap(GTK_LABEL(filename), TRUE);
+			gtk_label_set_line_wrap_mode(GTK_LABEL(filename), PANGO_WRAP_WORD_CHAR);
+			gtk_widget_set_halign(filename, GTK_ALIGN_CENTER);
+			gtk_widget_set_valign(filename, GTK_ALIGN_END);
+			gtk_widget_set_margin_bottom(filename, 2);
+			gtk_widget_set_margin_start(filename, 8);
+			gtk_widget_set_margin_top(filename, 4);
+			gtk_widget_set_margin_end(filename, 8);
+			
+			GtkWidget* progress = gtk_progress_bar_new();
+			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->file.progress);
+			gtk_widget_set_halign(progress, GTK_ALIGN_CENTER);
+			gtk_widget_set_valign(progress, GTK_ALIGN_START);
+			gtk_widget_set_margin_bottom(progress, 4);
+			gtk_widget_set_margin_start(progress, 8);
+			gtk_widget_set_margin_top(progress, 2);
+			gtk_widget_set_margin_end(progress, 8);
+			
+			const char* button_icon = "document-open-symbolic\0";
+			uint8_t button_type = 0;
+			
+			if (file_msg->file.progress < 1.0f) {
+				if (file_msg->usage == MSG_USAGE_LOCAL) {
+					button_icon = "media-playback-pause-symbolic\0";
+					button_type = 1;
+				} else {
+					button_icon = "folder-download-symbolic\0";
+					button_type = 2;
+				}
+			}
+			
+			GtkWidget* file_button = gtk_button_new_from_icon_name(button_icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
+			gtk_button_set_relief(GTK_BUTTON(file_button), GTK_RELIEF_NONE);
+			gtk_widget_set_halign(file_button, GTK_ALIGN_CENTER);
+			gtk_widget_set_valign(file_button, GTK_ALIGN_END);
+			gtk_widget_set_name(file_button, file_msg->file.uri);
+			
+			gtk_container_add(GTK_CONTAINER(name_box), filename);
+			gtk_container_add(GTK_CONTAINER(name_box), progress);
+			gtk_container_add(GTK_CONTAINER(file_box), name_box);
+			gtk_container_add(GTK_CONTAINER(file_box), file_button);
+			
+			switch (button_type) {
+				case 0:
+					//g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
+					break;
+				case 2:
+					g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_download_file_from), gui);
+					break;
+				default:
+					break;
+			}
+			
+			CGTK_add_message(chat_list, file_msg->file.publisher, file_box, file_msg->usage == MSG_USAGE_LOCAL? 2 : 0);
+			
+			g_hash_table_insert(chat->files, path_string, file_box);
+		}
 	}
 }

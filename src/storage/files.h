@@ -13,6 +13,8 @@
 
 void CGTK_init_storage_directories();
 
+const char* CGTK_home_file_path(const char* subdir, const char* filename);
+
 const char* CGTK_storage_file_path(const char* subdir, const char* filename);
 
 #define CGTK_FILENAME_SIZE (NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE)

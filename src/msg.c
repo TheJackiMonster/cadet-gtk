@@ -328,8 +328,16 @@ void CGTK_repair_message(msg_t* msg, const char* message, size_t message_len, co
 	}
 	
 	if (msg->kind == MSG_KIND_FILE) {
+		if (!(msg->decoding & MSG_DEC_PUBLISHER_BIT)) {
+			msg->file.publisher = sender;
+		}
+		
 		if (!(msg->decoding & MSG_DEC_NAME_BIT)) {
 			msg->file.name = "\0";
+		}
+		
+		if (!(msg->decoding & MSG_DEC_HASH_BIT)) {
+			msg->file.hash = "\0";
 		}
 	}
 }

@@ -372,7 +372,7 @@ static void CGTK_upload_publication(const char* path) {
 	publication->context = GNUNET_FS_publish_start(
 			session.handles.fs, fi,
 			NULL, NULL, NULL,
-			GNUNET_FS_PUBLISH_OPTION_SIMULATE_ONLY
+			GNUNET_FS_PUBLISH_OPTION_NONE
 	);
 	
 	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
@@ -385,7 +385,10 @@ static void CGTK_request_download(struct GNUNET_FS_Uri* uri, const char* path) {
 	
 	request_t* request = CGTK_request_create(uri, path);
 	
-	const uint64_t offset = 0LU;
+	uint64_t offset = 0LU;
+	
+	GNUNET_DISK_file_size(path, &offset, FALSE, TRUE);
+	
 	const uint64_t amount = GNUNET_FS_uri_chk_get_file_size(request->uri) - offset;
 	
 	request->context = GNUNET_FS_download_start(
@@ -744,7 +747,7 @@ static void CGTK_arm_connection(void* cls, int connected) {
 
 static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* info) {
 #ifdef CGTK_ALL_DEBUG
-	printf("GNUNET: CGTK_fs_progress()\n");
+	printf("GNUNET: CGTK_fs_progress(%d)\n", info->status);
 #endif
 	
 	switch (info->status) {
@@ -763,17 +766,25 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			
 			return publication;
 		} case GNUNET_FS_STATUS_PUBLISH_COMPLETED: {
-			publication_t *publication = (publication_t *) info->value.publish.cctx;
+			publication_t* publication = (publication_t*) info->value.publish.cctx;
 			publication->uri = GNUNET_FS_uri_dup(info->value.publish.specifics.completed.chk_uri);
 			publication->progress = 1.0f;
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_publication_finish, publication);
 			break;
+		} case GNUNET_FS_STATUS_PUBLISH_ERROR: {
+			publication_t* publication = (publication_t*) info->value.publish.cctx;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_publication_error, publication);
 		} case GNUNET_FS_STATUS_DOWNLOAD_START: {
 			request_t* request = (request_t*) info->value.download.cctx;
 			request->progress = 0.0f;
 			
 			return request;
+		} case GNUNET_FS_STATUS_DOWNLOAD_ACTIVE: {
+			return info->value.download.cctx;
+		} case GNUNET_FS_STATUS_DOWNLOAD_INACTIVE: {
+			return info->value.download.cctx;
 		} case GNUNET_FS_STATUS_DOWNLOAD_PROGRESS: {
 			request_t* request = (request_t*) info->value.download.cctx;
 			request->progress = 1.0f * info->value.download.completed / info->value.download.size;
@@ -786,6 +797,11 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			request->progress = 1.0f;
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_request_finish, request);
+			break;
+		} case GNUNET_FS_STATUS_DOWNLOAD_ERROR: {
+			request_t* request = (request_t*) info->value.download.cctx;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_request_error, request);
 			break;
 		} default: {
 			break;

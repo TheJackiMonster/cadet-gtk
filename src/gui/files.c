@@ -95,7 +95,7 @@ gboolean CGTK_store_animation_to_file(cgtk_gui_t* gui, const char* filename, Gdk
 	return CGTK_store_visual_data_to_file(gui, filename, (gpointer) animation);
 }
 
-gint CGTK_compare_file_links(gconstpointer a, gconstpointer b) {
+static gint CGTK_compare_file_links(gconstpointer a, gconstpointer b) {
 	const GString* as = (const GString*) a;
 	const GString* bs = (const GString*) b;
 	
@@ -125,8 +125,8 @@ void CGTK_send_message_about_file(cgtk_gui_t* gui, const char* filename, msg_t* 
 		while (id) {
 			GString* string = (GString*) id->data;
 			
-			const char* identity = NULL;
-			const char* port = NULL;
+			const char* identity = string->str;
+			const char* port = "\0";
 			
 			uint index = CGTK_split_name(string, &identity, &port);
 			

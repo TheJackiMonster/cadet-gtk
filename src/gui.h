@@ -28,12 +28,13 @@ typedef struct {
 	
 	GList* members;
 	GList* keys_1tu;
+	
+	GHashTable* files;
 } cgtk_chat_t;
 
 typedef struct cgtk_file_t {
 	const char* name;
 	const char* hash;
-	float progress;
 	
 	gpointer visual_data;
 	

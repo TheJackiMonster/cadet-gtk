@@ -72,6 +72,7 @@ typedef struct msg_t {
 			const char* name;
 			
 			const char* path;
+			float progress;
 		} file;
 		
 		struct {

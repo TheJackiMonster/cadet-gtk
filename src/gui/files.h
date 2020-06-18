@@ -19,7 +19,11 @@ GdkPixbufAnimation* CGTK_load_animation_from_file(cgtk_gui_t* gui, const char* f
 
 gboolean CGTK_store_animation_to_file(cgtk_gui_t* gui, const char* filename, GdkPixbufAnimation* animation);
 
+void CGTK_add_file_link_to_chat(cgtk_gui_t* gui, const char* filename, const char* identity, const char* port);
 
+void CGTK_send_message_about_file(cgtk_gui_t* gui, const char* filename, msg_t* msg);
+
+void CGTK_remove_file_link_to_chat(cgtk_gui_t* gui, const char* filename, const char* identity, const char* port);
 
 void CGTK_unload_data_from_file(cgtk_gui_t* gui, const char* filename);
 

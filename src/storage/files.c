@@ -25,21 +25,21 @@ static void CGTK_make_storage_directory(const char* subdir) {
 
 void CGTK_init_storage_directories() {
 	CGTK_make_storage_directory("\0");
-	CGTK_make_storage_directory(CGTK_STORAGE_UPLOAD_DIR);
 	CGTK_make_storage_directory(CGTK_STORAGE_ARCHIVE_DIR);
+	CGTK_make_storage_directory(CGTK_STORAGE_CHATS_DIR);
 	CGTK_make_storage_directory(CGTK_STORAGE_CONTACTS_DIR);
+	CGTK_make_storage_directory(CGTK_STORAGE_DOWNLOAD_DIR);
 	CGTK_make_storage_directory(CGTK_STORAGE_KEYS_DIR);
+	CGTK_make_storage_directory(CGTK_STORAGE_UPLOAD_DIR);
 }
 
-const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
+const char* CGTK_home_file_path(const char* subdir, const char* filename) {
 	const struct passwd* pw = getpwuid(getuid());
 	const char* home = pw->pw_dir;
 	
 	const size_t home_len = strlen(home);
 	const size_t subdir_len = strlen(subdir);
-	const size_t filename_len = strlen(filename);
 	
-	static const size_t storage_path_len = strlen(CGTK_STORAGE_PATH);
 	static char path [CGTK_PATH_SIZE];
 	
 	size_t offset = 0, remaining = CGTK_PATH_SIZE;
@@ -51,14 +51,33 @@ const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
 	
 	remaining -= home_len;
 	
-	strncpy(path + offset, CGTK_STORAGE_PATH, remaining);
-	remaining = (remaining - storage_path_len > 0? remaining - storage_path_len : 0);
-	offset += storage_path_len;
-	
 	strncpy(path + offset, subdir, remaining);
 	remaining = (remaining - subdir_len > 0? remaining - subdir_len : 0);
 	offset += subdir_len;
 	
+	strncpy(path + offset, filename, remaining);
+	
+	path[CGTK_PATH_SIZE - 1] = '\0';
+	
+	return path;
+}
+
+const char* CGTK_storage_file_path(const char* subdir, const char* filename) {
+	const char* storage = CGTK_home_file_path(CGTK_STORAGE_PATH, subdir);
+	
+	const size_t storage_len = strlen(storage);
+	
+	static char path [CGTK_PATH_SIZE];
+	
+	size_t offset = 0, remaining = CGTK_PATH_SIZE;
+	size_t i;
+	
+	for (i = 0; i < storage_len; i++) {
+		path[offset++] = storage[i];
+	}
+	
+	remaining -= storage_len;
+
 	strncpy(path + offset, filename, remaining);
 	
 	path[CGTK_PATH_SIZE - 1] = '\0';
@@ -131,7 +150,7 @@ const char* CGTK_get_extension(const char* path) {
 	const char* dot = rindex(path, '.');
 	const char* sep = rindex(path, '/');
 	
-	if ((sep) && (dot > sep)) {
+	if (dot > sep) {
 		return dot;
 	} else {
 		return "\0";

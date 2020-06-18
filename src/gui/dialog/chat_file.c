@@ -56,9 +56,6 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 			
 			file->name = g_strdup(filename);
 			file->hash = g_strdup(hashcode);
-			file->progress = 0.0f;
-			
-			printf("-> desc: '%s' %s %s\n", upload, file->name, file->hash);
 			
 			cgtk_1tu_key_t key;
 			CGTK_generate_new_key(&key);
@@ -72,6 +69,18 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 				CGTK_wipe_key(&key);
 				
 				if (gui->callbacks.send_message(destination, port, &msg)) {
+					memset(&msg, 0, sizeof(msg));
+					
+					msg.kind = MSG_KIND_FILE;
+					msg.file.hash = file->hash? file->hash : "\0";
+					msg.file.name = file->name? file->name : "\0";
+					
+					msg.file.path = upload;
+					msg.file.progress = 0.0f;
+					
+					msg.usage = MSG_USAGE_LOCAL;
+					
+					gui->callbacks.send_message(destination, port, &msg);
 					gui->callbacks.upload_file(upload);
 				}
 			} else {

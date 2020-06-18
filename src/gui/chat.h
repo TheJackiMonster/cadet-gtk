@@ -31,7 +31,7 @@ void CGTK_update_all_members(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_
 
 void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* msg);
 
-void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, const msg_t* file_msg);
+void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* file_msg);
 
 /** } */
 

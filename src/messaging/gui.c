@@ -88,25 +88,21 @@ ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerId
 	return offset;
 }
 
-ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, bool upload, float progress, const char* path) {
+ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, float progress, const char* path) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gui_file_progress()\n");
 #endif
 	
-	const size_t path_len = path? strlen(path) : 0;
+	const size_t path_len = strlen(path);
 	
 	msg_type_t type = MSG_GUI_FILE_PROGRESS;
 	
 	ssize_t result = 0;
 	
 	result += write(messaging->pipe_gui[1], &type, sizeof(type));
-	result += write(messaging->pipe_gui[1], &upload, sizeof(upload));
 	result += write(messaging->pipe_gui[1], &progress, sizeof(progress));
 	result += write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
-	
-	if (path) {
-		result += write(messaging->pipe_gui[1], path, path_len);
-	}
+	result += write(messaging->pipe_gui[1], path, path_len);
 	
 	return result;
 }
@@ -116,9 +112,10 @@ ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, bool upload, const c
 	printf("MESSAGING: CGTK_send_gui_file_complete()\n");
 #endif
 	
+	const size_t path_len = strlen(path);
+	
 	char* suri = GNUNET_FS_uri_to_string(uri);
 	const size_t uri_len = strlen(suri);
-	const size_t path_len = strlen(path);
 	
 	msg_type_t type = MSG_GUI_FILE_COMPLETE;
 	
@@ -187,17 +184,19 @@ ssize_t CGTK_recv_gui_message(messaging_t* messaging, char* buffer, size_t lengt
 }
 
 const char* CGTK_recv_gui_path(messaging_t* messaging) {
-	const size_t path_len = CGTK_recv_gui_msg_length(messaging);
+	size_t path_len = CGTK_recv_gui_msg_length(messaging);
 	
-	if (path_len == 0) {
-		return NULL;
+	if (path_len > PATH_MAX) {
+		path_len = PATH_MAX;
 	}
 	
-	static char path [PATH_MAX];
+	static char path [PATH_MAX + 1];
 	
 	if (CGTK_recv_gui_message(messaging, path, path_len) < path_len) {
 		return NULL;
 	}
+	
+	path[path_len] = '\0';
 	
 	return path;
 }

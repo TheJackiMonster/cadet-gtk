@@ -287,17 +287,19 @@ float CGTK_recv_gnunet_progress(messaging_t* messaging) {
 }
 
 const char* CGTK_recv_gnunet_path(messaging_t* messaging) {
-	const size_t path_len = CGTK_recv_gnunet_msg_length(messaging);
+	size_t path_len = CGTK_recv_gnunet_msg_length(messaging);
 	
-	if (path_len == 0) {
-		return NULL;
+	if (path_len > PATH_MAX) {
+		path_len = PATH_MAX;
 	}
 	
-	static char path [PATH_MAX];
+	static char path [PATH_MAX + 1];
 	
 	if (CGTK_recv_gnunet_message(messaging, path, path_len) < path_len) {
 		return NULL;
 	}
+	
+	path[path_len] = '\0';
 	
 	return path;
 }
