@@ -22,6 +22,40 @@ static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(gui->main.leaflet), "contacts\0");
 }
 
+static void CGTK_drag_data_received_message(GtkWidget* msg_view, GdkDragContext* context, gint x, gint y,
+		GtkSelectionData* data, guint info, guint time, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	guchar* text = gtk_selection_data_get_text(data);
+	
+	gboolean success = FALSE;
+	
+	if (text) {
+		gchar** uris = g_uri_list_extract_uris((gchar*) text);
+		
+		if (uris) {
+			CGTK_file_dialog_uris(gui, (const gchar**) uris);
+			
+			success = TRUE;
+			
+			g_strfreev(uris);
+		}
+		
+		g_free(text);
+	}
+	
+	gtk_drag_finish(context, success, FALSE, time);
+	
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), FALSE);
+}
+
+
+
+static void CGTK_after_drag_data_received_message(GtkWidget* msg_view, GdkDragContext* context, gint x, gint y,
+		GtkSelectionData* data, guint info, guint time, gpointer user_data) {
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), TRUE);
+}
+
 static void CGTK_paste_message(GtkWidget* msg_view, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
@@ -181,6 +215,9 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	GtkSizeGroup* sizeGroup = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
+	
+	g_signal_connect(gui->chat.msg_text_view, "drag-data-received\0", G_CALLBACK(CGTK_drag_data_received_message), gui);
+	g_signal_connect_after(gui->chat.msg_text_view, "drag-data-received\0", G_CALLBACK(CGTK_after_drag_data_received_message), gui);
 	
 	g_signal_connect(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_paste_message), gui);
 	g_signal_connect_after(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_after_paste_message), gui);
@@ -479,10 +516,7 @@ static void CGTK_open_file(GtkWidget* open_button, gpointer user_data) {
 		CGTK_wipe_key(&key);
 		
 		GString* uri = g_string_new("file://");
-		
 		g_string_append(uri, home_download_path->str);
-		
-		printf("open: %s\n", home_download_path->str);
 		
 		g_app_info_launch_default_for_uri(uri->str, NULL, NULL);
 		

@@ -60,7 +60,7 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 			cgtk_1tu_key_t key;
 			CGTK_generate_new_key(&key);
 			
-			if ((CGTK_encrypt_in_storage(upload, &key) == 0) && (CGTK_store_key_for(upload, &key) == 0)) {
+			if (CGTK_encrypt_in_storage(upload, &key) == 0) {
 				msg_t msg = {};
 				msg.kind = MSG_KIND_KEY;
 				msg.key.type = MSG_KEY_1TU;
@@ -462,7 +462,9 @@ static void CGTK_file_dialog_uris(cgtk_gui_t* gui, const gchar** uris) {
 	const gchar** iter = uris;
 	
 	while (*iter) {
-		CGTK_file_add_uri_dynamic(gui, *iter);
+		const gchar* uri = *iter;
+		
+		CGTK_file_add_uri_dynamic(gui, uri);
 		
 		iter++;
 	}

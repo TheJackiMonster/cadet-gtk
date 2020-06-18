@@ -201,7 +201,7 @@ int CGTK_key_from_string(const char* string, cgtk_1tu_key_t* key) {
 	for (size_t i = 0; i < CGTK_1TU_KEY_SIZE; i++) {
 		const char value = (
 				(CGTK_digit_from_char(string[i * 2])) |
-				(CGTK_digit_from_char(string[i * 2]) << 4)
+				(CGTK_digit_from_char(string[i * 2 + 1]) << 4)
 		);
 		
 		key->key_data[i] = value;
