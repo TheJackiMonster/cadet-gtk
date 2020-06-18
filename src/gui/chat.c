@@ -10,6 +10,7 @@
 #include <libhandy-1/handy.h>
 #endif
 
+#include "keys.h"
 #include "util.h"
 
 #include "dialog/chat_file.c"
@@ -458,29 +459,37 @@ static void CGTK_open_file(GtkWidget* open_button, gpointer user_data) {
 	
 	GList* children = gtk_container_get_children(GTK_CONTAINER(file_box));
 	
+	GtkWidget* name_box = GTK_WIDGET(children->data);
+	
+	children = gtk_container_get_children(GTK_CONTAINER(name_box));
+	
 	GtkWidget* filename_label = GTK_WIDGET(children->data);
 	
 	const char* filename = gtk_label_get_text(GTK_LABEL(filename_label));
 	
-	const char* home_download_path = CGTK_home_file_path("/Downloads/\0", filename);
+	GString* home_download_path = g_string_new(CGTK_home_file_path("/Downloads/\0", filename));
 	
-	if (CGTK_copy_file(path, home_download_path) == 0) {
+	if (CGTK_copy_file(path, home_download_path->str) == 0) {
 		cgtk_1tu_key_t key;
 		
 		if (CGTK_load_key_for(path, &key) == 0) {
-			CGTK_decrypt_in_storage(home_download_path, &key);
+			CGTK_decrypt_in_storage(home_download_path->str, &key);
 		}
 		
 		CGTK_wipe_key(&key);
 		
 		GString* uri = g_string_new("file://");
 		
-		g_string_append(uri, home_download_path);
+		g_string_append(uri, home_download_path->str);
+		
+		printf("open: %s\n", home_download_path->str);
 		
 		g_app_info_launch_default_for_uri(uri->str, NULL, NULL);
 		
 		g_string_free(uri, TRUE);
 	}
+	
+	g_string_free(home_download_path, TRUE);
 }
 
 static void CGTK_download_file_from(GtkWidget* download_button, gpointer user_data) {
@@ -517,16 +526,44 @@ void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* c
 			
 			children = gtk_container_get_children(GTK_CONTAINER(name_box));
 			
-			GtkWidget* filename = GTK_WIDGET(children->data);
 			GtkWidget* progress = GTK_WIDGET(children->next->data);
 			
 			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->file.progress);
 			
-			GtkWidget* image = gtk_button_get_image(GTK_BUTTON(file_button));
-			
-			gtk_image_set_from_icon_name(GTK_IMAGE(image), "document-open-symbolic\0", GTK_ICON_SIZE_LARGE_TOOLBAR);
-			
-			//g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
+			if (file_msg->file.progress >= 1.0f) {
+				cgtk_1tu_key_t key;
+				gboolean unlocked = FALSE;
+				
+				if (CGTK_load_key_for(file_msg->file.path, &key) != 0) {
+					cgtk_file_t* file = CGTK_get_file(gui, file_msg->file.path);
+					
+					CGTK_wipe_key(&key);
+					
+					if (CGTK_keys_pick(chat, file_msg->file.path, file) == 0) {
+						unlocked = TRUE;
+					}
+				} else {
+					CGTK_wipe_key(&key);
+					
+					unlocked = TRUE;
+				}
+				
+				GtkWidget* image = gtk_button_get_image(GTK_BUTTON(file_button));
+				
+				const char* icon_name = "system-lock-screen-symbolic\0";
+				
+				if (unlocked) {
+					icon_name = "document-open-symbolic\0";
+				}
+				
+				gtk_image_set_from_icon_name(GTK_IMAGE(image), icon_name, GTK_ICON_SIZE_LARGE_TOOLBAR);
+				
+				g_signal_handlers_disconnect_by_func(file_button, G_CALLBACK(CGTK_open_file), gui);
+				
+				if (unlocked) {
+					g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
+				}
+			}
 			
 			gtk_widget_show_all(file_box);
 			
@@ -587,7 +624,7 @@ void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* c
 			
 			switch (button_type) {
 				case 0:
-					//g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
+					g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
 					break;
 				case 2:
 					g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_download_file_from), gui);
