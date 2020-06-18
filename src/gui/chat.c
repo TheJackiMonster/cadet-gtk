@@ -49,8 +49,6 @@ static void CGTK_drag_data_received_message(GtkWidget* msg_view, GdkDragContext*
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), FALSE);
 }
 
-
-
 static void CGTK_after_drag_data_received_message(GtkWidget* msg_view, GdkDragContext* context, gint x, gint y,
 		GtkSelectionData* data, guint info, guint time, gpointer user_data) {
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), TRUE);
@@ -93,6 +91,17 @@ static void CGTK_paste_message(GtkWidget* msg_view, gpointer user_data) {
 
 static void CGTK_after_paste_message(GtkWidget* msg_view, gpointer user_data) {
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(msg_view), TRUE);
+}
+
+static void CGTK_attach_file(GtkWidget* file_button, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	CGTK_file_dialog(gui);
+	CGTK_file_add_dialog(gui->file.add_button, gui);
+	
+	if (gtk_container_get_children(GTK_CONTAINER(gui->file.stack)) == NULL) {
+		gtk_widget_destroy(gui->file.dialog);
+	}
 }
 
 static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
@@ -148,7 +157,11 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	GtkWidget* option_manage = gtk_button_new_with_label("Manage Chat\0");
 	gtk_button_set_relief(GTK_BUTTON(option_manage), GTK_RELIEF_NONE);
 	
+	GtkWidget* option_files = gtk_button_new_with_label("Shared Files\0");
+	gtk_button_set_relief(GTK_BUTTON(option_files), GTK_RELIEF_NONE);
+	
 	gtk_container_add(GTK_CONTAINER(options_box), option_manage);
+	gtk_container_add(GTK_CONTAINER(options_box), option_files);
 	gtk_container_add(GTK_CONTAINER(options), options_box);
 	
 	gtk_widget_show_all(options_box);
@@ -197,17 +210,28 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_widget_set_margin_end(msg_scrolled, 2);
 	gtk_widget_set_margin_top(msg_scrolled, 2);
 	
+	GtkWidget* button_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+	
+	gui->chat.file_button = gtk_button_new_from_icon_name("mail-attachment-symbolic\0", GTK_ICON_SIZE_MENU);
+	gtk_widget_set_margin_start(gui->chat.file_button, 2);
+	gtk_widget_set_margin_bottom(gui->chat.file_button, 2);
+	gtk_widget_set_margin_end(gui->chat.file_button, 4);
+	gtk_widget_set_margin_top(gui->chat.file_button, 4);
+	gtk_widget_set_sensitive(gui->chat.file_button, FALSE);
+	
 	gui->chat.msg_button = gtk_button_new_from_icon_name("document-send\0", GTK_ICON_SIZE_MENU);
-	gtk_widget_set_valign(gui->chat.msg_button, GTK_ALIGN_END);
 	gtk_widget_set_margin_start(gui->chat.msg_button, 2);
 	gtk_widget_set_margin_bottom(gui->chat.msg_button, 4);
 	gtk_widget_set_margin_end(gui->chat.msg_button, 4);
-	gtk_widget_set_margin_top(gui->chat.msg_button, 4);
+	gtk_widget_set_margin_top(gui->chat.msg_button, 2);
 	gtk_widget_set_sensitive(gui->chat.msg_button, FALSE);
+	
+	gtk_container_add(GTK_CONTAINER(button_box), gui->chat.file_button);
+	gtk_container_add(GTK_CONTAINER(button_box), gui->chat.msg_button);
 	
 	gtk_container_add(GTK_CONTAINER(msg_scrolled), gui->chat.msg_text_view);
 	gtk_container_add(GTK_CONTAINER(msg_box), msg_scrolled);
-	gtk_container_add(GTK_CONTAINER(msg_box), gui->chat.msg_button);
+	gtk_container_add(GTK_CONTAINER(msg_box), button_box);
 	
 	gtk_container_add(GTK_CONTAINER(content), gui->chat.stack);
 	gtk_container_add(GTK_CONTAINER(content), msg_box);
@@ -222,6 +246,7 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	g_signal_connect(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_paste_message), gui);
 	g_signal_connect_after(gui->chat.msg_text_view, "paste-clipboard\0", G_CALLBACK(CGTK_after_paste_message), gui);
 	
+	g_signal_connect(gui->chat.file_button, "clicked\0", G_CALLBACK(CGTK_attach_file), gui);
 	g_signal_connect(gui->chat.msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
 	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_management_dialog), gui);
 	g_signal_connect(gui->chat.back_button, "clicked\0", G_CALLBACK(CGTK_back), gui);
@@ -306,6 +331,7 @@ void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact
 	
 	gtk_widget_set_sensitive(gui->chat.options_button, TRUE);
 	gtk_widget_set_sensitive(gui->chat.msg_text_view, TRUE);
+	gtk_widget_set_sensitive(gui->chat.file_button, TRUE);
 	gtk_widget_set_sensitive(gui->chat.msg_button, TRUE);
 	
 	g_string_free(name, TRUE);
@@ -341,7 +367,9 @@ void CGTK_unload_chat(cgtk_gui_t* gui, const char* contact_id, const char* conta
 	gtk_widget_show_all(gui->chat.stack);
 	gtk_widget_show_all(gui->chat.header);
 	
+	gtk_widget_set_sensitive(gui->chat.options_button, FALSE);
 	gtk_widget_set_sensitive(gui->chat.msg_text_view, FALSE);
+	gtk_widget_set_sensitive(gui->chat.file_button, FALSE);
 	gtk_widget_set_sensitive(gui->chat.msg_button, FALSE);
 	
 	g_string_free(name, TRUE);

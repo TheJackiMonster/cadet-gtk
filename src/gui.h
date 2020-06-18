@@ -83,6 +83,7 @@ typedef struct {
 		GtkWidget* header;
 		GtkWidget* stack;
 		
+		GtkWidget* file_button;
 		GtkWidget* msg_button;
 		GtkWidget* msg_text_view;
 	} chat;
