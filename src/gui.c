@@ -157,7 +157,7 @@ void CGTK_update_chat_ui(cgtk_gui_t* gui, const char* identity, const char* port
 			CGTK_update_all_members(chat_list, chat, msg);
 			break;
 		} case MSG_KIND_FILE: {
-			CGTK_add_file_message(chat_list, msg);
+			CGTK_add_file_message(gui, chat_list, msg);
 			break;
 		} case MSG_KIND_KEY: {
 			switch (msg->key.type) {

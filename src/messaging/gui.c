@@ -88,38 +88,30 @@ ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerId
 	return offset;
 }
 
-ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, const struct GNUNET_PeerIdentity* destination,
-									const struct GNUNET_HashCode* port, float progress, const char* path, const struct GNUNET_FS_Uri* uri) {
+ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, bool upload, float progress, const char* path) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gui_file_progress()\n");
 #endif
 	
 	const size_t path_len = path? strlen(path) : 0;
-	char* suri = uri? GNUNET_FS_uri_to_string(uri) : "\0";
-	const size_t uri_len = strlen(suri);
 	
 	msg_type_t type = MSG_GUI_FILE_PROGRESS;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], destination, sizeof(struct GNUNET_PeerIdentity));
-	write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
-	write(messaging->pipe_gui[1], &progress, sizeof(progress));
+	ssize_t result = 0;
 	
-	write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], &upload, sizeof(upload));
+	result += write(messaging->pipe_gui[1], &progress, sizeof(progress));
+	result += write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
 	
 	if (path) {
-		return write(messaging->pipe_gui[1], path, path_len);
-	} else {
-		write(messaging->pipe_gui[1], &uri_len, sizeof(uri_len));
-		ssize_t result = write(messaging->pipe_gui[1], suri, uri_len);
-		
-		GNUNET_free(suri);
-		return result;
+		result += write(messaging->pipe_gui[1], path, path_len);
 	}
+	
+	return result;
 }
 
-ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, const struct GNUNET_PeerIdentity* destination,
-									const struct GNUNET_HashCode* port, const char* path, const struct GNUNET_FS_Uri* uri) {
+ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, bool upload, const char* path, const struct GNUNET_FS_Uri* uri) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gui_file_complete()\n");
 #endif
@@ -130,16 +122,17 @@ ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, const struct GNUNET_
 	
 	msg_type_t type = MSG_GUI_FILE_COMPLETE;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], destination, sizeof(struct GNUNET_PeerIdentity));
-	write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	ssize_t result = 0;
 	
-	write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
-	write(messaging->pipe_gui[1], path, path_len);
-	write(messaging->pipe_gui[1], &uri_len, sizeof(uri_len));
-	ssize_t result = write(messaging->pipe_gui[1], suri, uri_len);
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], &upload, sizeof(upload));
+	result += write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gui[1], path, path_len);
+	result += write(messaging->pipe_gui[1], &uri_len, sizeof(uri_len));
+	result += write(messaging->pipe_gui[1], suri, uri_len);
 	
 	GNUNET_free(suri);
+	
 	return result;
 }
 

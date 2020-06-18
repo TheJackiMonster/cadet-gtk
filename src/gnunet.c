@@ -343,21 +343,14 @@ static bool CGTK_push_message(connection_t* connection) {
 	return true;
 }
 
-static bool CGTK_push_upload(connection_t* connection) {
+static void CGTK_upload_publication(const char* path) {
 #ifdef CGTK_ALL_DEBUG
 	printf("GNUNET: CGTK_push_upload()\n");
 #endif
 	
-	const char* path = CGTK_recv_gui_path(messaging);
-	
-	if (!path) {
-		CGTK_fatal_error("Can't identify files path!\0");
-		return false;
-	}
-	
 	printf("this should upload: '%s'\n", path);
 	
-	publication_t* publication = CGTK_publication_create(connection, path);
+	publication_t* publication = CGTK_publication_create(path);
 	
 	struct GNUNET_FS_BlockOptions bo = {};
 	
@@ -383,27 +376,14 @@ static bool CGTK_push_upload(connection_t* connection) {
 	);
 	
 	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
-	return true;
 }
 
-static bool CGTK_push_download(connection_t* connection) {
+static void CGTK_request_download(struct GNUNET_FS_Uri* uri, const char* path) {
 #ifdef CGTK_ALL_DEBUG
-	printf("GNUNET: CGTK_push_download()\n");
+	printf("GNUNET: CGTK_request_download()\n");
 #endif
 	
-	struct GNUNET_FS_Uri* uri = CGTK_recv_gui_uri(messaging);
-	
-	if (!uri) {
-		CGTK_fatal_error("Can't identify files uri!\0");
-		return false;
-	}
-	
-	if (!GNUNET_FS_uri_test_chk(uri)) {
-		GNUNET_FS_uri_destroy(uri);
-		return false;
-	}
-	
-	request_t* request = NULL;
+	request_t* request = CGTK_request_create(uri, path);
 	
 	const uint64_t offset = 0LU;
 	const uint64_t amount = GNUNET_FS_uri_chk_get_file_size(request->uri) - offset;
@@ -423,7 +403,6 @@ static bool CGTK_push_download(connection_t* connection) {
 	);
 	
 	GNUNET_CONTAINER_DLL_insert(session.requests_head, session.requests_tail, request);
-	return true;
 }
 
 typedef struct {
@@ -693,42 +672,42 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_UPLOAD_FILE\n");
 #endif
 			
-			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gui_identity(messaging);
+			const char* path = CGTK_recv_gui_path(messaging);
 			
-			if (!destination) {
-				CGTK_fatal_error("Can't identify connections destination!\0");
+			if (!path) {
+				CGTK_fatal_error("Can't identify files path!\0");
 				return;
 			}
 			
-			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
-			
-			if (!port) {
-				CGTK_fatal_error("Can't identify connections port!\0");
-				return;
-			}
-			
-			CGTK_call_by_connection(destination, port, CGTK_push_upload);
+			CGTK_upload_publication(path);
 			break;
 		} case MSG_GNUNET_DOWNLOAD_FILE: {
 #ifdef CGTK_ALL_DEBUG
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_DOWNLOAD_FILE\n");
 #endif
 			
-			const struct GNUNET_PeerIdentity* destination = CGTK_recv_gui_identity(messaging);
+			struct GNUNET_FS_Uri* uri = CGTK_recv_gui_uri(messaging);
 			
-			if (!destination) {
-				CGTK_fatal_error("Can't identify connections destination!\0");
+			if (!uri) {
+				CGTK_fatal_error("Can't identify files uri!\0");
 				return;
 			}
 			
-			const struct GNUNET_HashCode* port = CGTK_recv_gui_hashcode(messaging);
+			const char* path = CGTK_recv_gui_path(messaging);
 			
-			if (!port) {
-				CGTK_fatal_error("Can't identify connections port!\0");
+			if (!path) {
+				GNUNET_FS_uri_destroy(uri);
+				
+				CGTK_fatal_error("Can't identify files path!\0");
 				return;
 			}
 			
-			CGTK_call_by_connection(destination, port, CGTK_push_download);
+			if (!GNUNET_FS_uri_test_chk(uri)) {
+				GNUNET_FS_uri_destroy(uri);
+				break;
+			}
+			
+			CGTK_request_download(uri, path);
 			break;
 		} case MSG_ERROR: {
 #ifdef CGTK_ALL_DEBUG

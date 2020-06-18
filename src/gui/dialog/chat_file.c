@@ -72,7 +72,7 @@ static void CGTK_file_send(GtkWidget* send_button, gpointer user_data) {
 				CGTK_wipe_key(&key);
 				
 				if (gui->callbacks.send_message(destination, port, &msg)) {
-					gui->callbacks.upload_file(destination, port, upload);
+					gui->callbacks.upload_file(upload);
 				}
 			} else {
 				CGTK_wipe_key(&key);

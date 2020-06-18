@@ -50,7 +50,8 @@ typedef struct {
 	void (*open_group)(const char* port);
 	void (*exit_chat)(const char* destination, const char* port);
 	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
-	void (*upload_file)(const char* destination, const char* port, const char* path);
+	void (*upload_file)(const char* path);
+	void (*download_file)(const char* uri, const char* path);
 } cgtk_callbacks_t;
 
 typedef struct {

@@ -13,13 +13,11 @@ struct publication_t {
 	
 	float progress;
 	
-	connection_t* connection;
-	
 	struct GNUNET_CONTAINER_MetaData* meta;
 	struct GNUNET_FS_PublishContext* context;
 };
 
-static publication_t* CGTK_publication_create(connection_t* connection, const char* path) {
+static publication_t* CGTK_publication_create(const char* path) {
 	publication_t* publication = GNUNET_malloc(sizeof(publication_t));
 	memset(publication, 0, sizeof(publication_t));
 	
@@ -27,7 +25,6 @@ static publication_t* CGTK_publication_create(connection_t* connection, const ch
 	
 	publication->progress = 0.0f;
 	
-	publication->connection = connection;
 	publication->meta = GNUNET_CONTAINER_meta_data_create();
 	
 	return publication;
@@ -55,17 +52,13 @@ static void CGTK_publication_destroy(publication_t* publication) {
 static void CGTK_publication_progress(void* cls) {
 	publication_t* publication = (publication_t*) cls;
 	
-	const struct GNUNET_PeerIdentity* destination = GNUNET_PEER_resolve2(publication->connection->identity);
-	
-	CGTK_send_gui_file_progress(messaging, destination, &(publication->connection->port), publication->progress, publication->path, NULL);
+	CGTK_send_gui_file_progress(messaging, true, publication->progress, publication->path);
 }
 
 static void CGTK_publication_finish(void* cls) {
 	publication_t* publication = (publication_t*) cls;
 	
-	const struct GNUNET_PeerIdentity* destination = GNUNET_PEER_resolve2(publication->connection->identity);
-	
-	CGTK_send_gui_file_complete(messaging, destination, &(publication->connection->port), publication->path, publication->uri);
+	CGTK_send_gui_file_complete(messaging, true, publication->path, publication->uri);
 	
 	GNUNET_CONTAINER_DLL_remove(session.publications_head, session.publications_tail, publication);
 	

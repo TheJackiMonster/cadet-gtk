@@ -41,6 +41,12 @@ typedef enum msg_key_t {
 	MSG_KEY_UNKNOWN = 0
 } msg_key_t;
 
+typedef enum msg_usage_t {
+	MSG_USAGE_GLOBAL = 0,
+	MSG_USAGE_LOCAL = 1,
+	MSG_USAGE_UPDATE = 2
+} msg_usage_t;
+
 typedef struct msg_t {
 	msg_kind_t kind;
 	time_t timestamp;
@@ -74,7 +80,7 @@ typedef struct msg_t {
 		} key;
 	};
 	
-	u_int8_t local;
+	msg_usage_t usage;
 	uint32_t decoding;
 } msg_t;
 

@@ -361,7 +361,16 @@ static void CGTK_add_text_message(GtkWidget* chat_list, const char* title, const
 
 void CGTK_add_talk_message(GtkWidget* chat_list, const msg_t* talk_msg) {
 	if (talk_msg->kind == MSG_KIND_TALK) {
-		CGTK_add_text_message(chat_list, talk_msg->talk.sender, talk_msg->talk.content, talk_msg->local? 2 : 0);
+		switch (talk_msg->usage) {
+			case MSG_USAGE_GLOBAL:
+				CGTK_add_text_message(chat_list, talk_msg->talk.sender, talk_msg->talk.content, 0);
+				break;
+			case MSG_USAGE_LOCAL:
+				CGTK_add_text_message(chat_list, talk_msg->talk.sender, talk_msg->talk.content, 2);
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -390,7 +399,7 @@ void CGTK_update_all_members(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_
 
 void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* msg) {
 	if (msg->kind == MSG_KIND_JOIN) {
-		if (msg->local) {
+		if (msg->usage == MSG_USAGE_LOCAL) {
 			CGTK_add_text_message(chat_list, "ENTERED\0", msg->join_leave.who, 1);
 		} else {
 			cgtk_member_t* member = (cgtk_member_t*) g_malloc(sizeof(cgtk_member_t));
@@ -406,7 +415,7 @@ void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* ms
 		}
 	} else
 	if (msg->kind == MSG_KIND_LEAVE) {
-		if (msg->local) {
+		if (msg->usage == MSG_USAGE_LOCAL) {
 			CGTK_add_text_message(chat_list, "QUIT\0", msg->join_leave.who, 1);
 		} else {
 			GList* filtered = NULL;
@@ -440,9 +449,15 @@ void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* ms
 	}
 }
 
-void CGTK_add_file_message(GtkWidget* chat_list, const msg_t* file_msg) {
+static void CGTK_download_file_from(GtkWidget* download_button, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	// gui->callbacks.download_file();
+}
+
+void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, const msg_t* file_msg) {
 	if (file_msg->kind == MSG_KIND_FILE) {
-		GtkWidget* file_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+		/*GtkWidget* file_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 		gtk_widget_set_margin_bottom(file_box, 4);
 		gtk_widget_set_margin_start(file_box, 4);
 		gtk_widget_set_margin_top(file_box, 4);
@@ -483,6 +498,8 @@ void CGTK_add_file_message(GtkWidget* chat_list, const msg_t* file_msg) {
 		gtk_container_add(GTK_CONTAINER(file_box), name_box);
 		gtk_container_add(GTK_CONTAINER(file_box), file_button);
 		
-		CGTK_add_message(chat_list, file_msg->file.publisher, file_box, file_msg->local? 2 : 0);
+		g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_download_file_from), gui);
+		
+		CGTK_add_message(chat_list, file_msg->file.publisher, file_box, file_msg->local? 2 : 0);*/
 	}
 }

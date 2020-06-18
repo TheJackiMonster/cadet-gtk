@@ -169,64 +169,43 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 	return offset;
 }
 
-ssize_t CGTK_send_gnunet_upload(messaging_t* messaging, const char* destination, const char* port, const char* path) {
+ssize_t CGTK_send_gnunet_upload(messaging_t* messaging, const char* path) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gnunet_upload()\n");
 #endif
-	
-	struct GNUNET_PeerIdentity identity;
-	
-	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
-		return -1;
-	}
-	
-	size_t port_len = strlen(port);
-	
-	struct GNUNET_HashCode hashcode;
-	GNUNET_CRYPTO_hash(port, port_len, &hashcode);
-	
-	CGTK_add_port_to_lookup(port, port_len, &hashcode);
 	
 	const size_t path_len = strlen(path);
 	
 	msg_type_t type = MSG_GNUNET_UPLOAD_FILE;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
-	write(messaging->pipe_gnunet[1], &path_len, sizeof(path_len));
+	ssize_t result = 0;
 	
-	return write(messaging->pipe_gnunet[1], path, path_len);
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gnunet[1], path, path_len);
+	
+	return result;
 }
 
-ssize_t CGTK_send_gnunet_download(messaging_t* messaging, const char* destination, const char* port, const char* uri) {
+ssize_t CGTK_send_gnunet_download(messaging_t* messaging, const char* uri, const char* path) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gnunet_download()\n");
 #endif
 	
-	struct GNUNET_PeerIdentity identity;
-	
-	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
-		return -1;
-	}
-	
-	size_t port_len = strlen(port);
-	
-	struct GNUNET_HashCode hashcode;
-	GNUNET_CRYPTO_hash(port, port_len, &hashcode);
-	
-	CGTK_add_port_to_lookup(port, port_len, &hashcode);
-	
 	const size_t uri_len = strlen(uri);
+	const size_t path_len = strlen(path);
 	
 	msg_type_t type = MSG_GNUNET_DOWNLOAD_FILE;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
-	write(messaging->pipe_gnunet[1], &uri_len, sizeof(uri_len));
+	ssize_t result = 0;
 	
-	return write(messaging->pipe_gnunet[1], uri, uri_len);
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &uri_len, sizeof(uri_len));
+	result += write(messaging->pipe_gnunet[1], uri, uri_len);
+	result += write(messaging->pipe_gnunet[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gnunet[1], path, path_len);
+	
+	return result;
 }
 
 msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging) {
@@ -285,6 +264,16 @@ size_t CGTK_recv_gnunet_msg_length(messaging_t* messaging) {
 
 ssize_t CGTK_recv_gnunet_message(messaging_t* messaging, char* buffer, size_t length) {
 	return read(messaging->pipe_gui[0], buffer, length);
+}
+
+bool CGTK_recv_gnunet_bool(messaging_t* messaging) {
+	bool flag = FALSE;
+	
+	if (read(messaging->pipe_gui[0], &flag, sizeof(flag)) < sizeof(flag)) {
+		return FALSE;
+	}
+	
+	return flag;
 }
 
 float CGTK_recv_gnunet_progress(messaging_t* messaging) {
