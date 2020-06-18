@@ -39,9 +39,11 @@ You can see all other features and bigger changes which are planned right here:
 
  * [ ] Show names of members of a group (connected to the names used in one-to-one chats).
  * [ ] Allow changing a normal chat to use JSON.
- * [ ] Allow sharing files privately through GNUnet and encryption.
+ * [x] Allow sharing files privately through GNUnet and encryption.
 >  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
  * [ ] Allow setting up a profile picture.
+ * [ ] Adding support for GNUpG as authentification and encryption method for file transfer.
+>  More information about GpG: https://gnupg.org/
  * [ ] Upgrading the security inside of groupchats.
  * [ ] Providing more consistency between multiple channels to the same destination.
  * [ ] Implementing audio-calls with the conversation of GNUnet.
@@ -56,6 +58,7 @@ You can see all other features and bigger changes which are planned right here:
  - GNUnet: https://docs.gnunet.org/doxygen/modules.html
  - Jansson: https://jansson.readthedocs.io/en/2.8/apiref.html
  - pipe: https://linux.die.net/man/2/pipe
+ - GpGMe: https://www.gnupg.org/documentation/manuals/gpgme/
 
 ## Who is contributing
 
