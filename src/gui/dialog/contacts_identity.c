@@ -32,17 +32,34 @@ static void CGTK_identity_confirm(GtkWidget* confirm_button, gpointer user_data)
 	const char* mail = CGTK_get_entry_text(gui->identity.mail_entry);
 	const char* phone = CGTK_get_entry_text(gui->identity.phone_entry);
 	
+	gui->config.regex_attr = CGTK_REGEX_ATTR_NONE;
+	
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->identity.name_check))) {
+		gui->config.regex_attr |= CGTK_REGEX_ATTR_NAME;
+	}
+	
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->identity.mail_check))) {
+		gui->config.regex_attr |= CGTK_REGEX_ATTR_MAIL;
+	}
+	
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->identity.phone_check))) {
+		gui->config.regex_attr |= CGTK_REGEX_ATTR_PHONE;
+	}
+	
 	GString* regex = NULL;
 	
-	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.name_entry)) > 0) {
+	if ((gui->config.regex_attr & CGTK_REGEX_ATTR_NAME) &&
+		(gtk_entry_get_text_length(GTK_ENTRY(gui->identity.name_entry)) > 0)) {
 		regex = CGTK_regex_append_escaped(regex, name);
 	}
 	
-	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.mail_entry)) > 0) {
+	if ((gui->config.regex_attr & CGTK_REGEX_ATTR_MAIL) &&
+		(gtk_entry_get_text_length(GTK_ENTRY(gui->identity.mail_entry)) > 0)) {
 		regex = CGTK_regex_append_escaped(regex, mail);
 	}
 	
-	if (gtk_entry_get_text_length(GTK_ENTRY(gui->identity.phone_entry)) > 0) {
+	if ((gui->config.regex_attr & CGTK_REGEX_ATTR_PHONE) &&
+		(gtk_entry_get_text_length(GTK_ENTRY(gui->identity.phone_entry)) > 0)) {
 		regex = CGTK_regex_append_escaped(regex, phone);
 	}
 	
@@ -72,6 +89,14 @@ static void CGTK_identity_destroy(GtkWidget* dialog, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
 	memset(&(gui->identity), 0, sizeof(gui->identity));
+}
+
+static gboolean CGTK_visibility_selected_public(GBinding *binding, const GValue* from_value, GValue* to_value, gpointer user_data) {
+	int active = g_value_get_int(from_value);
+	
+	g_value_set_boolean(to_value, active == 0);
+	
+	return TRUE;
 }
 
 static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
@@ -169,14 +194,26 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gtk_entry_set_input_purpose(GTK_ENTRY(gui->identity.phone_entry), GTK_INPUT_PURPOSE_PHONE);
 	gtk_widget_set_hexpand(gui->identity.phone_entry, TRUE);
 	
-	gtk_grid_attach(GTK_GRID(grid), gui->identity.label, 0, 0, 2, 1);
+	gui->identity.name_check = gtk_check_button_new();
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->identity.name_check), (gui->config.regex_attr & CGTK_REGEX_ATTR_NAME) != 0);
+	
+	gui->identity.mail_check = gtk_check_button_new();
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->identity.mail_check), (gui->config.regex_attr & CGTK_REGEX_ATTR_MAIL) != 0);
+	
+	gui->identity.phone_check = gtk_check_button_new();
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->identity.phone_check), (gui->config.regex_attr & CGTK_REGEX_ATTR_PHONE) != 0);
+	
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.label, 0, 0, 3, 1);
 	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), mail_label, 0, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), phone_label, 0, 3, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), gui->identity.name_entry, 1, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), gui->identity.mail_entry, 1, 2, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), gui->identity.phone_entry, 1, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), advanced_expand, 0, 4, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.name_check, 2, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.mail_check, 2, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->identity.phone_check, 2, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), advanced_expand, 0, 4, 3, 1);
 	
 	GtkWidget* visibility_label = gtk_label_new("Visibility\0");
 	gtk_widget_set_hexpand(visibility_label, TRUE);
@@ -238,6 +275,58 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	
 	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_identity_cancel), gui);
 	g_signal_connect(confirm_button, "clicked\0", G_CALLBACK(CGTK_identity_confirm), gui);
+	
+	g_object_bind_property_full(
+			gui->identity.visibility_combobox,
+			"active\0",
+			gui->identity.name_check,
+			"sensitive\0",
+			G_BINDING_DEFAULT,
+			&CGTK_visibility_selected_public,
+			NULL,
+			NULL,
+			NULL
+	);
+	
+	g_object_bind_property(
+			gui->identity.name_check,
+			"sensitive\0",
+			gui->identity.name_entry,
+			"sensitive\0",
+			G_BINDING_DEFAULT
+	);
+	
+	g_object_bind_property(
+			gui->identity.name_check,
+			"sensitive\0",
+			gui->identity.mail_check,
+			"sensitive\0",
+			G_BINDING_DEFAULT
+	);
+	
+	g_object_bind_property(
+			gui->identity.mail_check,
+			"sensitive\0",
+			gui->identity.mail_entry,
+			"sensitive\0",
+			G_BINDING_DEFAULT
+	);
+	
+	g_object_bind_property(
+			gui->identity.mail_check,
+			"sensitive\0",
+			gui->identity.phone_check,
+			"sensitive\0",
+			G_BINDING_DEFAULT
+	);
+	
+	g_object_bind_property(
+			gui->identity.phone_check,
+			"sensitive\0",
+			gui->identity.phone_entry,
+			"sensitive\0",
+			G_BINDING_DEFAULT
+	);
 	
 	gtk_widget_show_all(gui->identity.dialog);
 }

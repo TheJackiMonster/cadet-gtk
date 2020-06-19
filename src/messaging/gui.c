@@ -7,18 +7,22 @@ void CGTK_prepare_gui(messaging_t* messaging) {
 	close_if_open(&(messaging->pipe_gui[1]));
 }
 
-void CGTK_send_gui_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity) {
+ssize_t CGTK_send_gui_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gtk_identity()\n");
 #endif
 	
 	msg_type_t type = MSG_GUI_IDENTITY;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], identity, sizeof(struct GNUNET_PeerIdentity));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], identity, sizeof(struct GNUNET_PeerIdentity));
+	
+	return result;
 }
 
-void CGTK_send_gui_found(messaging_t* messaging, const char* name, const struct GNUNET_PeerIdentity* identity) {
+ssize_t CGTK_send_gui_found(messaging_t* messaging, const char* name, const struct GNUNET_PeerIdentity* identity) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gtk_found()\n");
 #endif
@@ -29,12 +33,16 @@ void CGTK_send_gui_found(messaging_t* messaging, const char* name, const struct 
 	
 	msg_type_t type = MSG_GUI_FOUND;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], &hash, sizeof(guint));
-	write(messaging->pipe_gui[1], identity, sizeof(struct GNUNET_PeerIdentity));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], &hash, sizeof(guint));
+	result += write(messaging->pipe_gui[1], identity, sizeof(struct GNUNET_PeerIdentity));
+	
+	return result;
 }
 
-void CGTK_send_gui_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
+ssize_t CGTK_send_gui_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 						   const struct GNUNET_HashCode* port) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gui_connect()\n");
@@ -42,12 +50,16 @@ void CGTK_send_gui_connect(messaging_t* messaging, const struct GNUNET_PeerIdent
 	
 	msg_type_t type = MSG_GUI_CONNECT;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
-	write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
+	result += write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	
+	return result;
 }
 
-void CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
+ssize_t CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 							  const struct GNUNET_HashCode* port) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gui_disconnect()\n");
@@ -55,9 +67,13 @@ void CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerId
 	
 	msg_type_t type = MSG_GUI_DISCONNECT;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
-	write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
+	result += write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	
+	return result;
 }
 
 ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
@@ -68,10 +84,16 @@ ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerId
 	
 	msg_type_t type = MSG_GUI_RECV_MESSAGE;
 	
-	write(messaging->pipe_gui[1], &type, sizeof(type));
-	write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
-	write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
-	write(messaging->pipe_gui[1], &length, sizeof(length));
+	ssize_t header = 0;
+	
+	header += write(messaging->pipe_gui[1], &type, sizeof(type));
+	header += write(messaging->pipe_gui[1], source, sizeof(struct GNUNET_PeerIdentity));
+	header += write(messaging->pipe_gui[1], port, sizeof(struct GNUNET_HashCode));
+	header += write(messaging->pipe_gui[1], &length, sizeof(length));
+	
+	if (header < (sizeof(type) + sizeof(struct GNUNET_PeerIdentity) + sizeof(struct GNUNET_HashCode) + sizeof(length))) {
+		return -1;
+	}
 	
 	ssize_t offset = 0;
 	

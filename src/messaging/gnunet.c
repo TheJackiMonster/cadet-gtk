@@ -38,10 +38,12 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const 
 	
 	msg_type_t type = MSG_GNUNET_HOST;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &visibility, sizeof(visibility));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
-	write(messaging->pipe_gnunet[1], &length, sizeof(length));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &visibility, sizeof(visibility));
+	result += write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	result += write(messaging->pipe_gnunet[1], &length, sizeof(length));
 	
 	ssize_t offset = 0;
 	
@@ -55,7 +57,9 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const 
 		offset += done;
 	}
 	
-	return offset;
+	result += offset;
+	
+	return result;
 }
 
 ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
@@ -67,8 +71,10 @@ ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
 	
 	msg_type_t type = MSG_GNUNET_SEARCH;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &length, sizeof(length));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &length, sizeof(length));
 	
 	ssize_t offset = 0;
 	
@@ -82,10 +88,12 @@ ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name) {
 		offset += done;
 	}
 	
-	return offset;
+	result += offset;
+	
+	return result;
 }
 
-void CGTK_send_gnunet_group(messaging_t* messaging, const char* port) {
+ssize_t CGTK_send_gnunet_group(messaging_t* messaging, const char* port) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gnunet_group()\n");
 #endif
@@ -99,11 +107,15 @@ void CGTK_send_gnunet_group(messaging_t* messaging, const char* port) {
 	
 	msg_type_t type = MSG_GNUNET_GROUP;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	
+	return result;
 }
 
-void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port) {
+ssize_t CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port) {
 #ifdef CGTK_ALL_DEBUG
 	printf("MESSAGING: CGTK_send_gnunet_exit()\n");
 #endif
@@ -111,7 +123,7 @@ void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, cons
 	struct GNUNET_PeerIdentity identity;
 	
 	if (GNUNET_CRYPTO_eddsa_public_key_from_string(destination, strlen(destination), &(identity.public_key)) != GNUNET_OK) {
-		return;
+		return -1;
 	}
 	
 	size_t port_len = strlen(port);
@@ -123,9 +135,13 @@ void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, cons
 	
 	msg_type_t type = MSG_GNUNET_EXIT;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
+	result += write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	
+	return result;
 }
 
 ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port,
@@ -149,10 +165,16 @@ ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination
 	
 	msg_type_t type = MSG_GNUNET_SEND_MESSAGE;
 	
-	write(messaging->pipe_gnunet[1], &type, sizeof(type));
-	write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
-	write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
-	write(messaging->pipe_gnunet[1], &length, sizeof(length));
+	ssize_t header = 0;
+	
+	header += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	header += write(messaging->pipe_gnunet[1], &identity, sizeof(identity));
+	header += write(messaging->pipe_gnunet[1], &hashcode, sizeof(hashcode));
+	header += write(messaging->pipe_gnunet[1], &length, sizeof(length));
+	
+	if (header < (sizeof(type) + sizeof(identity) + sizeof(hashcode) + sizeof(length))) {
+		return -1;
+	}
 	
 	ssize_t offset = 0;
 	

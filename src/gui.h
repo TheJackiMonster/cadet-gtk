@@ -111,6 +111,11 @@ typedef struct {
 		GtkWidget* name_entry;
 		GtkWidget* mail_entry;
 		GtkWidget* phone_entry;
+		
+		GtkWidget* name_check;
+		GtkWidget* mail_check;
+		GtkWidget* phone_check;
+		
 		GtkWidget* visibility_combobox;
 		GtkWidget* port_entry;
 	} identity;

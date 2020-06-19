@@ -7,18 +7,11 @@
 
 #include "../storage.h"
 
-#include <linux/limits.h>
-
-#define CGTK_PATH_SIZE PATH_MAX
-
 void CGTK_init_storage_directories();
 
 const char* CGTK_home_file_path(const char* subdir, const char* filename);
 
 const char* CGTK_storage_file_path(const char* subdir, const char* filename);
-
-#define CGTK_FILENAME_SIZE (NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE)
-#define CGTK_RANDOM_FILE_BUFFER_SIZE (CGTK_FILENAME_SIZE / 2)
 
 const char* CGTK_generate_random_filename();
 

@@ -20,9 +20,9 @@ ssize_t CGTK_send_gnunet_host(messaging_t* messaging, uint8_t visibility, const 
 
 ssize_t CGTK_send_gnunet_search(messaging_t* messaging, const char* name);
 
-void CGTK_send_gnunet_group(messaging_t* messaging, const char* port);
+ssize_t CGTK_send_gnunet_group(messaging_t* messaging, const char* port);
 
-void CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port);
+ssize_t CGTK_send_gnunet_exit(messaging_t* messaging, const char* destination, const char* port);
 
 ssize_t CGTK_send_gnunet_message(messaging_t* messaging, const char* destination, const char* port, const char* buffer, size_t length);
 

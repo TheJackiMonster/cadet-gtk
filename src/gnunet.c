@@ -329,7 +329,7 @@ static bool CGTK_push_message(connection_t* connection) {
 		}
 		
 		if (env) {
-			GNUNET_memcpy (&(msg[1]) + complete, buffer, offset);
+			GNUNET_memcpy(&(msg[1]) + complete, buffer, offset);
 		}
 		
 		complete += offset;

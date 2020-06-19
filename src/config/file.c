@@ -74,6 +74,12 @@ uint8_t CGTK_config_load(config_t* config) {
 			config->phone[CGTK_NAME_BUFFER_SIZE - 1] = '\0';
 		}
 		
+		json_t* regex_attr = json_object_get(json, "regex_attr\0");
+		
+		if (json_is_integer(regex_attr)) {
+			config->regex_attr = (json_integer_value(regex_attr) & CGTK_REGEX_ATTR_MASK);
+		}
+		
 		json_t* visibility = json_object_get(json, "visibility\0");
 		
 		if (json_is_string(visibility)) {
@@ -112,6 +118,8 @@ uint8_t CGTK_config_save(const config_t* config) {
 	json_object_set(json, "nick\0", json_string(config->nick));
 	json_object_set(json, "email\0", json_string(config->email));
 	json_object_set(json, "phone\0", json_string(config->phone));
+	
+	json_object_set(json, "regex_attr\0", json_integer(config->regex_attr & CGTK_REGEX_ATTR_MASK));
 	
 	json_t* visibility_string = NULL;
 	

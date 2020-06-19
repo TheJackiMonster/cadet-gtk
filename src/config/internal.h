@@ -6,6 +6,7 @@
 #define CADET_GTK_CONFIG_INTERNAL_H
 
 #include <gnunet/gnunet_constants.h>
+#include <linux/limits.h>
 
 /*
  * Only necessary for debug builds if something needs to get found by logging every call.
@@ -61,7 +62,11 @@
 #define CGTK_NAME_SEARCH_PREFIX_REG CGTK_NAME_SEARCH_PREFIX
 #define CGTK_NAME_SEARCH_PREFIX_REG_SIZE CGTK_NAME_SEARCH_PREFIX_SIZE
 
+#define CGTK_PATH_SIZE PATH_MAX
+
 #define CGTK_FILE_EXTENSION_MAX_ESTIMATE 15
+#define CGTK_FILENAME_SIZE (NAME_MAX - CGTK_FILE_EXTENSION_MAX_ESTIMATE)
+#define CGTK_RANDOM_FILE_BUFFER_SIZE (CGTK_FILENAME_SIZE / 2)
 
 #define CGTK_IDENTITY_BUFFER_SIZE 1024
 #define CGTK_PORT_BUFFER_SIZE 512
@@ -75,6 +80,12 @@
 #define CGTK_VISIBILITY_PRIVATE_ID "private\0"
 #define CGTK_VISIBILITY_CAT 2
 #define CGTK_VISIBILITY_CAT_ID "cat\0"
+
+#define CGTK_REGEX_ATTR_NONE 0x0
+#define CGTK_REGEX_ATTR_NAME 0x1
+#define CGTK_REGEX_ATTR_MAIL 0x2
+#define CGTK_REGEX_ATTR_PHONE 0x4
+#define CGTK_REGEX_ATTR_MASK 0x7
 
 #define CGTK_ANIMATION_DURATION 100
 

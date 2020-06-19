@@ -16,14 +16,14 @@
  */
 void CGTK_prepare_gui(messaging_t* messaging);
 
-void CGTK_send_gui_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity);
+ssize_t CGTK_send_gui_identity(messaging_t* messaging, const struct GNUNET_PeerIdentity* identity);
 
-void CGTK_send_gui_found(messaging_t* messaging, const char* name, const struct GNUNET_PeerIdentity* identity);
+ssize_t CGTK_send_gui_found(messaging_t* messaging, const char* name, const struct GNUNET_PeerIdentity* identity);
 
-void CGTK_send_gui_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
+ssize_t CGTK_send_gui_connect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 						   const struct GNUNET_HashCode* port);
 
-void CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
+ssize_t CGTK_send_gui_disconnect(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,
 							  const struct GNUNET_HashCode* port);
 
 ssize_t CGTK_send_gui_message(messaging_t* messaging, const struct GNUNET_PeerIdentity* source,

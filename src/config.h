@@ -16,6 +16,8 @@ typedef struct config_t {
 	char email [CGTK_NAME_BUFFER_SIZE];
 	char phone [CGTK_NAME_BUFFER_SIZE];
 	
+	uint8_t regex_attr;
+	
 	uint8_t visibility;
 	char port [CGTK_PORT_BUFFER_SIZE];
 } config_t;
