@@ -37,19 +37,23 @@ If you want to take a look at all the releases and its changes: [Release Notes](
 
 You can see all other features and bigger changes which are planned right here:
 
- * [ ] Show names of members of a group (connected to the names used in one-to-one chats).
- * [ ] Allow changing a normal chat to use JSON.
  * [x] Allow sharing files privately through GNUnet and encryption.
 >  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
+ * [ ] Allow changing a normal chat to use JSON.
+ * [ ] Show names of members of a group (connected to the names used in one-to-one chats).
+ * [ ] Providing more consistency between multiple channels to the same destination.
  * [ ] Allow setting up a profile picture.
+ * [ ] Adding a history of contacts, messages, files and keys between sessions.
+ * [ ] Upgrading the security inside of groupchats.
+ * [ ] Making groupchats more decentralized rather than hosted by one node.
  * [ ] Adding support for GNUpG as authentification and encryption method for file transfer.
 >  More information about GpG: https://gnupg.org/
- * [ ] Upgrading the security inside of groupchats.
- * [ ] Providing more consistency between multiple channels to the same destination.
- * [ ] Implementing audio-calls with the conversation of GNUnet.
-  * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
+ * [ ] Using EGO for establishing an identity between devices and using GNS
+>  (useful for reclaim attributes and tickers which could add new privacy features)
+ * [ ] Use pEp for authentification and encryption (maybe with a gtk-adapter?).
 >  More information here: https://pep.software/about/
  * [ ] Use pEp-sync to use the application on multiple peers concurrently.
+ * [ ] Implementing audio-calls with the conversation of GNUnet.
 
 ## Docs I use
 
