@@ -167,7 +167,11 @@ msg_type_t CGTK_recv_gui_msg_type(messaging_t* messaging) {
 
 uint8_t CGTK_recv_gui_code(messaging_t* messaging) {
 	uint8_t code;
-	read(messaging->pipe_gnunet[0], &code, sizeof(code));
+	
+	if (read(messaging->pipe_gnunet[0], &code, sizeof(code)) < sizeof(code)) {
+		return 0;
+	}
+	
 	return code;
 }
 
