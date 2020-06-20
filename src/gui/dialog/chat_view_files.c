@@ -79,7 +79,7 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 		hdy_action_row_set_subtitle(entry, file->hash);
 		hdy_action_row_set_icon_name(entry, "text-x-generic-symbolic\0");
 		
-		gtk_container_add(GTK_CONTAINER(files_list), GTK_WIDGET(entry));
+		gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
 		
 		gtk_widget_show_all(GTK_WIDGET(entry));
 		
@@ -92,7 +92,8 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	
 	g_string_free(name, TRUE);
 	
-	gtk_grid_attach(GTK_GRID(grid), files_list, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), upload_list, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), download_list, 0, 1, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
