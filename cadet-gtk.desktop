@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=0.5.0
+Name=Cadet-GTK
+Comment=A GTK based GUI for the CADET subsystem of GNUnet.
+TryExec=cadet-gtk
+Exec=cadet-gtk
+Icon=cadet-gtk
+Terminal=false
+StartupWMClass=CadetGTK
+Type=Application
+Categories=Chat;Network;InstantMessaging;GTK;FileSharing;
+MimeType=x-scheme-handler/cgtk;
+Keywords=cgtk;chat;im;messaging;messenger;cadet;gtk;
+X-GNOME-UsesNotifications=true
