@@ -130,6 +130,10 @@ typedef struct {
 	
 	struct {
 		GtkWidget* dialog;
+	} view_files;
+	
+	struct {
+		GtkWidget* dialog;
 		
 		GtkWidget* stack;
 		GtkWidget* stack_switcher;

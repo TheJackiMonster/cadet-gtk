@@ -57,11 +57,11 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
 	
-	#ifdef HANDY_USE_ZERO_API
+#ifdef HANDY_USE_ZERO_API
 	gui->management.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
-	#else
+#else
 	gui->management.dialog = gtk_dialog_new();
-	#endif
+#endif
 	
 	gtk_window_set_title(GTK_WINDOW(gui->management.dialog), "Manage Chat\0");
 	gtk_widget_set_size_request(gui->management.dialog, 320, 0);

@@ -15,6 +15,7 @@
 
 #include "dialog/chat_file.c"
 #include "dialog/chat_management.c"
+#include "dialog/chat_view_files.c"
 
 static void CGTK_back(GtkWidget* back_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
@@ -248,7 +249,10 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	
 	g_signal_connect(gui->chat.file_button, "clicked\0", G_CALLBACK(CGTK_attach_file), gui);
 	g_signal_connect(gui->chat.msg_button, "clicked\0", G_CALLBACK(CGTK_send_message), gui);
+	
 	g_signal_connect(option_manage, "clicked\0", G_CALLBACK(CGTK_management_dialog), gui);
+	g_signal_connect(option_files, "clicked\0", G_CALLBACK(CGTK_view_files_dialog), gui);
+	
 	g_signal_connect(gui->chat.back_button, "clicked\0", G_CALLBACK(CGTK_back), gui);
 }
 
