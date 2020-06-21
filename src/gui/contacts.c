@@ -15,6 +15,7 @@
 
 #include "dialog/contacts_id_search.c"
 #include "dialog/contacts_new_contact.c"
+#include "dialog/contacts_new_group.c"
 #include "dialog/contacts_identity.c"
 
 static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
@@ -40,7 +41,28 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) 
 	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Contacts\0");
 	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), FALSE);
 	
-	gui->contacts.add_button = gtk_button_new_from_icon_name("list-add-symbolic\0", GTK_ICON_SIZE_MENU);
+	GtkWidget* add_options = gtk_popover_menu_new();
+	GtkWidget* options_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 1);
+	
+	// TODO: add options for different chats
+	
+	GtkWidget* option_contact = gtk_button_new_with_label("New Contact\0");
+	gtk_button_set_relief(GTK_BUTTON(option_contact), GTK_RELIEF_NONE);
+	
+	GtkWidget* option_group = gtk_button_new_with_label("New Group\0");
+	gtk_button_set_relief(GTK_BUTTON(option_group), GTK_RELIEF_NONE);
+	
+	gtk_container_add(GTK_CONTAINER(options_box), option_contact);
+	gtk_container_add(GTK_CONTAINER(options_box), option_group);
+	gtk_container_add(GTK_CONTAINER(add_options), options_box);
+	
+	gtk_widget_show_all(options_box);
+	
+	GtkWidget* add_contact_icon = gtk_image_new_from_icon_name("list-add-symbolic\0", GTK_ICON_SIZE_MENU);
+	
+	gui->contacts.add_button = gtk_menu_button_new();
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(gui->contacts.add_button), add_options);
+	gtk_button_set_image(GTK_BUTTON(gui->contacts.add_button), add_contact_icon);
 	
 	gui->contacts.identity_button = gtk_button_new_from_icon_name("user-info-symbolic\0", GTK_ICON_SIZE_MENU);
 	gtk_widget_set_sensitive(gui->contacts.identity_button, FALSE);
@@ -74,7 +96,8 @@ void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) 
 	gtk_size_group_add_widget(sizeGroup, header);
 	gtk_size_group_add_widget(sizeGroup, content);
 	
-	g_signal_connect(gui->contacts.add_button, "clicked\0", G_CALLBACK(CGTK_new_contact_dialog), gui);
+	g_signal_connect(option_contact, "clicked\0", G_CALLBACK(CGTK_new_contact_dialog), gui);
+	g_signal_connect(option_group, "clicked\0", G_CALLBACK(CGTK_new_group_dialog), gui);
 	g_signal_connect(gui->contacts.identity_button, "clicked\0", G_CALLBACK(CGTK_identity_dialog), gui);
 	g_signal_connect(gui->contacts.list, "row-activated\0", G_CALLBACK(CGTK_activate_contact), gui);
 }

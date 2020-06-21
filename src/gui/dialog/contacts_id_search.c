@@ -22,8 +22,14 @@ static void CGTK_id_search_select(GtkListBox* box, GtkListBoxRow* row, gpointer 
 	const char* identity = gtk_widget_get_name(GTK_WIDGET(row));
 	const char* name = hdy_action_row_get_title(HDY_ACTION_ROW(row));
 	
-	gtk_entry_set_text(GTK_ENTRY(gui->new_contact.identity_entry), identity);
-	gtk_entry_set_text(GTK_ENTRY(gui->new_contact.name_entry), name);
+	if (gui->new_contact.dialog) {
+		gtk_entry_set_text(GTK_ENTRY(gui->new_contact.identity_entry), identity);
+		gtk_entry_set_text(GTK_ENTRY(gui->new_contact.name_entry), name);
+	} else
+	if (gui->new_group.dialog) {
+		gtk_entry_set_text(GTK_ENTRY(gui->new_group.identity_entry), identity);
+		gtk_entry_set_text(GTK_ENTRY(gui->new_group.name_entry), name);
+	}
 	
 	gtk_widget_destroy(gui->id_search.dialog);
 }
@@ -67,7 +73,14 @@ static void CGTK_id_search_dialog(GtkWidget* search_button, gpointer user_data) 
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
 #ifdef HANDY_USE_ZERO_API
-	gui->id_search.dialog = hdy_dialog_new(GTK_WINDOW(gui->new_contact.dialog));
+	if (gui->new_contact.dialog) {
+		gui->id_search.dialog = hdy_dialog_new(GTK_WINDOW(gui->new_contact.dialog));
+	} else
+	if (gui->new_group.dialog) {
+		gui->id_search.dialog = hdy_dialog_new(GTK_WINDOW(gui->new_group.dialog));
+	} else {
+		return;
+	}
 #else
 	gui->id_search.dialog = gtk_dialog_new();
 #endif

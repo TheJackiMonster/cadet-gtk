@@ -26,16 +26,21 @@ add_executable(cadet-gtk
 #		src/gnunet/connection.c                 #: internally-included
 #		src/gnunet/group.c                      #: internally-included
 #		src/gnunet/name.c                       #: internally-included
+#		src/gnunet/publication.c                #: internally-included
+#		src/gnunet/request.c                    #: internally-included
 		src/gnunet.h
 		src/gnunet.c
 		
 		src/gtk.h
 		src/gtk.c
 		
+#		src/gui/dialog/chat_file.c              #: internally-included
 #		src/gui/dialog/chat_management.c        #: internally-included
+#		src/gui/dialog/chat_view_files.c        #: internally-included
 #		src/gui/dialog/contacts_id_search.c     #: internally-included
 #		src/gui/dialog/contacts_identity.c      #: internally-included
 #		src/gui/dialog/contacts_new_contact.c   #: internally-included
+#		src/gui/dialog/contacts_new_group.c     #: internally-included
 		src/gui/chat.h
 		src/gui/chat.c
 		src/gui/contacts.h

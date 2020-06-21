@@ -167,7 +167,11 @@ static void CGTK_file_destroy(GtkWidget* dialog, gpointer user_data) {
 
 static void CGTK_file_dialog(cgtk_gui_t* gui) {
 #ifdef HANDY_USE_ZERO_API
-	gui->file.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
+	if (gui->main.window) {
+		gui->file.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
+	} else {
+		return;
+	}
 #else
 	gui->file.dialog = gtk_dialog_new();
 #endif

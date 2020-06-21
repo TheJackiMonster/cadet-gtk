@@ -122,14 +122,29 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	GtkWidget* button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), GTK_BUTTONBOX_END);
 	gtk_box_set_spacing(GTK_BOX(button_box), 2);
-
+	
+	GtkWidget* grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+	
+	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
+	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
+	
+	GtkWidget* advanced_grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
+	
 	// TODO: Maybe put identity as QR code in here (backside of the avatar which can be shown via swipe)?
 	
 #ifndef HANDY_USE_ZERO_API
 	char capitals [8];
 	
 	for (int i = 0; i < 4; i++) {
-		capitals[i*2] = id_buffer[i];
+		capitals[i*2] = gui->attributes.identity[i];
 		capitals[i*2 + 1] = (char) (i == 3? '\0' : ' ');
 	}
 	
@@ -149,21 +164,6 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	
 	gtk_container_add(GTK_CONTAINER(main_box), avatar);
 #endif
-	
-	GtkWidget* grid = gtk_grid_new();
-	gtk_grid_set_column_homogeneous(GTK_GRID(grid), FALSE);
-	gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
-	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
-	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
-	
-	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
-	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
-	
-	GtkWidget* advanced_grid = gtk_grid_new();
-	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
-	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
-	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
-	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
 	
 	gui->identity.label = gtk_label_new(gui->attributes.identity);
 	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->identity.label), PANGO_WRAP_CHAR);

@@ -14,25 +14,13 @@ static void CGTK_new_contact_confirm(GtkWidget* confirm_button, gpointer user_da
 	const char* identity = CGTK_get_entry_text(gui->new_contact.identity_entry);
 	const char* port = CGTK_get_entry_text(gui->new_contact.port_entry);
 	const char* name = CGTK_get_entry_text(gui->new_contact.name_entry);
-	gboolean is_group = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->new_contact.group_check));
 	
 	cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
-	chat->is_group = is_group;
+	chat->is_group = FALSE;
 	
 	gui->callbacks.set_name(identity, port, name);
 	
-	if ((is_group) && (strcmp(identity, gui->attributes.identity) == 0)) {
-		gui->callbacks.open_group(port);
-	} else {
-		CGTK_open_contact(gui, identity, port);
-	}
-	
-	if (is_group) {
-		msg_t msg = {};
-		msg.kind = MSG_KIND_JOIN;
-		
-		gui->callbacks.send_message(identity, port, &msg);
-	}
+	CGTK_open_contact(gui, identity, port);
 	
 	gtk_widget_destroy(gui->new_contact.dialog);
 }
@@ -53,9 +41,15 @@ static void CGTK_new_contact_destroy(GtkWidget* dialog, gpointer user_data) {
 
 static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->contacts.add_button), FALSE);
 
 #ifdef HANDY_USE_ZERO_API
-	gui->new_contact.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
+	if (gui->main.window) {
+		gui->new_contact.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
+	} else {
+		return;
+	}
 #else
 	gui->new_contact.dialog = gtk_dialog_new();
 #endif
@@ -87,38 +81,72 @@ static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
 	
+	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
+	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
+	
+	GtkWidget* advanced_grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
+	
+#ifndef HANDY_USE_ZERO_API
+	char capitals [8];
+	
+	for (int i = 0; i < 4; i++) {
+		capitals[i*2] = gui->attributes.identity[i];
+		capitals[i*2 + 1] = (char) (i == 3? '\0' : ' ');
+	}
+	
+	GtkWidget* avatar = hdy_avatar_new(48, capitals, TRUE);
+	gtk_widget_set_margin_bottom(avatar, 4);
+	gtk_widget_set_margin_start(avatar, 8);
+	gtk_widget_set_margin_top(avatar, 4);
+	gtk_widget_set_margin_end(avatar, 8);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), avatar);
+#else
+	GtkWidget* avatar = gtk_image_new_from_icon_name("avatar-default-symbolic\0", GTK_ICON_SIZE_DIALOG);
+	gtk_widget_set_margin_bottom(avatar, 4);
+	gtk_widget_set_margin_start(avatar, 8);
+	gtk_widget_set_margin_top(avatar, 4);
+	gtk_widget_set_margin_end(avatar, 8);
+	
+	gtk_container_add(GTK_CONTAINER(main_box), avatar);
+#endif
+	
 	GtkWidget* id_label = gtk_label_new("ID\0");
 	gtk_widget_set_hexpand(id_label, TRUE);
-	
-	GtkWidget* port_label = gtk_label_new("Port\0");
-	gtk_widget_set_hexpand(port_label, TRUE);
 	
 	GtkWidget* name_label = gtk_label_new("Name\0");
 	gtk_widget_set_hexpand(name_label, TRUE);
 	
+	GtkWidget* port_label = gtk_label_new("Port\0");
+	gtk_widget_set_hexpand(port_label, TRUE);
+	
 	gui->new_contact.identity_entry = gtk_entry_new();
 	gtk_widget_set_hexpand(gui->new_contact.identity_entry, TRUE);
-	
-	gui->new_contact.port_entry = gtk_entry_new();
-	gtk_widget_set_hexpand(gui->new_contact.port_entry, TRUE);
 	
 	gui->new_contact.name_entry = gtk_entry_new();
 	gtk_widget_set_hexpand(gui->new_contact.name_entry, TRUE);
 	
-	gui->new_contact.group_check = gtk_check_button_new_with_label("Join a groupchat?\0");
-	gtk_widget_set_hexpand( gui->new_contact.group_check, TRUE);
+	gui->new_contact.port_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gui->new_contact.port_entry), gui->config.port);
+	gtk_widget_set_hexpand(gui->new_contact.port_entry, TRUE);
 	
 	gtk_grid_attach(GTK_GRID(grid), id_label, 0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), port_label, 0, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 1, 1, 1);
 	gtk_grid_attach(GTK_GRID(grid), gui->new_contact.identity_entry, 1, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->new_contact.port_entry, 1, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->new_contact.name_entry, 1, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->new_contact.group_check, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), gui->new_contact.name_entry, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), advanced_expand, 0, 2, 2, 1);
+	
+	gtk_grid_attach(GTK_GRID(advanced_grid), port_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), gui->new_contact.port_entry, 1, 0, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
 	
+	gtk_container_add(GTK_CONTAINER(advanced_expand), advanced_grid);
 	gtk_container_add(GTK_CONTAINER(main_box), grid);
 	gtk_container_add(GTK_CONTAINER(main_box), button_box);
 	

@@ -48,20 +48,24 @@ static void CGTK_management_destroy(GtkWidget* dialog, gpointer user_data) {
 static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
+	
+#ifdef HANDY_USE_ZERO_API
+	if (gui->main.window) {
+		gui->management.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
+	} else {
+		return;
+	}
+#else
+	gui->management.dialog = gtk_dialog_new();
+#endif
+	
 	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));
 	
 	const char* identity = name->str;
 	const char* port = "\0";
 	
 	uint index = CGTK_split_name(name, &identity, &port);
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->chat.options_button), FALSE);
-	
-#ifdef HANDY_USE_ZERO_API
-	gui->management.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
-#else
-	gui->management.dialog = gtk_dialog_new();
-#endif
 	
 	gtk_window_set_title(GTK_WINDOW(gui->management.dialog), "Manage Chat\0");
 	gtk_widget_set_size_request(gui->management.dialog, 320, 0);

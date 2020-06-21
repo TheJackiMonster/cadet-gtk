@@ -91,18 +91,27 @@ typedef struct {
 	struct {
 		GtkWidget* dialog;
 		
+		GtkWidget* entry;
+		GtkWidget* list;
+	} id_search;
+	
+	struct {
+		GtkWidget* dialog;
+		
 		GtkWidget* identity_entry;
-		GtkWidget* port_entry;
 		GtkWidget* name_entry;
-		GtkWidget* group_check;
+		
+		GtkWidget* port_entry;
 	} new_contact;
 	
 	struct {
 		GtkWidget* dialog;
 		
-		GtkWidget* entry;
-		GtkWidget* list;
-	} id_search;
+		GtkWidget* host_check;
+		GtkWidget* identity_entry;
+		GtkWidget* port_entry;
+		GtkWidget* name_entry;
+	} new_group;
 	
 	struct {
 		GtkWidget* dialog;
