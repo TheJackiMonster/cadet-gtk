@@ -14,10 +14,25 @@ static void CGTK_management_confirm(GtkWidget* confirm_button, gpointer user_dat
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
 	const char* destination = gtk_label_get_text(GTK_LABEL(gui->management.identity_label));
-	const char* port = gtk_label_get_text(GTK_LABEL(gui->management.port_label));
 	const char* name = CGTK_get_entry_text(gui->management.name_entry);
+	const char* port = "\0";
+	
+	GtkTextBuffer* port_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gui->management.port_text_view));
+	
+	if (gtk_text_buffer_get_char_count(port_buffer) > 0) {
+		GtkTextIter start_iter, end_iter;
+		
+		gtk_text_buffer_get_start_iter(port_buffer, &start_iter);
+		gtk_text_buffer_get_end_iter(port_buffer, &end_iter);
+		
+		port = gtk_text_buffer_get_text(port_buffer, &start_iter, &end_iter, FALSE);
+	}
 	
 	gui->callbacks.set_name(destination, port, name);
+	
+	cgtk_chat_t* chat = gui->callbacks.select_chat(destination, port);
+	
+	chat->use_json = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gui->management.json_check));
 	
 	gtk_widget_destroy(gui->management.dialog);
 }
@@ -26,7 +41,18 @@ static void CGTK_management_exit_chat(GtkWidget* exit_button, gpointer user_data
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 
 	const char* destination = gtk_label_get_text(GTK_LABEL(gui->management.identity_label));
-	const char* port = gtk_label_get_text(GTK_LABEL(gui->management.port_label));
+	const char* port = "\0";
+	
+	GtkTextBuffer* port_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gui->management.port_text_view));
+	
+	if (gtk_text_buffer_get_char_count(port_buffer) > 0) {
+		GtkTextIter start_iter, end_iter;
+		
+		gtk_text_buffer_get_start_iter(port_buffer, &start_iter);
+		gtk_text_buffer_get_end_iter(port_buffer, &end_iter);
+		
+		port = gtk_text_buffer_get_text(port_buffer, &start_iter, &end_iter, FALSE);
+	}
 	
 	gui->callbacks.exit_chat(destination, port);
 	
@@ -88,6 +114,17 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	gtk_grid_set_row_homogeneous(GTK_GRID(grid), FALSE);
 	gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
 	
+	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
+	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
+	gtk_widget_set_margin_top(advanced_expand, 16);
+	
+	GtkWidget* advanced_grid = gtk_grid_new();
+	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
+	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_widget_set_margin_top(advanced_grid, 6);
+	
 	const cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
 	
 	GtkWidget* members_list = gtk_list_box_new();
@@ -121,15 +158,24 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	gtk_label_set_selectable(GTK_LABEL(gui->management.identity_label), TRUE);
 	gtk_widget_set_hexpand(gui->management.identity_label, TRUE);
 	
-	gui->management.port_label = gtk_label_new(port);
-	gtk_label_set_line_wrap_mode(GTK_LABEL(gui->management.port_label), PANGO_WRAP_CHAR);
-	gtk_label_set_line_wrap(GTK_LABEL(gui->management.port_label), TRUE);
-	gtk_label_set_selectable(GTK_LABEL(gui->management.port_label), TRUE);
-	gtk_widget_set_hexpand(gui->management.port_label, TRUE);
-	
 	gui->management.name_entry = gtk_entry_new();
 	gtk_entry_set_text(GTK_ENTRY(gui->management.name_entry), gui->callbacks.get_name(identity, port));
 	gtk_widget_set_hexpand(gui->management.name_entry, TRUE);
+	
+	gui->management.port_text_view = gtk_text_view_new();
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(gui->management.port_text_view), FALSE);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(gui->management.port_text_view), GTK_WRAP_CHAR);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(gui->management.port_text_view), 4);
+	gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(gui->management.port_text_view), 4);
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(gui->management.port_text_view), 4);
+	gtk_text_view_set_top_margin(GTK_TEXT_VIEW(gui->management.port_text_view), 4);
+	gtk_widget_set_hexpand(gui->management.port_text_view, TRUE);
+	gtk_widget_set_margin_bottom(gui->management.port_text_view, 4);
+	gtk_widget_set_margin_top(gui->management.port_text_view, 4);
+	
+	GtkTextBuffer* port_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(gui->management.port_text_view));
+	
+	gtk_text_buffer_set_text(port_buffer, port, strlen(port));
 	
 	if (name->str[index] == '\0') {
 		name->str[index] = '_';
@@ -137,19 +183,27 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	
 	g_string_free(name, TRUE);
 	
+	gui->management.json_check = gtk_check_button_new_with_label("Use JSON for messages\0");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->management.json_check), chat->use_json);
+	
 	GtkWidget* exit_button = gtk_button_new_with_label("Exit Chat\0");
 	
 	gtk_grid_attach(GTK_GRID(grid), gui->management.identity_label, 0, 0, 2, 1);
 	gtk_grid_attach(GTK_GRID(grid), members_list, 0, 1, 2, 1);
-	gtk_grid_attach(GTK_GRID(grid), port_label, 0, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->management.port_label, 1, 2, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), gui->management.name_entry, 1, 3, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), exit_button, 1, 4, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), name_label, 0, 2, 1, 1);
+	
+	gtk_grid_attach(GTK_GRID(grid), gui->management.name_entry, 1, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), exit_button, 1, 3, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), advanced_expand, 0, 4, 2, 1);
+	
+	gtk_grid_attach(GTK_GRID(advanced_grid), port_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), gui->management.port_text_view, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(advanced_grid), gui->management.json_check, 1, 1, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
 	
+	gtk_container_add(GTK_CONTAINER(advanced_expand), advanced_grid);
 	gtk_container_add(GTK_CONTAINER(main_box), grid);
 	gtk_container_add(GTK_CONTAINER(main_box), button_box);
 	

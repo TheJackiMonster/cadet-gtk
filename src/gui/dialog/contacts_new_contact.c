@@ -83,12 +83,14 @@ static void CGTK_new_contact_dialog(GtkWidget* add_button, gpointer user_data) {
 	
 	GtkWidget* advanced_expand = gtk_expander_new("Advanced\0");
 	gtk_expander_set_expanded(GTK_EXPANDER(advanced_expand), FALSE);
+	gtk_widget_set_margin_top(advanced_expand, 16);
 	
 	GtkWidget* advanced_grid = gtk_grid_new();
 	gtk_grid_set_column_homogeneous(GTK_GRID(advanced_grid), FALSE);
 	gtk_grid_set_column_spacing(GTK_GRID(advanced_grid), 4);
 	gtk_grid_set_row_homogeneous(GTK_GRID(advanced_grid), FALSE);
 	gtk_grid_set_row_spacing(GTK_GRID(advanced_grid), 4);
+	gtk_widget_set_margin_top(advanced_grid, 6);
 	
 #ifndef HANDY_USE_ZERO_API
 	char capitals [8];

@@ -133,8 +133,10 @@ typedef struct {
 		GtkWidget* dialog;
 		
 		GtkWidget* identity_label;
-		GtkWidget* port_label;
 		GtkWidget* name_entry;
+		
+		GtkWidget* port_text_view;
+		GtkWidget* json_check;
 	} management;
 	
 	struct {
