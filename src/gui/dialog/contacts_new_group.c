@@ -51,37 +51,7 @@ static void CGTK_new_group_id_changed(GtkEditable* id_editable, gpointer user_da
 	gtk_widget_show_all(gui->new_group.name_entry);
 }
 
-static void CGTK_new_group_destroy(GtkWidget* dialog, gpointer user_data) {
-	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
-	
-	memset(&(gui->new_group), 0, sizeof(gui->new_group));
-}
-
-static void CGTK_new_group_dialog(GtkWidget* add_button, gpointer user_data) {
-	cgtk_gui_t *gui = (cgtk_gui_t *) user_data;
-	
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gui->contacts.add_button), FALSE);
-	
-#ifdef HANDY_USE_ZERO_API
-	if (gui->main.window) {
-		gui->new_group.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
-	} else {
-		return;
-	}
-#else
-	gui->new_group.dialog = gtk_dialog_new();
-#endif
-	
-	gtk_window_set_title(GTK_WINDOW(gui->new_group.dialog), "Add group\0");
-	gtk_widget_set_size_request(gui->new_group.dialog, 320, 0);
-	
-	GtkWidget* header_bar = gtk_dialog_get_header_bar(GTK_DIALOG(gui->new_group.dialog));
-	
-	GtkWidget* search_button = gtk_button_new_from_icon_name("system-search-symbolic\0", GTK_ICON_SIZE_MENU);
-	
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), search_button);
-	
-	GtkWidget* main_box = gtk_dialog_get_content_area(GTK_DIALOG(gui->new_group.dialog));
+static void CGTK_init_new_group_dialog(cgtk_gui_t* gui, GtkWidget* main_box) {
 	gtk_box_set_spacing(GTK_BOX(main_box), 2);
 	gtk_widget_set_margin_start(main_box, 4);
 	gtk_widget_set_margin_bottom(main_box, 4);
@@ -151,10 +121,6 @@ static void CGTK_new_group_dialog(GtkWidget* add_button, gpointer user_data) {
 	gtk_box_set_child_packing(GTK_BOX(button_box), cancel_button, FALSE, FALSE, 2, GTK_PACK_START);
 	gtk_box_set_child_packing(GTK_BOX(button_box), confirm_button, FALSE, FALSE, 2, GTK_PACK_START);
 	
-	g_signal_connect(gui->new_group.dialog, "destroy\0", G_CALLBACK(CGTK_new_group_destroy), gui);
-	
-	g_signal_connect(search_button, "clicked\0", G_CALLBACK(CGTK_id_search_dialog), gui);
-	
 	g_signal_connect(gui->new_group.identity_entry, "changed\0", G_CALLBACK(CGTK_new_group_id_changed), gui);
 	
 	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_new_group_cancel), gui);
@@ -165,6 +131,4 @@ static void CGTK_new_group_dialog(GtkWidget* add_button, gpointer user_data) {
 			gui->new_group.identity_entry, "sensitive\0",
 			G_BINDING_INVERT_BOOLEAN
 	);
-	
-	gtk_widget_show_all(gui->new_group.dialog);
 }
