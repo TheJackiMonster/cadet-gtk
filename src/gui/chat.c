@@ -348,7 +348,7 @@ void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact
 #ifdef HANDY_USE_ZERO_API
 		gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(gui->main.leaflet)) == HDY_FOLD_UNFOLDED);
 #else
-		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->content_leaflet));
+		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->main.leaflet));
 #endif
 		
 		if (unfolded) {
@@ -386,7 +386,7 @@ void CGTK_unload_chat(cgtk_gui_t* gui, const char* contact_id, const char* conta
 #ifdef HANDY_USE_ZERO_API
 		gboolean unfolded = (hdy_leaflet_get_fold(HDY_LEAFLET(gui->main.leaflet)) == HDY_FOLD_UNFOLDED);
 #else
-		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->content_leaflet));
+		gboolean unfolded = !hdy_leaflet_get_folded(HDY_LEAFLET(gui->main.leaflet));
 #endif
 		
 		if (unfolded) {

@@ -106,6 +106,8 @@ static void CGTK_identity_dialog(GtkWidget* id_button, gpointer user_data) {
 	gui->identity.dialog = hdy_dialog_new(GTK_WINDOW(gui->main.window));
 #else
 	gui->identity.dialog = gtk_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(gui->identity.dialog), GTK_WINDOW(gui->main.window));
+	gtk_window_set_modal(GTK_WINDOW(gui->identity.dialog), TRUE);
 #endif
 	
 	gtk_window_set_title(GTK_WINDOW(gui->identity.dialog), "Identity\0");

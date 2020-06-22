@@ -33,6 +33,8 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	}
 #else
 	gui->view_files.dialog = gtk_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(gui->view_files.dialog), GTK_WINDOW(gui->main.window));
+	gtk_window_set_modal(GTK_WINDOW(gui->view_files.dialog), TRUE);
 #endif
 	
 	GString* name = g_string_new(gtk_stack_get_visible_child_name(GTK_STACK(gui->chat.stack)));

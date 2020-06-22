@@ -83,6 +83,17 @@ static void CGTK_id_search_dialog(GtkWidget* search_button, gpointer user_data) 
 	}
 #else
 	gui->id_search.dialog = gtk_dialog_new();
+	
+	if (gui->new_contact.dialog) {
+		gtk_window_set_transient_for(GTK_WINDOW(gui->id_search.dialog), GTK_WINDOW(gui->new_contact.dialog));
+	} else
+	if (gui->new_group.dialog) {
+		gtk_window_set_transient_for(GTK_WINDOW(gui->id_search.dialog), GTK_WINDOW(gui->new_group.dialog));
+	} else {
+		gtk_window_set_transient_for(GTK_WINDOW(gui->id_search.dialog), GTK_WINDOW(gui->main.window));
+	}
+	
+	gtk_window_set_modal(GTK_WINDOW(gui->id_search.dialog), TRUE);
 #endif
 	
 	gtk_window_set_title(GTK_WINDOW(gui->id_search.dialog), "Search contact\0");

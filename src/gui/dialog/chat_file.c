@@ -174,6 +174,8 @@ static void CGTK_file_dialog(cgtk_gui_t* gui) {
 	}
 #else
 	gui->file.dialog = gtk_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(gui->file.dialog), GTK_WINDOW(gui->main.window));
+	gtk_window_set_modal(GTK_WINDOW(gui->file.dialog), TRUE);
 #endif
 	
 	gtk_window_set_title(GTK_WINDOW(gui->file.dialog), "File\0");

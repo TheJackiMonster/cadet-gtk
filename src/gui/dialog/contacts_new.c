@@ -22,6 +22,8 @@ static void CGTK_new_contact_and_group_dialog(GtkWidget* add_button, gpointer us
 	}
 #else
 	dialog = gtk_dialog_new();
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(gui->main.window));
+	gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 #endif
 	
 	gtk_widget_set_size_request(dialog, 320, 0);
@@ -43,10 +45,21 @@ static void CGTK_new_contact_and_group_dialog(GtkWidget* add_button, gpointer us
 	GtkWidget* contact_main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
 	GtkWidget* group_main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
 	
+#ifdef HANDY_USE_ZERO_API
 	GtkWidget* header_bar = gtk_dialog_get_header_bar(GTK_DIALOG(dialog));
+#else
+	GtkWidget* header_bar = hdy_header_bar_new();
+	
+	gtk_window_set_titlebar(GTK_WINDOW(dialog), header_bar);
+#endif
+	
 	GtkWidget* search_button = gtk_button_new_from_icon_name("system-search-symbolic\0", GTK_ICON_SIZE_MENU);
 	
+#ifdef HANDY_USE_ZERO_API
 	gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), search_button);
+#else
+	hdy_header_bar_pack_end(HDY_HEADER_BAR(header_bar), search_button);
+#endif
 	
 	CGTK_init_new_contact_dialog(gui, contact_main_box);
 	CGTK_init_new_group_dialog(gui, group_main_box);
@@ -55,7 +68,11 @@ static void CGTK_new_contact_and_group_dialog(GtkWidget* add_button, gpointer us
 	gtk_stack_add_named(GTK_STACK(title_stack), contact_label, "contact\0");
 	gtk_stack_add_named(GTK_STACK(title_stack), group_label, "group\0");
 	
+#ifdef HANDY_USE_ZERO_API
 	gtk_header_bar_set_custom_title(GTK_HEADER_BAR(header_bar), GTK_WIDGET(title_stack));
+#else
+	hdy_header_bar_set_custom_title(HDY_HEADER_BAR(header_bar), GTK_WIDGET(title_stack));
+#endif
 	
 	const gchar* contact_title = gtk_label_get_text(GTK_LABEL(contact_label));
 	const gchar* group_title = gtk_label_get_text(GTK_LABEL(group_label));
