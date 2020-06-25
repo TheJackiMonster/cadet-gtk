@@ -10,6 +10,8 @@ This application requires [libhandy](https://gitlab.gnome.org/GNOME/libhandy/)
 0.0.12 or later, as it uses it in order to make it work as a mobile application
 too.
 
+It also depends on [libnotify](https://developer.gnome.org/libnotify/).
+
 It runs the actual handling of CADET as second process and communicates to the main process with the GUI
 via unix specific pipes.
 
