@@ -20,6 +20,18 @@ static void CGTK_view_files_destroy(GtkWidget* dialog, gpointer user_data) {
 	memset(&(gui->view_files), 0, sizeof(gui->view_files));
 }
 
+static void CGTK_view_files_unindex(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	//
+}
+
+static void CGTK_view_files_delete(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
+	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
+	
+	//
+}
+
 static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
@@ -81,11 +93,17 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 		
 		HdyActionRow* entry = hdy_action_row_new();
 		
+		gtk_widget_set_name(GTK_WIDGET(entry), path_string->str);
+		
 		hdy_action_row_set_title(entry, file->name);
 		hdy_action_row_set_subtitle(entry, file->hash);
 		hdy_action_row_set_icon_name(entry, "text-x-generic-symbolic\0");
 		
-		gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
+		if (CGTK_check_storage_subdir(path_string->str, CGTK_STORAGE_UPLOAD_DIR)) {
+			gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
+		} else {
+			gtk_container_add(GTK_CONTAINER(download_list), GTK_WIDGET(entry));
+		}
 		
 		gtk_widget_show_all(GTK_WIDGET(entry));
 		
@@ -117,6 +135,9 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	
 	g_signal_connect(cancel_button, "clicked\0", G_CALLBACK(CGTK_view_files_cancel), gui);
 	g_signal_connect(confirm_button, "clicked\0", G_CALLBACK(CGTK_view_files_confirm), gui);
+	
+	g_signal_connect(upload_list, "row-activated\0", G_CALLBACK(CGTK_view_files_unindex), gui);
+	g_signal_connect(download_list, "row-activated\0", G_CALLBACK(CGTK_view_files_delete), gui);
 	
 	gtk_widget_show_all(gui->view_files.dialog);
 }

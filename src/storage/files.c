@@ -136,6 +136,12 @@ int CGTK_check_directory(const char* path) {
 	return S_ISDIR(stats.st_mode);
 }
 
+int CGTK_check_storage_subdir(const char* path, const char* subdir) {
+	const char* storage = CGTK_home_file_path(CGTK_STORAGE_PATH, subdir);
+	
+	return (strstr(path, storage) == path);
+}
+
 const char* CGTK_get_filename(const char* path) {
 	const char* sep = rindex(path, '/');
 	

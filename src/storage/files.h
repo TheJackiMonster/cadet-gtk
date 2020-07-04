@@ -19,6 +19,8 @@ int CGTK_check_existence(const char* path);
 
 int CGTK_check_directory(const char* path);
 
+int CGTK_check_storage_subdir(const char* path, const char* subdir);
+
 const char* CGTK_get_filename(const char* path);
 
 const char* CGTK_get_extension(const char* path);
