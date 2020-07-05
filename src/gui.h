@@ -35,6 +35,7 @@ typedef struct {
 typedef struct cgtk_file_t {
 	const char* name;
 	const char* hash;
+	float status;
 	
 	gpointer visual_data;
 	
@@ -52,6 +53,8 @@ typedef struct {
 	uint8_t (*send_message)(const char* destination, const char* port, msg_t* msg);
 	void (*upload_file)(const char* path);
 	void (*download_file)(const char* uri, const char* path);
+	void (*delete_file)(const char* path, gboolean cleanup);
+	void (*unindex_file)(const char* path);
 } cgtk_callbacks_t;
 
 typedef struct {

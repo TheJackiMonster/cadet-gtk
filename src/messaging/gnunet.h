@@ -30,6 +30,8 @@ ssize_t CGTK_send_gnunet_upload(messaging_t* messaging, const char* path);
 
 ssize_t CGTK_send_gnunet_download(messaging_t* messaging, const char* uri, const char* path);
 
+ssize_t CGTK_send_gnunet_unindex(messaging_t* messaging, const char* path);
+
 msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging);
 
 const char* CGTK_recv_gnunet_identity(messaging_t* messaging);

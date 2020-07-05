@@ -48,6 +48,9 @@ cgtk_file_t* CGTK_get_file(cgtk_gui_t* gui, const char* filename) {
 		result = g_malloc(sizeof(cgtk_file_t));
 		memset(result, 0, sizeof(cgtk_file_t));
 		
+		cgtk_file_t* file = (cgtk_file_t*) result;
+		file->status = 0.0f;
+		
 		gboolean done = g_hash_table_insert(gui->files, key, result);
 		
 		if (!done) {
@@ -135,6 +138,10 @@ void CGTK_send_message_about_file(cgtk_gui_t* gui, const char* filename, msg_t* 
 			string->str[index] = '_';
 			
 			id = id->next;
+		}
+		
+		if ((msg->kind == MSG_KIND_FILE) && (msg->file.progress > file->status)) {
+			file->status = msg->file.progress < 1.0f? msg->file.progress : 1.0f;
 		}
 	}
 }

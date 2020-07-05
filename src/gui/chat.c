@@ -594,7 +594,11 @@ void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* c
 			
 			GtkWidget* progress = GTK_WIDGET(children->next->data);
 			
-			gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->file.progress);
+			if (file_msg->file.progress >= 0.0f) {
+				gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), file_msg->file.progress);
+			} else {
+				gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress), 0.0f);
+			}
 			
 			if (file_msg->file.progress >= 1.0f) {
 				cgtk_1tu_key_t key;
@@ -629,6 +633,14 @@ void CGTK_add_file_message(cgtk_gui_t* gui, GtkWidget* chat_list, cgtk_chat_t* c
 				if (unlocked) {
 					g_signal_connect(file_button, "clicked", G_CALLBACK(CGTK_open_file), gui);
 				}
+			} else {
+				GtkWidget* image = gtk_button_get_image(GTK_BUTTON(file_button));
+				
+				const char* icon_name = "edit-delete-symbolic\0";
+				
+				gtk_image_set_from_icon_name(GTK_IMAGE(image), icon_name, GTK_ICON_SIZE_LARGE_TOOLBAR);
+				
+				g_signal_handlers_disconnect_by_func(file_button, G_CALLBACK(CGTK_open_file), gui);
 			}
 			
 			gtk_widget_show_all(file_box);

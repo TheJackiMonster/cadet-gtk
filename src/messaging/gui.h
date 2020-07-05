@@ -33,6 +33,8 @@ ssize_t CGTK_send_gui_file_progress(messaging_t* messaging, float progress, cons
 
 ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, bool upload, const char* path, const struct GNUNET_FS_Uri* uri);
 
+ssize_t CGTK_send_gui_file_delete(messaging_t* messaging, const char* path);
+
 msg_type_t CGTK_recv_gui_msg_type(messaging_t* messaging);
 
 uint8_t CGTK_recv_gui_code(messaging_t* messaging);

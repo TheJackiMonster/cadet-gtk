@@ -348,8 +348,6 @@ static void CGTK_upload_publication(const char* path) {
 	printf("GNUNET: CGTK_push_upload()\n");
 #endif
 	
-	printf("this should upload: '%s'\n", path);
-	
 	publication_t* publication = CGTK_publication_create(path);
 	
 	struct GNUNET_FS_BlockOptions bo = {};
@@ -369,11 +367,23 @@ static void CGTK_upload_publication(const char* path) {
 			&bo
 	);
 	
-	publication->context = GNUNET_FS_publish_start(
+	publication->context.publish = GNUNET_FS_publish_start(
 			session.handles.fs, fi,
 			NULL, NULL, NULL,
 			GNUNET_FS_PUBLISH_OPTION_NONE
 	);
+	
+	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
+}
+
+static void CGTK_unindex_publication(const char* path) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_unindex_publication()\n");
+#endif
+	
+	publication_t* publication = CGTK_publication_create(path);
+	
+	publication->context.unindex = GNUNET_FS_unindex_start(session.handles.fs, path, publication);
 	
 	GNUNET_CONTAINER_DLL_insert(session.publications_head, session.publications_tail, publication);
 }
@@ -689,14 +699,14 @@ static void CGTK_idle(void* cls) {
 			printf("GNUNET: CGTK_idle(): MSG_GNUNET_DOWNLOAD_FILE\n");
 #endif
 			
-			struct GNUNET_FS_Uri* uri = CGTK_recv_gui_uri(messaging);
+			struct GNUNET_FS_Uri *uri = CGTK_recv_gui_uri(messaging);
 			
 			if (!uri) {
 				CGTK_fatal_error("Can't identify files uri!\0");
 				return;
 			}
 			
-			const char* path = CGTK_recv_gui_path(messaging);
+			const char *path = CGTK_recv_gui_path(messaging);
 			
 			if (!path) {
 				GNUNET_FS_uri_destroy(uri);
@@ -711,6 +721,20 @@ static void CGTK_idle(void* cls) {
 			}
 			
 			CGTK_request_download(uri, path);
+			break;
+		} case MSG_GNUNET_UNINDEX_FILE: {
+#ifdef CGTK_ALL_DEBUG
+			printf("GNUNET: CGTK_idle(): MSG_GNUNET_UNINDEX_FILE\n");
+#endif
+			
+			const char* path = CGTK_recv_gui_path(messaging);
+			
+			if (!path) {
+				CGTK_fatal_error("Can't identify files path!\0");
+				return;
+			}
+			
+			CGTK_unindex_publication(path);
 			break;
 		} case MSG_ERROR: {
 #ifdef CGTK_ALL_DEBUG
@@ -799,9 +823,25 @@ static void* CGTK_fs_progress(void* cls, const struct GNUNET_FS_ProgressInfo* in
 			GNUNET_SCHEDULER_add_now(&CGTK_request_finish, request);
 			break;
 		} case GNUNET_FS_STATUS_DOWNLOAD_ERROR: {
-			request_t* request = (request_t*) info->value.download.cctx;
+			request_t *request = (request_t *) info->value.download.cctx;
 			
 			GNUNET_SCHEDULER_add_now(&CGTK_request_error, request);
+			break;
+		} case GNUNET_FS_STATUS_UNINDEX_START: {
+			publication_t* publication = (publication_t*) info->value.unindex.cctx;
+			publication->progress = 0.0f;
+			
+			return publication;
+		} case GNUNET_FS_STATUS_UNINDEX_PROGRESS: {
+			publication_t* publication = (publication_t*) info->value.unindex.cctx;
+			publication->progress = 1.0f * info->value.unindex.completed / info->value.unindex.size;
+			
+			return publication;
+		} case GNUNET_FS_STATUS_UNINDEX_COMPLETED: {
+			publication_t* publication = (publication_t*) info->value.unindex.cctx;
+			publication->progress = 1.0f;
+			
+			GNUNET_SCHEDULER_add_now(&CGTK_publication_unindex_finish, publication);
 			break;
 		} default: {
 			break;

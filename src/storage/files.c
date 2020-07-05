@@ -225,3 +225,7 @@ int CGTK_copy_file(const char* src_path, const char* dst_path) {
 	
 	return (copied - stats.st_size);
 }
+
+int CGTK_remove_file(const char* path) {
+	return remove(path);
+}

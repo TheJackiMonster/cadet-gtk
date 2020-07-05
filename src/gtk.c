@@ -257,6 +257,36 @@ static void CGTK_download_file(const char* uri, const char* path) {
 	CGTK_send_gnunet_download(messaging, uri, path);
 }
 
+static void CGTK_delete_file(const char* path, gboolean cleanup) {
+	cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
+	
+	msg_t msg = {};
+	msg.kind = MSG_KIND_FILE;
+	msg.file.hash = file->hash ? file->hash : "\0";
+	msg.file.name = file->name ? file->name : "\0";
+	
+	msg.file.path = path;
+	msg.file.progress = -1.0f;
+	
+	msg.usage = MSG_USAGE_UPDATE;
+	
+	CGTK_send_message_about_file(&(session.gui), path, &msg);
+	
+	if (cleanup) {
+		CGTK_unload_data_from_file(&(session.gui), path);
+	} else {
+		file->status = 0.0f;
+	}
+	
+	CGTK_remove_file(path);
+}
+
+static void CGTK_unindex_file(const char* path) {
+	CGTK_send_gnunet_unindex(messaging, path);
+	
+	CGTK_delete_file(path, TRUE);
+}
+
 static gboolean CGTK_idle(gpointer user_data) {
 	msg_type_t type = CGTK_recv_gnunet_msg_type(messaging);
 	
@@ -435,17 +465,17 @@ static gboolean CGTK_idle(gpointer user_data) {
 		} case MSG_GUI_FILE_COMPLETE: {
 			bool upload = CGTK_recv_gnunet_bool(messaging);
 			
-			const char* path = CGTK_recv_gnunet_path(messaging);
+			const char *path = CGTK_recv_gnunet_path(messaging);
 			
 			if (!path) {
 				CGTK_shutdown("Can't identify files path!\0");
 				return FALSE;
 			}
 			
-			GString* spath = g_string_new(path);
+			GString *spath = g_string_new(path);
 			path = spath->str; // copy path before second use of CGTK_recv_gnunet_path(...)
 			
-			const char* uri = CGTK_recv_gnunet_path(messaging);
+			const char *uri = CGTK_recv_gnunet_path(messaging);
 			
 			if (!uri) {
 				g_string_free(spath, TRUE);
@@ -454,22 +484,32 @@ static gboolean CGTK_idle(gpointer user_data) {
 				return FALSE;
 			}
 			
-			cgtk_file_t* file = CGTK_get_file(&(session.gui), path);
+			cgtk_file_t *file = CGTK_get_file(&(session.gui), path);
 			
 			msg_t msg = {};
 			msg.kind = MSG_KIND_FILE;
 			msg.file.uri = uri;
-			msg.file.hash = file->hash? file->hash : "\0";
-			msg.file.name = file->name? file->name : "\0";
+			msg.file.hash = file->hash ? file->hash : "\0";
+			msg.file.name = file->name ? file->name : "\0";
 			
 			msg.file.path = path;
 			msg.file.progress = 1.0f;
 			
-			msg.usage = upload? MSG_USAGE_GLOBAL : MSG_USAGE_UPDATE;
+			msg.usage = upload ? MSG_USAGE_GLOBAL : MSG_USAGE_UPDATE;
 			
 			CGTK_send_message_about_file(&(session.gui), path, &msg);
 			
 			g_string_free(spath, TRUE);
+			break;
+		} case MSG_GUI_FILE_DELETE: {
+			const char *path = CGTK_recv_gnunet_path(messaging);
+			
+			if (!path) {
+				CGTK_shutdown("Can't identify files path!\0");
+				return FALSE;
+			}
+			
+			CGTK_delete_file(path, TRUE);
 			break;
 		} case MSG_ERROR: {
 			CGTK_shutdown("No connection!\0");
@@ -534,6 +574,8 @@ void CGTK_activate_gtk(GtkApplication* application, gpointer user_data) {
 	session.gui.callbacks.send_message = &CGTK_send_message;
 	session.gui.callbacks.upload_file = &CGTK_upload_file;
 	session.gui.callbacks.download_file = &CGTK_download_file;
+	session.gui.callbacks.delete_file = &CGTK_delete_file;
+	session.gui.callbacks.unindex_file = &CGTK_unindex_file;
 	
 	CGTK_config_load(&(session.config));
 	

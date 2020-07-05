@@ -29,4 +29,6 @@ const char* CGTK_get_filehash(const char* path);
 
 int CGTK_copy_file(const char* src_path, const char* dst_path);
 
+int CGTK_remove_file(const char* path);
+
 #endif //CADET_GTK_STORAGE_FILES_H

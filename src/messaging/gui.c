@@ -155,6 +155,24 @@ ssize_t CGTK_send_gui_file_complete(messaging_t* messaging, bool upload, const c
 	return result;
 }
 
+ssize_t CGTK_send_gui_file_delete(messaging_t* messaging, const char* path) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gui_file_delete()\n");
+#endif
+	
+	const size_t path_len = strlen(path);
+	
+	msg_type_t type = MSG_GUI_FILE_DELETE;
+	
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gui[1], &type, sizeof(type));
+	result += write(messaging->pipe_gui[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gui[1], path, path_len);
+	
+	return result;
+}
+
 msg_type_t CGTK_recv_gui_msg_type(messaging_t* messaging) {
 	msg_type_t type = MSG_NONE;
 	

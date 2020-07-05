@@ -230,6 +230,24 @@ ssize_t CGTK_send_gnunet_download(messaging_t* messaging, const char* uri, const
 	return result;
 }
 
+ssize_t CGTK_send_gnunet_unindex(messaging_t* messaging, const char* path) {
+#ifdef CGTK_ALL_DEBUG
+	printf("MESSAGING: CGTK_send_gnunet_unindex()\n");
+#endif
+	
+	const size_t path_len = strlen(path);
+	
+	msg_type_t type = MSG_GNUNET_UNINDEX_FILE;
+	
+	ssize_t result = 0;
+	
+	result += write(messaging->pipe_gnunet[1], &type, sizeof(type));
+	result += write(messaging->pipe_gnunet[1], &path_len, sizeof(path_len));
+	result += write(messaging->pipe_gnunet[1], path, path_len);
+	
+	return result;
+}
+
 msg_type_t CGTK_recv_gnunet_msg_type(messaging_t* messaging) {
 	msg_type_t type = MSG_NONE;
 	

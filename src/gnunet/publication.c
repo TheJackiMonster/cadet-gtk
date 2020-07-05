@@ -14,7 +14,11 @@ struct publication_t {
 	float progress;
 	
 	struct GNUNET_CONTAINER_MetaData* meta;
-	struct GNUNET_FS_PublishContext* context;
+	
+	struct {
+		struct GNUNET_FS_PublishContext* publish;
+		struct GNUNET_FS_UnindexContext* unindex;
+	} context;
 };
 
 static publication_t* CGTK_publication_create(const char* path) {
@@ -39,9 +43,14 @@ static void CGTK_publication_destroy(publication_t* publication) {
 	printf("GNUNET: CGTK_publication_destroy()\n");
 #endif
 	
-	if (publication->context) {
-		GNUNET_FS_publish_stop(publication->context);
-		publication->context = NULL;
+	if (publication->context.publish) {
+		GNUNET_FS_publish_stop(publication->context.publish);
+		publication->context.publish = NULL;
+	}
+	
+	if (publication->context.unindex) {
+		GNUNET_FS_unindex_stop(publication->context.unindex);
+		publication->context.unindex = NULL;
 	}
 	
 	if (publication->meta) {
@@ -77,6 +86,20 @@ static void CGTK_publication_finish(void* cls) {
 	publication_t* publication = (publication_t*) cls;
 	
 	CGTK_send_gui_file_complete(messaging, true, publication->path, publication->uri);
+	
+	GNUNET_CONTAINER_DLL_remove(session.publications_head, session.publications_tail, publication);
+	
+	CGTK_publication_destroy(publication);
+}
+
+static void CGTK_publication_unindex_finish(void* cls) {
+#ifdef CGTK_ALL_DEBUG
+	printf("GNUNET: CGTK_publication_unindex_finish()\n");
+#endif
+	
+	publication_t* publication = (publication_t*) cls;
+	
+	CGTK_send_gui_file_delete(messaging, publication->path);
 	
 	GNUNET_CONTAINER_DLL_remove(session.publications_head, session.publications_tail, publication);
 	

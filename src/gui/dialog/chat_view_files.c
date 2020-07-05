@@ -23,13 +23,21 @@ static void CGTK_view_files_destroy(GtkWidget* dialog, gpointer user_data) {
 static void CGTK_view_files_unindex(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	//
+	const char* path = gtk_widget_get_name(GTK_WIDGET(row));
+	
+	gui->callbacks.unindex_file(path);
+	
+	gtk_container_remove(GTK_CONTAINER(box), GTK_WIDGET(row));
 }
 
 static void CGTK_view_files_delete(GtkListBox* box, GtkListBoxRow* row, gpointer user_data) {
 	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
 	
-	//
+	const char* path = gtk_widget_get_name(GTK_WIDGET(row));
+	
+	gui->callbacks.delete_file(path, FALSE);
+	
+	gtk_container_remove(GTK_CONTAINER(box), GTK_WIDGET(row));
 }
 
 static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) {
@@ -87,25 +95,25 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	while (files) {
 		GString* path_string = (GString*) files->data;
 		
-		//GtkWidget* file_box = GTK_WIDGET(g_hash_table_lookup(chat->files, files->data));
-		
 		const cgtk_file_t* file = CGTK_get_file(gui, path_string->str);
 		
-		HdyActionRow* entry = hdy_action_row_new();
-		
-		gtk_widget_set_name(GTK_WIDGET(entry), path_string->str);
-		
-		hdy_action_row_set_title(entry, file->name);
-		hdy_action_row_set_subtitle(entry, file->hash);
-		hdy_action_row_set_icon_name(entry, "text-x-generic-symbolic\0");
-		
-		if (CGTK_check_storage_subdir(path_string->str, CGTK_STORAGE_UPLOAD_DIR)) {
-			gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
-		} else {
-			gtk_container_add(GTK_CONTAINER(download_list), GTK_WIDGET(entry));
+		if ((file) && (file->status > 0.0f)) {
+			HdyActionRow* entry = hdy_action_row_new();
+			
+			gtk_widget_set_name(GTK_WIDGET(entry), path_string->str);
+			
+			hdy_action_row_set_title(entry, file->name);
+			hdy_action_row_set_subtitle(entry, file->hash);
+			hdy_action_row_set_icon_name(entry, "text-x-generic-symbolic\0");
+			
+			if (CGTK_check_storage_subdir(path_string->str, CGTK_STORAGE_UPLOAD_DIR)) {
+				gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
+			} else {
+				gtk_container_add(GTK_CONTAINER(download_list), GTK_WIDGET(entry));
+			}
+			
+			gtk_widget_show_all(GTK_WIDGET(entry));
 		}
-		
-		gtk_widget_show_all(GTK_WIDGET(entry));
 		
 		files = files->next;
 	}
