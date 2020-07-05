@@ -88,7 +88,10 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	const cgtk_chat_t* chat = gui->callbacks.select_chat(identity, port);
 	
 	GtkWidget* upload_list = gtk_list_box_new();
+	gtk_widget_set_size_request(upload_list, 0, 150);
+	
 	GtkWidget* download_list = gtk_list_box_new();
+	gtk_widget_set_size_request(download_list, 0, 150);
 	
 	const GList* files = g_hash_table_get_keys(chat->files);
 	
@@ -124,8 +127,16 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 	
 	g_string_free(name, TRUE);
 	
-	gtk_grid_attach(GTK_GRID(grid), upload_list, 0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(grid), download_list, 0, 1, 1, 1);
+	GtkWidget* upload_label = gtk_label_new("Uploaded files:\0");
+	gtk_widget_set_hexpand(upload_label, TRUE);
+	
+	GtkWidget* download_label = gtk_label_new("Downloaded files:\0");
+	gtk_widget_set_hexpand(download_label, TRUE);
+	
+	gtk_grid_attach(GTK_GRID(grid), upload_label, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), upload_list, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), download_label, 0, 2, 1, 1);
+	gtk_grid_attach(GTK_GRID(grid), download_list, 0, 3, 1, 1);
 	
 	GtkWidget* cancel_button = gtk_button_new_with_label("Cancel\0");
 	GtkWidget* confirm_button = gtk_button_new_with_label("Confirm\0");
