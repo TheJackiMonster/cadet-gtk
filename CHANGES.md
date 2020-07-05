@@ -1,3 +1,13 @@
+## Version 0.6.0
+* Allow sharing files privately through GNUnet and encryption.
+>  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
+* Allow changing a normal chat to use JSON.
+* New notifications which alarm on incoming messages from inactive chats.
+* Allow automatic startup of required GNUnet services.
+* Allow deleting and unindexing files afterwards.
+* Local encryption for all uploaded and downloaded files from chats.
+* Many GUI changes, optimizations and fixes for upcoming libhandy.
+
 ## Version 0.5.0
 * Allow viewing all members in a groupchat more conveniently in the management of the chat.
 * Allow changing your nickname via GUI in your profile view.

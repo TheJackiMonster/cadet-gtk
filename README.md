@@ -37,9 +37,6 @@ If you want to take a look at all the releases and its changes: [Release Notes](
 
 You can see all other features and bigger changes which are planned right here:
 
- * [x] Allow sharing files privately through GNUnet and encryption.
->  More information how to share files via CLI: https://gnunet.org/en/use.html#filesharing
- * [x] Allow changing a normal chat to use JSON.
  * [ ] Show names of members of a group (connected to the names used in one-to-one chats).
  * [ ] Providing more consistency between multiple channels to the same destination.
  * [ ] Allow setting up a profile picture.
