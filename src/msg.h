@@ -6,6 +6,7 @@
 #define CADET_GTK_MSG_H
 
 #include <stdint.h>
+#include <time.h>
 #include <jansson.h>
 
 #define MSG_DEC_KIND_BIT 0x001u

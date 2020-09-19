@@ -13,7 +13,7 @@
 
 static struct GNUNET_CONTAINER_MultiHashMap* port_lookup;
 
-static int pipe2(int pipefd[2], int flags) {
+static int __pipe2(int pipefd[2], int flags) {
 	int result = pipe(pipefd);
 	
 	if (result == 0) {
@@ -24,8 +24,8 @@ static int pipe2(int pipefd[2], int flags) {
 }
 
 void CGTK_init_messaging(messaging_t* messaging) {
-	if ((pipe2(messaging->pipe_gnunet, O_NONBLOCK) == -1) ||
-		(pipe2(messaging->pipe_gui, O_NONBLOCK) == -1)) {
+	if ((__pipe2(messaging->pipe_gnunet, O_NONBLOCK) == -1) ||
+		(__pipe2(messaging->pipe_gui, O_NONBLOCK) == -1)) {
 		exit(EXIT_FAILURE);
 	}
 	
