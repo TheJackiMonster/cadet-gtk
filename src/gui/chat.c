@@ -143,9 +143,9 @@ static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
 }
 
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
-	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
-	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "\0");
+	hdy_header_bar_set_title(HDY_HEADER_BAR(header), "Chat\0");
+	hdy_header_bar_set_has_subtitle(HDY_HEADER_BAR(header), TRUE);
+	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(header), "\0");
 	gtk_widget_set_hexpand(header, TRUE);
 	
 	gui->chat.back_button = gtk_button_new_from_icon_name("go-previous-symbolic\0", GTK_ICON_SIZE_MENU);
@@ -174,8 +174,8 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_button_set_image(GTK_BUTTON(gui->chat.options_button), options_icon);
 	gtk_widget_set_sensitive(gui->chat.options_button, FALSE);
 	
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), gui->chat.back_button);
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), gui->chat.options_button);
+	hdy_header_bar_pack_start(HDY_HEADER_BAR(header), gui->chat.back_button);
+	hdy_header_bar_pack_end(HDY_HEADER_BAR(header), gui->chat.options_button);
 	
 	gtk_widget_set_hexpand(content, TRUE);
 	gtk_widget_set_vexpand(content, TRUE);

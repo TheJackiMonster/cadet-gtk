@@ -22,9 +22,9 @@ void CGTK_init_ui(cgtk_gui_t* gui) {
 	memset(gui->attributes.regex, '\0', CGTK_REGEX_BUFFER_SIZE);
 	
 	GtkWidget* contacts_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	GtkWidget* contacts_header = gtk_header_bar_new();
+	GtkWidget* contacts_header = hdy_header_bar_new();
 	
-	gui->chat.header = gtk_header_bar_new();
+	gui->chat.header = hdy_header_bar_new();
 	GtkWidget* chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	
 	GtkWidget* title_leaflet = hdy_leaflet_new();
@@ -37,11 +37,11 @@ void CGTK_init_ui(cgtk_gui_t* gui) {
 	gtk_container_child_set(GTK_CONTAINER(title_leaflet), gui->chat.header, "name\0", "chat\0", NULL);
 	hdy_leaflet_set_visible_child_name(HDY_LEAFLET(title_leaflet), "contacts\0");
 	
-	HdyTitleBar* titleBar = hdy_title_bar_new();
+	GtkWidget* titleBar = hdy_title_bar_new();
 	
 	gtk_container_add(GTK_CONTAINER(titleBar), title_leaflet);
 	
-	gtk_window_set_titlebar(GTK_WINDOW(gui->main.window), GTK_WIDGET(titleBar));
+	gtk_window_set_titlebar(GTK_WINDOW(gui->main.window), titleBar);
 	
 	gui->main.leaflet = hdy_leaflet_new();
 	hdy_leaflet_set_transition_type(HDY_LEAFLET(gui->main.leaflet), HDY_LEAFLET_TRANSITION_TYPE_SLIDE);
@@ -59,8 +59,8 @@ void CGTK_init_ui(cgtk_gui_t* gui) {
 	CGTK_init_chat(gui->chat.header, chat_box, gui);
 	
 	HdyHeaderGroup* header_group = hdy_header_group_new();
-	hdy_header_group_add_header_bar(header_group, GTK_HEADER_BAR(contacts_header));
-	hdy_header_group_add_header_bar(header_group, GTK_HEADER_BAR(gui->chat.header));
+	hdy_header_group_add_header_bar(header_group, HDY_HEADER_BAR(contacts_header));
+	hdy_header_group_add_header_bar(header_group, HDY_HEADER_BAR(gui->chat.header));
 	
 	g_object_bind_property(
 			gui->main.leaflet,
@@ -94,7 +94,7 @@ void CGTK_init_ui(cgtk_gui_t* gui) {
 			G_BINDING_INVERT_BOOLEAN
 	);
 	
-	gtk_widget_show_all(GTK_WIDGET(titleBar));
+	gtk_widget_show_all(titleBar);
 }
 
 void CGTK_update_id_search_ui(cgtk_gui_t* gui, guint hash, const char* identity) {
