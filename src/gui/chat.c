@@ -323,7 +323,7 @@ GtkWidget* CGTK_get_chat_label(cgtk_gui_t* gui, const char* contact_id, const ch
 void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact_port, gboolean silent) {
 	GString* name = CGTK_merge_name(contact_id, contact_port);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), contact_id);
+	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(gui->chat.header), contact_id);
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, contact_id, contact_port);
 	
@@ -366,7 +366,7 @@ void CGTK_unload_chat(cgtk_gui_t* gui, const char* contact_id, const char* conta
 	
 	gtk_container_remove(GTK_CONTAINER(gui->chat.stack), chat_box);
 	
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), "\0");
+	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(gui->chat.header), "\0");
 	
 	gtk_widget_show_all(gui->chat.stack);
 	gtk_widget_show_all(gui->chat.header);

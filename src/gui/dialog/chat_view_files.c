@@ -109,6 +109,15 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 			hdy_action_row_set_subtitle(HDY_ACTION_ROW(entry), file->hash);
 			hdy_action_row_set_icon_name(HDY_ACTION_ROW(entry), "text-x-generic-symbolic\0");
 			
+			/*
+			 * This is necessary to make the row itself activatable for 'row-activated' in its list!
+			 *
+			 * "[...] HdyActionRow is unactivatable by default, giving it an activatable widget will automatically make it
+			 *  activatable, but unsetting it won't change the row's activatability. [...]"
+			 */
+			hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(entry), entry);
+			hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(entry), NULL);
+			
 			if (CGTK_check_storage_subdir(path_string->str, CGTK_STORAGE_UPLOAD_DIR)) {
 				gtk_container_add(GTK_CONTAINER(upload_list), entry);
 			} else {

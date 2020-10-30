@@ -57,6 +57,15 @@ void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* i
 		hdy_action_row_set_subtitle(HDY_ACTION_ROW(contact), identity);
 		hdy_action_row_set_icon_name(HDY_ACTION_ROW(contact), "avatar-default-symbolic\0");
 		
+		/*
+		 * This is necessary to make the row itself activatable for 'row-activated' in its list!
+		 *
+		 * "[...] HdyActionRow is unactivatable by default, giving it an activatable widget will automatically make it
+		 *  activatable, but unsetting it won't change the row's activatability. [...]"
+		 */
+		hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(contact), contact);
+		hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(contact), NULL);
+		
 		gtk_container_add(GTK_CONTAINER(gui->id_search.list), contact);
 		
 		gtk_widget_show_all(contact);
