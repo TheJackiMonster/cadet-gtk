@@ -143,9 +143,16 @@ static void CGTK_send_message(GtkWidget* msg_button, gpointer user_data) {
 }
 
 void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
+#ifdef HANDY_USE_ZERO_API
+	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Chat\0");
+	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), TRUE);
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(header), "\0");
+#else
 	hdy_header_bar_set_title(HDY_HEADER_BAR(header), "Chat\0");
 	hdy_header_bar_set_has_subtitle(HDY_HEADER_BAR(header), TRUE);
 	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(header), "\0");
+#endif
+	
 	gtk_widget_set_hexpand(header, TRUE);
 	
 	gui->chat.back_button = gtk_button_new_from_icon_name("go-previous-symbolic\0", GTK_ICON_SIZE_MENU);
@@ -173,9 +180,14 @@ void CGTK_init_chat(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
 	gtk_menu_button_set_popover(GTK_MENU_BUTTON(gui->chat.options_button), options);
 	gtk_button_set_image(GTK_BUTTON(gui->chat.options_button), options_icon);
 	gtk_widget_set_sensitive(gui->chat.options_button, FALSE);
-	
+
+#ifdef HANDY_USE_ZERO_API
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(header), gui->chat.back_button);
+	gtk_header_bar_pack_end(GTK_HEADER_BAR(header), gui->chat.options_button);
+#else
 	hdy_header_bar_pack_start(HDY_HEADER_BAR(header), gui->chat.back_button);
 	hdy_header_bar_pack_end(HDY_HEADER_BAR(header), gui->chat.options_button);
+#endif
 	
 	gtk_widget_set_hexpand(content, TRUE);
 	gtk_widget_set_vexpand(content, TRUE);
@@ -323,7 +335,11 @@ GtkWidget* CGTK_get_chat_label(cgtk_gui_t* gui, const char* contact_id, const ch
 void CGTK_load_chat(cgtk_gui_t* gui, const char* contact_id, const char* contact_port, gboolean silent) {
 	GString* name = CGTK_merge_name(contact_id, contact_port);
 	
+#ifdef HANDY_USE_ZERO_API
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), contact_id);
+#else
 	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(gui->chat.header), contact_id);
+#endif
 	
 	GtkWidget* chat_list = CGTK_get_chat_list(gui, contact_id, contact_port);
 	
@@ -365,8 +381,12 @@ void CGTK_unload_chat(cgtk_gui_t* gui, const char* contact_id, const char* conta
 	);
 	
 	gtk_container_remove(GTK_CONTAINER(gui->chat.stack), chat_box);
-	
+
+#ifdef HANDY_USE_ZERO_API
+	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(gui->chat.header), "\0");
+#else
 	hdy_header_bar_set_subtitle(HDY_HEADER_BAR(gui->chat.header), "\0");
+#endif
 	
 	gtk_widget_show_all(gui->chat.stack);
 	gtk_widget_show_all(gui->chat.header);

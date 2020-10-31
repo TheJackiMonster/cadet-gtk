@@ -93,14 +93,25 @@ static void CGTK_new_contact_and_group_dialog(GtkWidget* add_button, gpointer us
 	gtk_container_child_set_property(GTK_CONTAINER(main_stack), group_main_box, "icon-name\0", &icon_string);
 	
 	g_value_unset(&icon_string);
-	
+
+#ifdef HANDY_USE_ZERO_API
+	HdyViewSwitcherBar* viewSwitcherBar = hdy_view_switcher_bar_new();
+	hdy_view_switcher_bar_set_stack(viewSwitcherBar, GTK_STACK(main_stack));
+	hdy_view_switcher_bar_set_reveal(viewSwitcherBar, TRUE);
+#else
 	GtkWidget* viewSwitcherBar = hdy_view_switcher_bar_new();
 	hdy_view_switcher_bar_set_stack(HDY_VIEW_SWITCHER_BAR(viewSwitcherBar), GTK_STACK(main_stack));
 	hdy_view_switcher_bar_set_reveal(HDY_VIEW_SWITCHER_BAR(viewSwitcherBar), TRUE);
+#endif
 	
 	GtkWidget* main_box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_container_add(GTK_CONTAINER(main_box), main_stack);
+	
+#ifdef HANDY_USE_ZERO_API
+	gtk_container_add(GTK_CONTAINER(main_box), GTK_WIDGET(viewSwitcherBar));
+#else
 	gtk_container_add(GTK_CONTAINER(main_box), viewSwitcherBar);
+#endif
 	
 	g_signal_connect(dialog, "destroy\0", G_CALLBACK(CGTK_new_contact_and_group_destroy), gui);
 	

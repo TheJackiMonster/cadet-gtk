@@ -39,8 +39,13 @@ static void CGTK_activate_contact(GtkListBox* box, GtkListBoxRow* row, gpointer 
 }
 
 void CGTK_init_contacts(GtkWidget* header, GtkWidget* content, cgtk_gui_t* gui) {
+#ifdef HANDY_USE_ZERO_API
+	gtk_header_bar_set_title(GTK_HEADER_BAR(header), "Contacts\0");
+	gtk_header_bar_set_has_subtitle(GTK_HEADER_BAR(header), FALSE);
+#else
 	hdy_header_bar_set_title(HDY_HEADER_BAR(header), "Contacts\0");
 	hdy_header_bar_set_has_subtitle(HDY_HEADER_BAR(header), FALSE);
+#endif
 	
 	gui->contacts.add_button = gtk_button_new_from_icon_name("list-add-symbolic\0", GTK_ICON_SIZE_MENU);
 	
@@ -97,9 +102,14 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) 
 		
 		list = list->next;
 	}
-	
+
+#ifdef HANDY_USE_ZERO_API
+	HdyActionRow* contact = hdy_action_row_new();
+	gtk_widget_set_name(GTK_WIDGET(contact), name->str);
+#else
 	GtkWidget* contact = hdy_action_row_new();
 	gtk_widget_set_name(contact, name->str);
+#endif
 	
 	g_string_free(name, TRUE);
 	
@@ -110,7 +120,12 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) 
 	if (chat->is_group) {
 		g_string_append(name, " (GROUP)\0");
 	}
-	
+
+#ifdef HANDY_USE_ZERO_API
+	hdy_action_row_set_title(contact, name->str);
+	hdy_action_row_set_subtitle(contact, identity);
+	hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
+#else
 	hdy_preferences_row_set_title(HDY_PREFERENCES_ROW(contact), name->str);
 	hdy_action_row_set_subtitle(HDY_ACTION_ROW(contact), identity);
 	hdy_action_row_set_icon_name(HDY_ACTION_ROW(contact), "user-available-symbolic\0");
@@ -123,12 +138,19 @@ void CGTK_open_contact(cgtk_gui_t* gui, const char* identity, const char* port) 
 	 */
 	hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(contact), contact);
 	hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(contact), NULL);
+#endif
 	
 	g_string_free(name, TRUE);
+
+#ifdef HANDY_USE_ZERO_API
+	gtk_container_add(GTK_CONTAINER(gui->contacts.list), GTK_WIDGET(contact));
 	
+	gtk_widget_show_all(GTK_WIDGET(contact));
+#else
 	gtk_container_add(GTK_CONTAINER(gui->contacts.list), contact);
 	
 	gtk_widget_show_all(contact);
+#endif
 }
 
 void CGTK_reload_contact(cgtk_gui_t* gui, const char* identity, const char* port) {

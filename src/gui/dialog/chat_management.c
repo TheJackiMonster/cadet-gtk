@@ -135,6 +135,17 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 	while (members) {
 		const cgtk_member_t* member = (cgtk_member_t*) members->data;
 		
+#ifdef HANDY_USE_ZERO_API
+		HdyActionRow* contact = hdy_action_row_new();
+		
+		hdy_action_row_set_title(contact, member->name);
+		hdy_action_row_set_subtitle(contact, member->identity);
+		hdy_action_row_set_icon_name(contact, "user-available-symbolic\0");
+		
+		gtk_container_add(GTK_CONTAINER(members_list), GTK_WIDGET(contact));
+		
+		gtk_widget_show_all(GTK_WIDGET(contact));
+#else
 		GtkWidget* contact = hdy_action_row_new();
 		
 		hdy_preferences_row_set_title(HDY_PREFERENCES_ROW(contact), member->name);
@@ -153,6 +164,7 @@ static void CGTK_management_dialog(GtkWidget* manage_button, gpointer user_data)
 		gtk_container_add(GTK_CONTAINER(members_list), contact);
 		
 		gtk_widget_show_all(contact);
+#endif
 		
 		members = members->next;
 	}

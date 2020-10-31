@@ -50,6 +50,18 @@ void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* i
 	}
 	
 	if (!duplicate) {
+#ifdef HANDY_USE_ZERO_API
+		HdyActionRow* contact = hdy_action_row_new();
+		gtk_widget_set_name(GTK_WIDGET(contact), identity);
+		
+		hdy_action_row_set_title(contact, name);
+		hdy_action_row_set_subtitle(contact, identity);
+		hdy_action_row_set_icon_name(contact, "avatar-default-symbolic\0");
+		
+		gtk_container_add(GTK_CONTAINER(gui->id_search.list), GTK_WIDGET(contact));
+		
+		gtk_widget_show_all(GTK_WIDGET(contact));
+#else
 		GtkWidget* contact = hdy_action_row_new();
 		gtk_widget_set_name(contact, identity);
 		
@@ -69,6 +81,7 @@ void CGTK_id_search_entry_found(cgtk_gui_t* gui, const char* name, const char* i
 		gtk_container_add(GTK_CONTAINER(gui->id_search.list), contact);
 		
 		gtk_widget_show_all(contact);
+#endif
 	}
 }
 

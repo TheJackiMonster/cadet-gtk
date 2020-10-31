@@ -101,6 +101,15 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 		const cgtk_file_t* file = CGTK_get_file(gui, path_string->str);
 		
 		if ((file) && (file->status > 0.0f)) {
+#ifdef HANDY_USE_ZERO_API
+			HdyActionRow* entry = hdy_action_row_new();
+			
+			gtk_widget_set_name(GTK_WIDGET(entry), path_string->str);
+			
+			hdy_action_row_set_title(entry, file->name);
+			hdy_action_row_set_subtitle(entry, file->hash);
+			hdy_action_row_set_icon_name(entry, "text-x-generic-symbolic\0");
+#else
 			GtkWidget* entry = hdy_action_row_new();
 			
 			gtk_widget_set_name(entry, path_string->str);
@@ -117,14 +126,27 @@ static void CGTK_view_files_dialog(GtkWidget* files_button, gpointer user_data) 
 			 */
 			hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(entry), entry);
 			hdy_action_row_set_activatable_widget(HDY_ACTION_ROW(entry), NULL);
+#endif
 			
 			if (CGTK_check_storage_subdir(path_string->str, CGTK_STORAGE_UPLOAD_DIR)) {
+#ifdef HANDY_USE_ZERO_API
+				gtk_container_add(GTK_CONTAINER(upload_list), GTK_WIDGET(entry));
+#else
 				gtk_container_add(GTK_CONTAINER(upload_list), entry);
+#endif
 			} else {
+#ifdef HANDY_USE_ZERO_API
+				gtk_container_add(GTK_CONTAINER(download_list), GTK_WIDGET(entry));
+#else
 				gtk_container_add(GTK_CONTAINER(download_list), entry);
+#endif
 			}
 			
+#ifdef HANDY_USE_ZERO_API
+			gtk_widget_show_all(GTK_WIDGET(entry));
+#else
 			gtk_widget_show_all(entry);
+#endif
 		}
 		
 		files = files->next;
