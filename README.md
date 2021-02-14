@@ -7,7 +7,7 @@ A GTK based GUI for the CADET subsystem of GNUnet.
 ![Example for chat](examples/mobile_chat.png "Chat between you and one contact")
 
 This application requires [libhandy](https://gitlab.gnome.org/GNOME/libhandy/)
-0.0.12 or later, as it uses it in order to make it work as a mobile application
+1.0.0 or later, as it uses it in order to make it work as a mobile application
 too.
 
 It also depends on [libnotify](https://developer.gnome.org/libnotify/).
@@ -29,9 +29,12 @@ You can find a script to install this project from source in the `setup` directo
 
 ### Other
 
-You will need to clone the [repository](https://gitlab.com/TheJackiMonster/cadet-gtk.git) and compile it from source with cmake.
-You should notice that you will need a quite current release of GNUnet installed so maybe you will need to compile
-this from [source](https://git.gnunet.org/gnunet.git) too.
+You will need to clone the [repository](https://gitlab.com/TheJackiMonster/cadet-gtk.git) and compile it from source with the provided build script.
+`
+./build.sh 'release'
+./install.sh '/usr'
+`
+You should notice that you will need a quite current release of GNUnet installed so maybe you will need to compile this from [source](https://git.gnunet.org/gnunet.git) too.
 
 ## Progress
 
