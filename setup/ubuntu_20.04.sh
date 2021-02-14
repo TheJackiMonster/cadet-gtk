@@ -39,9 +39,7 @@ sudo apt-get install libgtk-3-0 libhandy-0.0-0 libjansson4 libnotify4
 sudo apt-get install cmake libgtk-3-dev libhandy-0.0-dev libjansson-dev libnotify-dev
 
 # Building and installing Cadet-GTK
-mkdir ../build
-cd ../build
+cd ..
 
-cmake ..
-make -j$(nproc || echo -n 1)
-sudo make install
+sh build.sh release
+sudo sh install.sh /usr
