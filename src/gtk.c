@@ -184,7 +184,7 @@ static uint8_t CGTK_send_message(const char* destination, const char* port, msg_
 	
 	if (msg->usage == MSG_USAGE_GLOBAL) {
 		size_t buffer_len = 0;
-		const char* buffer;
+		const char* buffer = NULL;
 		
 		if (chat->use_json) {
 			buffer = CGTK_encode_message(msg, &buffer_len);
@@ -340,8 +340,6 @@ static gboolean CGTK_idle(gpointer user_data) {
 				CGTK_shutdown("Can't identify connections port!\0");
 				return FALSE;
 			}
-			
-			cgtk_chat_t* chat = CGTK_select_chat(session.gui.attributes.identity, port);
 			
 			CGTK_update_contacts_ui(&(session.gui), source, port, CONTACT_ACTIVE);
 			break;

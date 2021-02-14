@@ -11,6 +11,4 @@ const char* CGTK_generate_download_path(const char* extension);
 
 int CGTK_download_file_to(const char* src_path, const char* dst_path);
 
-const char* CGTK_default_download_path_for(const char* filename);
-
 #endif //CADET_GTK_STORAGE_DOWNLOAD_H

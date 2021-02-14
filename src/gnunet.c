@@ -286,14 +286,6 @@ static void handle_port_message(void* cls, const struct GNUNET_MessageHeader* me
 	CGTK_handle_message((connection_t*) cls, message);
 }
 
-static void CGTK_done_message(void* cls) {
-	if (session.idle) {
-		GNUNET_SCHEDULER_cancel(session.idle);
-	}
-	
-	CGTK_idle(cls);
-}
-
 static bool CGTK_push_message(connection_t* connection) {
 #ifdef CGTK_ALL_DEBUG
 	printf("GNUNET: CGTK_push_message()\n");

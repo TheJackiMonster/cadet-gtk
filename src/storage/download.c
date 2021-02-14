@@ -25,8 +25,3 @@ inline int CGTK_download_file_to(const char* src_path, const char* dst_path) {
 	return CGTK_copy_file(src_path, dst_path);
 }
 
-const char* CGTK_default_download_path_for(const char* filename) {
-	static char download_path [CGTK_PATH_SIZE];
-	
-	
-}

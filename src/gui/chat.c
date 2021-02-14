@@ -540,8 +540,6 @@ void CGTK_update_member(GtkWidget* chat_list, cgtk_chat_t* chat, const msg_t* ms
 }
 
 static void CGTK_open_file(GtkWidget* open_button, gpointer user_data) {
-	cgtk_gui_t* gui = (cgtk_gui_t*) user_data;
-	
 	GtkWidget* file_box = gtk_widget_get_parent(open_button);
 	
 	const char* path = gtk_widget_get_name(file_box);

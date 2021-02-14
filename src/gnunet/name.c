@@ -16,7 +16,7 @@ static void CGTK_name_call(const char* name_regex) {
 		
 		name_prefixed[0] = '(';
 		
-		strncpy(name_prefixed + 1, CGTK_NAME_SEARCH_PREFIX_REG, CGTK_NAME_SEARCH_PREFIX_REG_SIZE);
+		strcpy(name_prefixed + 1, CGTK_NAME_SEARCH_PREFIX_REG);
 		
 		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + 1] = ')';
 		name_prefixed[CGTK_NAME_SEARCH_PREFIX_REG_SIZE + 2] = '(';
@@ -64,7 +64,7 @@ static void CGTK_name_search(const char* name) {
 		
 		static char name_prefixed [CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE];
 		
-		strncpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX, CGTK_NAME_SEARCH_PREFIX_SIZE);
+		strcpy(name_prefixed, CGTK_NAME_SEARCH_PREFIX);
 		strncpy(name_prefixed + CGTK_NAME_SEARCH_PREFIX_SIZE, name, CGTK_NAME_BUFFER_SIZE);
 		
 		name_prefixed[CGTK_NAME_SEARCH_PREFIX_SIZE + CGTK_NAME_BUFFER_SIZE - 1] = '\0';
