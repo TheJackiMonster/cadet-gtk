@@ -25,7 +25,7 @@ You can install directly from the source via the package [cadet-gtk-git](https:/
 
 You can find a script to install this project from source in the `setup` directory for following versions:
 
-- [Ubuntu 20.04](setup/ubuntu_20.04.sh)
+- [Ubuntu 20.10](setup/ubuntu_20.10.sh)
 
 ### Other
 

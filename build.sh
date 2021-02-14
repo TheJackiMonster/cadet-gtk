@@ -1,12 +1,6 @@
 #!/bin/sh
 gtk_libs=$(pkg-config --cflags --libs libhandy-1 gtk+-3.0 jansson libnotify)
-gnunet_libs="
--lgnunetarm 
--lgnunetcadet 
--lgnunetfs 
--lgnunetregex 
--lgnunetutil 
-"
+gnunet_libs=$(pkg-config --cflags --libs gnunetarm gnunetcadet gnunetfs gnunetregex gnunetutil)
 
 sources="
 src/config/file.c
