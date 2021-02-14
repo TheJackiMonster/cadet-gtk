@@ -30,10 +30,10 @@ You can find a script to install this project from source in the `setup` directo
 ### Other
 
 You will need to clone the [repository](https://gitlab.com/TheJackiMonster/cadet-gtk.git) and compile it from source with the provided build script.
-`
+```
 ./build.sh 'release'
 ./install.sh '/usr'
-`
+```
 You should notice that you will need a quite current release of GNUnet installed so maybe you will need to compile this from [source](https://git.gnunet.org/gnunet.git) too.
 
 ## Progress
