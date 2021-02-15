@@ -28,5 +28,6 @@ src/storage.c
 
 binary="cadet-gtk"
 optimization=$(if [ $# -gt 0 ] && [ "$1" = "release" ]; then echo '-O2 '; elif [ $# -gt 0 ] && [ "$1" = "debug" ]; then echo '-Og -Wall '; else echo '-O0 '; fi)
+ubuntu=$(if [ -z "$(gcc --version | grep Ubuntu)" ]; then echo " "; else echo "-Wl,--no-as-needed "; fi)
 
-gcc $optimization $gtk_libs $gnunet_libs $sources -o $binary
+gcc $ubuntu $optimization $gtk_libs $gnunet_libs $sources -o $binary
