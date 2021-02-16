@@ -11,7 +11,7 @@ sudo apt-get update # make sure to get newest version of packages
 sudo apt-get install gnunet libgtk-3-0 libhandy-1-0 libjansson4 libnotify4
 
 # *-dev packages are only necessary for compilation from sources
-sudo apt-get install pkg-config gnunet-dev libgtk-3-dev libhandy-1-dev libjansson-dev libnotify-dev
+sudo apt-get install gcc pkg-config gnunet-dev libgtk-3-dev libhandy-1-dev libjansson-dev libnotify-dev
 
 # Building and installing Cadet-GTK
 cd ..
