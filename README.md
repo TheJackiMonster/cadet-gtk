@@ -70,3 +70,4 @@ You can see all other features and bigger changes which are planned right here:
 
  - Tobias Frisch ( thejackimonster@gmail.com )
  - Marcos Marado ( mindboosternoori@gmail.com )
+ - Daniel Engel
